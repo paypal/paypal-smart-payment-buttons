@@ -1,6 +1,7 @@
 /* @flow */
 
 import { ENV, COUNTRY, LANG, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, DEFAULT_COUNTRY, COUNTRY_LANGS } from '@paypal/sdk-constants';
+import { isFundingRemembered } from '@paypal/funding-components';
 
 import type { ExpressRequest, ExpressResponse } from './types';
 
@@ -9,6 +10,9 @@ type FundingEligibility = {|
     eligible : boolean
 },
 venmo : {
+    eligible : boolean
+},
+itau : {
     eligible : boolean
 }
 |};
@@ -35,6 +39,10 @@ function getFundingEligibility(req : ExpressRequest) : FundingEligibility {
     if (cookies && cookies.indexOf('pwv') !== -1) {
         fundingEligibility[FUNDING.VENMO] = fundingEligibility[FUNDING.VENMO] || {};
         fundingEligibility[FUNDING.VENMO].eligible = true;
+    }
+    if (isFundingRemembered(req, FUNDING.ITAU, { cookies })) {
+        fundingEligibility[FUNDING.ITAU] = fundingEligibility[FUNDING.ITAU] || {};
+        fundingEligibility[FUNDING.ITAU].eligible = true;
     }
 
     return fundingEligibility;
