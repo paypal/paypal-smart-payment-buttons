@@ -48,7 +48,8 @@
     "cross-domain-utils": "^2.0.16",
     "grabthar": "^3",
     "jsx-pragmatic": "^2",
-    "zalgo-promise": "^1.0.28"
+    "zalgo-promise": "^1.0.28",
+    "cookie": "^0.3.1"
   },
   "devDependencies": {
     "babel-core": "^7.0.0-bridge.0",
@@ -57,7 +58,8 @@
     "grumbler-scripts": "^3.0.18",
     "post-robot": "^10.0.13",
     "sync-browser-mocks": "^1.0.44",
-    "webpack-mem-compile": "^1.0.2"
+    "webpack-mem-compile": "^1.0.2",
+    "cookie-parser": "^1.4.3"
   },
   "license": "PayPal",
   "author": "DL-PP-Hermes-Integration@paypal.com"
