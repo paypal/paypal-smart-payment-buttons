@@ -130,6 +130,9 @@ export type FundingEligibilityType = {|
     venmo? : {
         eligible : boolean
     },
+    itau? : {
+        eligible : boolean
+    },
     wechatpay? : {
         eligible : boolean
     },
