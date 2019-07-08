@@ -181,13 +181,13 @@ export function setupButton(opts : { fundingEligibility : FundingEligibilityType
     tasks.remember = ZalgoPromise.try(() => {
         const fundings = [];
         if (fundingEligibility && fundingEligibility.venmo && fundingEligibility.venmo.eligible) {
-            fundings.push( FUNDING.VENMO)
+            fundings.push(FUNDING.VENMO);
 
         }
-        if(fundingEligibility && fundingEligibility.itau && fundingEligibility.itau.eligible) {
-            fundings.push(FUNDING.ITAU)
+        if (fundingEligibility && fundingEligibility.itau && fundingEligibility.itau.eligible) {
+            fundings.push(FUNDING.ITAU);
         }
-        if(fundings && fundings.length) {
+        if (fundings && fundings.length) {
             return rememberFunding(fundings);
         }
     });
