@@ -23,6 +23,7 @@ import { initCheckout } from './checkout';
 let cardFieldsOpen = false;
 
 type CardFieldsProps = {|
+    buttonSessionID : string,
     fundingSource : $Values<typeof FUNDING>,
     card : ?$Values<typeof CARD>,
     buyerCountry : $Values<typeof COUNTRY>,
@@ -111,7 +112,7 @@ const openCardFields = () => {
 
 export function initCardFields(props : CardFieldsProps) : CardFieldsInstance {
     const { fundingSource, card, buyerCountry, createOrder, onApprove, onCancel,
-        onAuth, onShippingChange, cspNonce, locale, commit, onError } = props;
+        onAuth, onShippingChange, cspNonce, locale, commit, onError, buttonSessionID } = props;
 
     if (!card) {
         throw new Error(`Card required to render card fields`);
@@ -157,6 +158,7 @@ export function initCardFields(props : CardFieldsProps) : CardFieldsInstance {
         onShippingChange,
         onCardTypeChange,
 
+        buttonSessionID,
         buyerCountry,
         locale,
         commit,

@@ -2,7 +2,7 @@
 
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { memoize, noop, supportsPopups } from 'belter/src';
-import { FUNDING, CARD, COUNTRY } from '@paypal/sdk-constants/src';
+import { FUNDING, CARD, COUNTRY, SDK_QUERY_KEYS } from '@paypal/sdk-constants/src';
 import { getParent, getTop } from 'cross-domain-utils/src';
 
 import { enableVault } from '../api';
@@ -39,32 +39,35 @@ export function setupCheckout() : ZalgoPromise<void> {
     return ZalgoPromise.hash(tasks).then(noop);
 }
 
-type VaultSetupEligibleProps = {|
+type VaultAutoSetupEligibleProps = {|
     vault : boolean,
     clientAccessToken : ?string,
     createBillingAgreement : ?CreateBillingAgreement,
-    createSubscription : ?CreateSubscription
+    createSubscription : ?CreateSubscription,
+    fundingSource : $Values<typeof FUNDING>,
+    fundingEligibility : FundingEligibilityType
 |};
 
-function isVaultSetupEligible({ vault, clientAccessToken, createBillingAgreement, createSubscription } : VaultSetupEligibleProps) : boolean {
-    if (!window.xprops.enableVault) {
-        return false;
-    }
-
+function isVaultAutoSetupEligible({ vault, clientAccessToken, createBillingAgreement, createSubscription, fundingSource, fundingEligibility } : VaultAutoSetupEligibleProps) : boolean {
     if (!clientAccessToken) {
         return false;
     }
 
-    if (createBillingAgreement) {
+    if (createBillingAgreement || createSubscription) {
         return false;
     }
 
-    // No buyer vault for subscription
-    if (createSubscription) {
-        return false;
+    const fundingSourceEligible = Boolean(fundingEligibility[fundingSource] && fundingEligibility[fundingSource].vaultable);
+
+    if (vault && !fundingSourceEligible) {
+        throw new Error(`SDK received ${ SDK_QUERY_KEYS.VAULT }=true parameter, but ${ fundingSource } is not vaultable.`);
     }
 
     if (vault) {
+        return true;
+    }
+
+    if (fundingSourceEligible) {
         return true;
     }
 
@@ -81,9 +84,13 @@ type EnableVaultSetupOptions = {|
     createSubscription : ?CreateSubscription
 |};
 
-function enableVaultSetup({ orderID, vault, clientAccessToken, createBillingAgreement, createSubscription } : EnableVaultSetupOptions) : ZalgoPromise<void> {
+function enableVaultSetup({ orderID, vault, clientAccessToken, createBillingAgreement, createSubscription, fundingSource, fundingEligibility } : EnableVaultSetupOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
-        if (clientAccessToken && isVaultSetupEligible({ vault, clientAccessToken, createBillingAgreement, createSubscription })) {
+        if (!clientAccessToken) {
+            return;
+        }
+        
+        if (isVaultAutoSetupEligible({ vault, clientAccessToken, createBillingAgreement, createSubscription, fundingSource, fundingEligibility })) {
             return enableVault({ orderID, clientAccessToken }).catch(err => {
                 if (vault) {
                     throw err;
@@ -99,6 +106,7 @@ export function getDefaultContext() : $Values<typeof CONTEXT> {
 
 type CheckoutProps= {|
     win? : ?ProxyWindow,
+    buttonSessionID : string,
     context? : $Values<typeof CONTEXT>,
     fundingSource : $Values<typeof FUNDING>,
     card : ?$Values<typeof CARD>,
@@ -127,7 +135,7 @@ type CheckoutInstance = {|
 |};
 
 export function initCheckout(props : CheckoutProps) : CheckoutInstance {
-    const { win, fundingSource, card, buyerCountry, createOrder, onApprove, onCancel,
+    const { win, buttonSessionID, fundingSource, card, buyerCountry, createOrder, onApprove, onCancel,
         onAuth, onShippingChange, cspNonce, context, locale, commit, onError, vault,
         clientAccessToken, fundingEligibility, createBillingAgreement, createSubscription, validationPromise = ZalgoPromise.resolve(true) } = props;
 
@@ -151,6 +159,8 @@ export function initCheckout(props : CheckoutProps) : CheckoutInstance {
 
     const { renderTo, close: closeCheckout, onError: triggerError } = window.paypal.Checkout({
         window: win,
+        buttonSessionID,
+        clientAccessToken,
 
         createOrder: () => {
             return validationPromise.then(valid => {

@@ -4,19 +4,7 @@ import { ENV, COUNTRY, LANG, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, DEF
 import { isFundingRemembered } from '@paypal/funding-components';
 import cookie from 'cookie';
 
-import type { ExpressRequest, ExpressResponse } from './types';
-
-type FundingEligibility = {|
-    paypal : {
-    eligible : boolean
-},
-venmo : {
-    eligible : boolean
-},
-itau : {
-    eligible : boolean
-}
-|};
+import type { ExpressRequest, ExpressResponse, FundingEligibility } from './types';
 
 function getFundingEligibility(req : ExpressRequest) : FundingEligibility {
     const encodedFundingEligibility = req.query.fundingEligibility;
