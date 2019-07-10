@@ -31,7 +31,7 @@ function getFundingEligibility(req : ExpressRequest) : FundingEligibility {
         fundingEligibility[FUNDING.VENMO].eligible = true;
     }
 
-    if (isFundingRemembered(req, FUNDING.ITAU, { cookies: cookie.parse(cookies) })) {
+    if (cookies && isFundingRemembered(req, FUNDING.ITAU, { cookies: cookie.parse(cookies) })) {
         fundingEligibility[FUNDING.ITAU] = fundingEligibility[FUNDING.ITAU] || {};
         fundingEligibility[FUNDING.ITAU].eligible = true;
 

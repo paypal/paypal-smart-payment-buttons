@@ -142,9 +142,6 @@ export type FundingEligibilityType = {|
         eligible : boolean,
         vaultable? : boolean
     },
-    itau? : {
-        eligible : boolean
-    },
     wechatpay? : {
         eligible : boolean,
         vaultable? : boolean
