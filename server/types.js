@@ -25,7 +25,7 @@ export type FundingEligibility = {|
         eligible : boolean,
         vaultedInstruments ? : VaultedInstruments
     },
-    itau : {
+    itau? : {
         eligible : boolean,
         vaultedInstruments ? : VaultedInstruments
     },
