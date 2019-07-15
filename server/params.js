@@ -1,44 +1,8 @@
 /* @flow */
 
 import { ENV, COUNTRY, LANG, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, DEFAULT_COUNTRY, COUNTRY_LANGS } from '@paypal/sdk-constants';
-import { isFundingRemembered } from '@paypal/funding-components';
-import cookie from 'cookie';
 
-import type { ExpressRequest, ExpressResponse, FundingEligibility } from './types';
-
-function getFundingEligibility(req : ExpressRequest) : FundingEligibility {
-    const encodedFundingEligibility = req.query.fundingEligibility;
-
-    let fundingEligibility;
-
-    if (!encodedFundingEligibility || typeof encodedFundingEligibility !== 'string') {
-        // $FlowFixMe
-        fundingEligibility = {
-            [FUNDING.PAYPAL]: {
-                eligible: true
-            }
-        };
-    } else {
-        fundingEligibility = JSON.parse(
-            Buffer.from(encodedFundingEligibility, 'base64').toString('utf8')
-        );
-    }
-
-    const cookies = req.get('cookie');
-
-    if (cookies && cookies.indexOf('pwv') !== -1) {
-        fundingEligibility[FUNDING.VENMO] = fundingEligibility[FUNDING.VENMO] || {};
-        fundingEligibility[FUNDING.VENMO].eligible = true;
-    }
-
-    if (cookies && isFundingRemembered(req, FUNDING.ITAU, { cookies: cookie.parse(cookies) })) {
-        fundingEligibility[FUNDING.ITAU] = fundingEligibility[FUNDING.ITAU] || {};
-        fundingEligibility[FUNDING.ITAU].eligible = true;
-
-    }
-
-    return fundingEligibility;
-}
+import type { ExpressRequest, ExpressResponse } from './types';
 
 function getNonce(res : ExpressResponse) : string {
     let nonce = res.locals && res.locals.nonce;
@@ -86,7 +50,7 @@ type RequestParams = {|
     buttonSessionID : string,
     clientAccessToken : ?string,
     cspNonce : string,
-    fundingEligibility : FundingEligibility,
+    // fundingEligibility : FundingEligibility,
     debug : boolean
 |};
 
@@ -115,7 +79,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
 
     const cspNonce = getNonce(res);
 
-    const fundingEligibility = getFundingEligibility(req);
+    // const fundingEligibility = getFundingEligibility(req);
 
     return {
         env,
@@ -133,7 +97,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         merchantID,
         buttonSessionID,
         clientAccessToken,
-        fundingEligibility,
+        // fundingEligibility,
         cspNonce,
         debug
     };

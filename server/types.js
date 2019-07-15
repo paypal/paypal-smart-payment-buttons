@@ -21,7 +21,7 @@ export type FundingEligibility = {|
         eligible : boolean,
         vaultedInstruments ? : VaultedInstruments
     },
-    venmo : {
+    venmo? : {
         eligible : boolean,
         vaultedInstruments ? : VaultedInstruments
     },
@@ -40,7 +40,7 @@ export type FundingEligibility = {|
             amex : {
                 vaultedInstruments ? : VaultedInstruments
             },
-            discover : {
+            discover? : {
                 vaultedInstruments ? : VaultedInstruments
             }
         }
