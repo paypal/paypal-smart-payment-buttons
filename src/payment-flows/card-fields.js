@@ -53,10 +53,15 @@ type CardFieldsEligibleProps = {|
     win : ?ProxyWindow,
     vault : boolean,
     fundingSource : $Values<typeof FUNDING>,
-    onShippingChange : ?OnShippingChange
+    onShippingChange : ?OnShippingChange,
+    isCardFieldsExperimentEnabled? : boolean
 |};
 
-export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSource } : CardFieldsEligibleProps) : boolean {
+export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSource, isCardFieldsExperimentEnabled } : CardFieldsEligibleProps) : boolean {
+    if (!isCardFieldsExperimentEnabled) {
+        return false;
+    }
+
     if (win) {
         return false;
     }
