@@ -58,19 +58,15 @@ type CardFieldsEligibleProps = {|
 |};
 
 export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSource, isCardFieldsExperimentEnabled } : CardFieldsEligibleProps) : boolean {
-    if (!isCardFieldsExperimentEnabled) {
-        return false;
-    }
-
     if (win) {
         return false;
     }
 
-    if (!window.xprops.enableStandardCardFields) {
+    if (fundingSource !== FUNDING.CARD) {
         return false;
     }
 
-    if (fundingSource !== FUNDING.CARD) {
+    if (!window.xprops.enableStandardCardFields) {
         return false;
     }
 
@@ -80,6 +76,25 @@ export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSour
 
     if (onShippingChange) {
         return false;
+    }
+
+    // if merchant opt-in inline guest, they will ALWAYS see inline guest guest
+    if (window.xprops.enableInlineGuest === true) {
+        return true;
+    }
+
+    // if merchant opt-out inline guest, they will NEVER see inline guest guest
+    if (window.xprops.enableInlineGuest === false) {
+        return false;
+    }
+
+    // if merchant doesn't pass the inline guest flag, they will in the ramp
+    if (window.xprops.enableInlineGuest === undefined) {
+        if (!isCardFieldsExperimentEnabled) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     return true;
