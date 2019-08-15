@@ -66,10 +66,6 @@ export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSour
         return false;
     }
 
-    if (!window.xprops.enableStandardCardFields) {
-        return false;
-    }
-
     if (vault) {
         return false;
     }
@@ -79,17 +75,12 @@ export function isCardFieldsEligible({ win, vault, onShippingChange, fundingSour
     }
 
     // if merchant opt-in inline guest, they will ALWAYS see inline guest guest
-    if (window.xprops.enableInlineGuest === true) {
+    if (window.xprops.enableStandardCardFields === true) {
         return true;
     }
 
-    // if merchant opt-out inline guest, they will NEVER see inline guest guest
-    if (window.xprops.enableInlineGuest === false) {
-        return false;
-    }
-
     // if merchant doesn't pass the inline guest flag, they will in the ramp
-    if (window.xprops.enableInlineGuest === undefined) {
+    if (!window.xprops.enableStandardCardFields) {
         if (!isCardFieldsExperimentEnabled) {
             return false;
         } else {
