@@ -16,6 +16,23 @@ function getNonce(res : ExpressResponse) : string {
     return nonce;
 }
 
+type Enum<T> = {
+    [string] : T
+};
+type ButtonLayoutType = Enum<'horizontal' | 'vertical'>;
+type ButtonShapeType = Enum<'horizontal' | 'vertical'>;
+type ButtonColorType = Enum<'gold' | 'blue' | 'silver' | 'black' | 'darkblue' | 'transparent' | 'white'>;
+type ButtonLabelType = Enum<'paypal' | 'checkout' | 'pay' | 'credit' |
+    'card' | 'buynow' | 'installment' | 'venmo' | 'itau' | 'ideal' | 'elv' | 'bancontact' | 'giropay' | 'sofort' | 'eps' | 'mybank' | 'p24' | 'payu' | 'verkkopankki' | 'blik' | 'trustly' | 'maxima' | 'boleto'>;
+
+type ButtonStyleType = {|
+    color : ButtonColorType,
+    layout : ButtonLayoutType,
+    shape : ButtonShapeType,
+    label : ButtonLabelType,
+    tagline : boolean
+|};
+
 type ParamsType = {|
     env : $Values<typeof ENV>,
     clientID : string,
@@ -30,7 +47,8 @@ type ParamsType = {|
     merchantID? : $ReadOnlyArray<string>,
     buttonSessionID : string,
     clientAccessToken? : string,
-    debug? : boolean
+    debug? : boolean,
+    style? : ButtonStyleType
 |};
 
 type RequestParams = {|
@@ -49,7 +67,8 @@ type RequestParams = {|
     cspNonce : string,
     defaultFundingEligibility : FundingEligibility,
     locale : LocaleType,
-    debug : boolean
+    debug : boolean,
+    style? : ButtonStyleType
 |};
 
 function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibility {
@@ -84,7 +103,8 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         merchantID,
         buttonSessionID,
         clientAccessToken,
-        debug = false
+        debug = false,
+        style
     } = params;
 
     const {
@@ -114,6 +134,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         cspNonce,
         debug,
         // $FlowFixMe
-        locale: { country, lang }
+        locale: { country, lang },
+        style
     };
 }
