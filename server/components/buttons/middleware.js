@@ -3,9 +3,8 @@
 import { html } from 'jsx-pragmatic';
 
 import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware } from '../../lib';
-import { renderFraudnetScript, shouldRenderFraudnet, resolveFundingEligibility, resolvePersonalization } from '../../service';
 import type { LoggerType, CacheType, ClientIDToMerchantID, ExpressRequest, FirebaseConfig } from '../../types';
-
+import { renderFraudnetScript, shouldRenderFraudnet, resolveButtonStuff } from '../../service';
 import { getSmartPaymentButtonsClientScript, getPayPalSmartPaymentButtonsRenderScript } from './script';
 import { EVENT } from './constants';
 import { getParams } from './params';
@@ -13,15 +12,14 @@ import { buttonStyle } from './style';
 
 type ButtonMiddlewareOptions = {|
     logger? : LoggerType,
-    getFundingEligibility : Function,
-    getPersonalization : Function,
+    getButtonStuff : Function,
     clientIDToMerchantID : ClientIDToMerchantID,
     getInlineGuestExperiment? : (req : ExpressRequest, params : Object) => Promise<boolean>,
     cache? : CacheType,
     firebaseConfig? : FirebaseConfig
 |};
 
-export function getButtonMiddleware({ logger = defaultLogger, cache, getFundingEligibility, getPersonalization, clientIDToMerchantID, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
+export function getButtonMiddleware({ logger = defaultLogger, cache, getButtonStuff, clientIDToMerchantID, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     return sdkMiddleware({ logger, cache }, async ({ req, res, params, meta, logBuffer }) => {
         logger.info(req, EVENT.RENDER);
         if (logBuffer) {
@@ -29,7 +27,7 @@ export function getButtonMiddleware({ logger = defaultLogger, cache, getFundingE
         }
 
         let { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard,
-            merchantID, currency, intent, commit, vault, clientAccessToken, defaultFundingEligibility, locale } = getParams(params, req, res);
+            merchantID, currency, intent, commit, vault, clientAccessToken, defaultFundingEligibility, locale, style } = getParams(params, req, res);
 
         const [ client, render, isCardFieldsExperimentEnabled ] = await Promise.all([
             getSmartPaymentButtonsClientScript({ debug, logBuffer, cache }),
@@ -47,16 +45,13 @@ export function getButtonMiddleware({ logger = defaultLogger, cache, getFundingE
         if (!clientID) {
             return clientErrorResponse(res, 'Please provide a clientID query parameter');
         }
-
-        const [ fundingEligibility, personalization, clientMerchantID ] = await Promise.all([
-            resolveFundingEligibility(req, {
-                getFundingEligibility, logger, clientID, merchantID, buttonSessionID,
-                currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, defaultFundingEligibility
-            }),
-
-            resolvePersonalization(req, {
-                getPersonalization, logger, clientID, merchantID, buyerCountry, locale, buttonSessionID,
-                currency, intent, commit, vault
+        
+        const { label: buttonLabel, period: installmentPeriod } = style;
+        const [ { fundingEligibility, checkoutCustomization: personalization }, clientMerchantID ] = await Promise.all([
+            resolveButtonStuff(req, {
+                getButtonStuff, logger, clientID, merchantID, buttonSessionID, currency, intent, locale,
+                commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, defaultFundingEligibility,
+                buttonLabel, installmentPeriod
             }),
 
             merchantID ? null : clientIDToMerchantID(req, clientID)

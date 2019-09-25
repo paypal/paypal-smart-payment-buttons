@@ -84,7 +84,8 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         merchantID,
         buttonSessionID,
         clientAccessToken,
-        debug = false
+        debug = false,
+        style = {}
     } = params;
 
     const {
@@ -114,6 +115,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         cspNonce,
         debug,
         // $FlowFixMe
-        locale: { country, lang }
+        locale: { country, lang },
+        style
     };
 }
