@@ -5,7 +5,7 @@ import { FUNDING } from '@paypal/sdk-constants';
 
 import { getButtonMiddleware, cancelWatchers } from '../../server';
 
-import { mockReq, mockRes, getFundingEligibility, getPersonalization, clientIDToMerchantID } from './mock';
+import { mockReq, mockRes, getButtonStuff, clientIDToMerchantID } from './mock';
 
 function getRenderedFundingSources(template) : $ReadOnlyArray<string> {
     return regexMap(template, / data-funding-source="([^"]+)"/g, (result, group1) => group1);
@@ -15,13 +15,14 @@ jest.setTimeout(300000);
 
 afterAll(cancelWatchers);
 
-const buttonMiddleware = getButtonMiddleware({ getFundingEligibility, getPersonalization, clientIDToMerchantID });
+const buttonMiddleware = getButtonMiddleware({ getButtonStuff, clientIDToMerchantID });
 
 test('should do a basic button render and succeed', async () => {
 
     const req = mockReq({
         query: {
-            clientID: 'xyz'
+            'style.label': '',
+            'clientID':      'abc'
         }
     });
     const res = mockRes();
@@ -59,8 +60,9 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
     
     const req = mockReq({
         query: {
-            clientID:           'xyz',
-            fundingEligibility: Buffer.from(JSON.stringify({
+            'clientID':           'xyz',
+            'style.label':        '',
+            'fundingEligibility': Buffer.from(JSON.stringify({
                 paypal: {
                     eligible: true
                 },
@@ -82,10 +84,9 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
     const res = mockRes();
     
     const errButtonMiddleware = getButtonMiddleware({
-        getFundingEligibility: () => {
+        getButtonStuff: () => {
             throw new Error('error');
         },
-        getPersonalization,
         clientIDToMerchantID
     });
     // $FlowFixMe

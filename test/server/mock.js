@@ -65,84 +65,85 @@ export function mockRes(opts : Object = {}) : MockRes {
 }
 
 // eslint-disable-next-line require-await
-export async function getFundingEligibility() : Promise<Object> {
-    return Promise.resolve({
-        bancontact: {
-            eligible: false
-        },
-        card: {
-            eligible: true,
-            branded:  true,
+export async function getButtonStuff() : Promise<Object> {
+    return Promise.resolve(
+        {
+            fundingEligibility: {
+                bancontact: {
+                    eligible: false
+                },
+                card: {
+                    eligible: true,
+                    branded:  true,
         
-            vendors: {
-                visa: {
-                    eligible: true
+                    vendors: {
+                        visa: {
+                            eligible: true
+                        },
+                        mastercard: {
+                            eligible: true
+                        },
+                        amex: {
+                            eligible: true
+                        },
+                        discover: {
+                            eligible: true
+                        },
+                        hiper: {
+                            eligible: false
+                        },
+                        elo: {
+                            eligible: false
+                        },
+                        jcb: {
+                            eligible: false
+                        }
+                    }
                 },
-                mastercard: {
-                    eligible: true
-                },
-                amex: {
-                    eligible: true
-                },
-                discover: {
-                    eligible: true
-                },
-                hiper: {
+                credit: {
                     eligible: false
                 },
-                elo: {
+                sepa: {
                     eligible: false
                 },
-                jcb: {
+                eps: {
+                    eligible: false
+                },
+                giropay: {
+                    eligible: false
+                },
+                ideal: {
+                    eligible: false
+                },
+                mybank: {
+                    eligible: false
+                },
+                p24: {
+                    eligible: false
+                },
+                paypal: {
+                    eligible: true
+                },
+                sofort: {
+                    eligible: false
+                },
+                venmo: {
+                    eligible: false
+                },
+                wechatpay: {
+                    eligible: false
+                },
+                zimpler: {
                     eligible: false
                 }
+            },
+            checkoutCustomization: {
+                tagline: {
+                    text: 'This is the tagline'
+                }
             }
-        },
-        credit: {
-            eligible: false
-        },
-        sepa: {
-            eligible: false
-        },
-        eps: {
-            eligible: false
-        },
-        giropay: {
-            eligible: false
-        },
-        ideal: {
-            eligible: false
-        },
-        mybank: {
-            eligible: false
-        },
-        p24: {
-            eligible: false
-        },
-        paypal: {
-            eligible: true
-        },
-        sofort: {
-            eligible: false
-        },
-        venmo: {
-            eligible: false
-        },
-        wechatpay: {
-            eligible: false
-        },
-        zimpler: {
-            eligible: false
         }
-    });
-}
-
-export function getPersonalization() : Promise<Object> {
-    return Promise.resolve({
-        tagline: {
-            text: 'This is the tagline'
-        }
-    });
+    );
 }
 
 export function clientIDToMerchantID() : Promise<string> {

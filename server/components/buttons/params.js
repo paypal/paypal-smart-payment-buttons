@@ -16,6 +16,10 @@ function getNonce(res : ExpressResponse) : string {
     return nonce;
 }
 
+type StyleType = {|
+    label : ?string,
+    period : ?string
+|};
 type ParamsType = {|
     env : $Values<typeof ENV>,
     clientID : string,
@@ -30,7 +34,8 @@ type ParamsType = {|
     merchantID? : $ReadOnlyArray<string>,
     buttonSessionID : string,
     clientAccessToken? : string,
-    debug? : boolean
+    debug? : boolean,
+    style : StyleType
 |};
 
 type RequestParams = {|
@@ -49,7 +54,8 @@ type RequestParams = {|
     cspNonce : string,
     defaultFundingEligibility : FundingEligibility,
     locale : LocaleType,
-    debug : boolean
+    debug : boolean,
+    style : StyleType
 |};
 
 function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibility {
@@ -85,7 +91,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         buttonSessionID,
         clientAccessToken,
         debug = false,
-        style = {}
+        style
     } = params;
 
     const {

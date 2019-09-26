@@ -5,6 +5,7 @@ import { html } from 'jsx-pragmatic';
 import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware } from '../../lib';
 import type { LoggerType, CacheType, ClientIDToMerchantID, ExpressRequest, FirebaseConfig } from '../../types';
 import { renderFraudnetScript, shouldRenderFraudnet, resolveButtonStuff } from '../../service';
+
 import { getSmartPaymentButtonsClientScript, getPayPalSmartPaymentButtonsRenderScript } from './script';
 import { EVENT } from './constants';
 import { getParams } from './params';
@@ -28,7 +29,7 @@ export function getButtonMiddleware({ logger = defaultLogger, cache, getButtonSt
 
         let { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard,
             merchantID, currency, intent, commit, vault, clientAccessToken, defaultFundingEligibility, locale, style } = getParams(params, req, res);
-
+        
         const [ client, render, isCardFieldsExperimentEnabled ] = await Promise.all([
             getSmartPaymentButtonsClientScript({ debug, logBuffer, cache }),
             getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cache }),

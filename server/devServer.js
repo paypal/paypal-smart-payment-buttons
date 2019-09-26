@@ -11,18 +11,16 @@ const app = express();
 const PORT = process.env.PORT || 8003;
 
 const buttonMiddleware = getButtonMiddleware({
-    getFundingEligibility: () => {
-        return Promise.resolve({
-            paypal: {
-                eligible: true
-            }
-        });
-    },
     clientIDToMerchantID: () => {
         return Promise.resolve('XYZ12345');
     },
-    getPersonalization: () => {
+    getButtonStuff: () => {
         return Promise.resolve({
+            fundingEligibility: {
+                paypal: {
+                    eligible: true
+                }
+            },
             tagline: {
                 text:     'foo',
                 tracking: {
