@@ -251,6 +251,18 @@ const FUNDING_ELIGIBILITY_QUERY = `
                 eligible
                 vaultable
             }
+            payu : {
+                eligible
+                vaultable
+            }
+            blik : {
+                eligible
+                vaultable
+            }
+            trustly : {
+                eligible
+                vaultable
+            }
             card {
                 eligible
                 branded
