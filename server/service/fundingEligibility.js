@@ -68,6 +68,18 @@ export type FundingEligibility = {|
         eligible : boolean,
         vaultable : boolean
     },
+    payu : {
+        eligible : boolean,
+        vaultable : boolean
+    },
+    trustly : {
+        eligible : boolean,
+        vaultable : boolean
+    },
+    blik : {
+        eligible : boolean,
+        vaultable : boolean
+    },
     card : {
         eligible : boolean,
         branded : boolean,
