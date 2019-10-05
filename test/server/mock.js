@@ -136,6 +136,15 @@ export async function graphQL(req : {}, payload : $ReadOnlyArray<{ query : strin
                     },
                     zimpler: {
                         eligible: false
+                    },
+                    oxxo: {
+                        eligible: false
+                    },
+                    maxima: {
+                        eligible: false
+                    },
+                    boleto: {
+                        eligible: false
                     }
                 }
             };
