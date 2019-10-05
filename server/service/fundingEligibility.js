@@ -251,15 +251,15 @@ const FUNDING_ELIGIBILITY_QUERY = `
                 eligible
                 vaultable
             }
-            payu : {
+            payu {
                 eligible
                 vaultable
             }
-            blik : {
+            blik {
                 eligible
                 vaultable
             }
-            trustly : {
+            trustly {
                 eligible
                 vaultable
             }
