@@ -100,7 +100,6 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
 
         const content = smartContent[locale.country][locale.lang];
         const blackButtonText = content.payWithDebitOrCreditCard;
-
         
         const buttonHTML = render.button.Buttons({
             ...params, nonce: cspNonce, csp:   { nonce: cspNonce }, fundingEligibility, personalization, blackButtonText
