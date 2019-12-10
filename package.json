@@ -46,7 +46,7 @@
     "@paypal/sdk-constants": "^1.0.27",
     "@paypal/sdk-logos": "^1.0.17",
     "beaver-logger": "^4.0.12",
-    "belter": "^1.0.19",
+    "belter": "^1.0.112",
     "cross-domain-utils": "^2.0.16",
     "grabthar": "^3",
     "jsx-pragmatic": "^2",
