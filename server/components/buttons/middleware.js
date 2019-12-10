@@ -107,7 +107,7 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
         }
         
         const buttonHTML = render.button.Buttons({
-            ...params, nonce: cspNonce, csp:   { nonce: cspNonce }, fundingEligibility, personalization, blackButtonText
+            ...params, nonce: cspNonce, csp:   { nonce: cspNonce }, fundingEligibility, personalization, content
         }).render(html());
 
         const setupParams = {
