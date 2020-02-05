@@ -18,134 +18,15 @@ export function getWalletMiddleware({ logger, graphQL }) {
         const { clientID, orderID, accessToken, cspNonce, debug, style } = getParams(params, req, res);
         const clientPromise = await getSmartWalletClientScript({ debug, logBuffer });
     
-        // const gqlBatch = graphQLBatch(req, graphQL);
-        // const checkoutSessionPromise = resolveCheckoutSession(req, gqlBatch, { logger, accessToken, orderID });
+        const gqlBatch = graphQLBatch(req, graphQL);
+        const checkoutSessionPromise = resolveCheckoutSession(req, gqlBatch, { logger, accessToken, orderID });
     
-        // gqlBatch.flush();
+        gqlBatch.flush();
         
         const client = await clientPromise;
-        // const checkoutSession = await checkoutSessionPromise;
-        const result = {
-            "data": {
-                "checkoutSession": {
-                    "fundingOptions": [
-                        {
-                            "id": "CC-RUKPVJL6359RW",
-                            "fundingInstrument": {
-                                "id": "CC-RUKPVJL6359RW",
-                                "name": "VISA",
-                                "issuerProductDescription": "The Bank Card Platinum Rewards",
-                                "type": "CREDIT_CARD",
-                                "instrumentSubType": "CREDIT",
-                                "lastDigits": "8558",
-                                "image": {
-                                    "url": {
-                                        "href": "https://msmaster.qa.paypal.com:14870/v1/content/media-containers/PICS/cdn-assets//00/s/MjU2WDI1NlhQTkc/p/MTAzMmFmNmEtNzJlMi00NDg5LWFkM2EtZGY4NzgwNTQyNWQ3/image_0.png"
-                                    },
-                                    "width": "96",
-                                    "height": "96"
-                                },
-                                "isPreferred": false
-                            },
-                            "allPlans": [
-                                {
-                                    "id": "0584975021f6f9a37eaf31971bb52d90",
-                                    "fundingSources": [
-                                        {
-                                            "fundingInstrument": {
-                                                "id": "CC-RUKPVJL6359RW",
-                                                "name": "VISA",
-                                                "type": "CREDIT_CARD",
-                                                "instrumentSubType": "CREDIT",
-                                                "lastDigits": "8558"
-                                            },
-                                            "fundingMethodType": "INSTANT",
-                                            "delayedPaymentDate": null,
-                                            "amount": {
-                                                "currencyCode": "USD",
-                                                "currencyValue": "0.01",
-                                                "currencyFormatSymbolISOCurrency": "$0.01 USD",
-                                                "currencyFormat": "$0.01"
-                                            },
-                                            "groupedSources": null
-                                        }
-                                    ],
-                                    "isSelected": true,
-                                    "backupFundingInstrument": null,
-                                    "currencyConversion": null,
-                                    "preAuthorizationData": {
-                                        "authType": "FULL",
-                                        "amount": {
-                                            "currencyFormatSymbolISOCurrency": "$0.01 USD"
-                                        }
-                                    }
-                                }
-                            ]
-                        },
-                        {
-                            "id": "CC-QMHLG9FE97UNL",
-                            "fundingInstrument": {
-                                "id": "CC-QMHLG9FE97UNL",
-                                "name": "VISA",
-                                "issuerProductDescription": "The Bank Card Platinum Rewards",
-                                "type": "CREDIT_CARD",
-                                "instrumentSubType": "CREDIT",
-                                "lastDigits": "8558",
-                                "image": {
-                                    "url": {
-                                        "href": "https://msmaster.qa.paypal.com:14870/v1/content/media-containers/PICS/cdn-assets//00/s/MjU2WDI1NlhQTkc/p/MTAzMmFmNmEtNzJlMi00NDg5LWFkM2EtZGY4NzgwNTQyNWQ3/image_0.png"
-                                    },
-                                    "width": "96",
-                                    "height": "96"
-                                },
-                                "isPreferred": false
-                            },
-                            "allPlans": [
-                                {
-                                    "id": "754f133c14e571ba080c23c9ff068341",
-                                    "fundingSources": [
-                                        {
-                                            "fundingInstrument": {
-                                                "id": "CC-QMHLG9FE97UNL",
-                                                "name": "VISA",
-                                                "type": "CREDIT_CARD",
-                                                "instrumentSubType": "CREDIT",
-                                                "lastDigits": "8558"
-                                            },
-                                            "fundingMethodType": "INSTANT",
-                                            "delayedPaymentDate": null,
-                                            "amount": {
-                                                "currencyCode": "USD",
-                                                "currencyValue": "0.01",
-                                                "currencyFormatSymbolISOCurrency": "$0.01 USD",
-                                                "currencyFormat": "$0.01"
-                                            },
-                                            "groupedSources": null
-                                        }
-                                    ],
-                                    "isSelected": false,
-                                    "backupFundingInstrument": null,
-                                    "currencyConversion": null,
-                                    "preAuthorizationData": {
-                                        "authType": "FULL",
-                                        "amount": {
-                                            "currencyFormatSymbolISOCurrency": "$0.01 USD"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-            },
-            "extensions": {
-                "developerNotes": [
-                    "Please include an 'x-app-name' header with your request that identifies your client.  (Ex: 'x-app-name': 'hermione')"
-                ],
-                "correlationId": "c7e8f4824f717"
-            }
-        };
-        const checkoutSession = result.data.checkoutSession;
+        const checkoutSession = await checkoutSessionPromise;
+        
+        // const checkoutSession = result.data.checkoutSession;
         // const { fundingOptions } = checkoutSession;
         // console.log('the checkout session is: ', checkoutSession);
         
