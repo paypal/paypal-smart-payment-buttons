@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto';
 import express from 'express';
 
 import type { ExpressRequest, ExpressResponse } from './types';
-import { getButtonMiddleware, getMenuMiddleware } from './components';
+import { getButtonMiddleware, getMenuMiddleware, getWalletMiddleware } from './components';
 
 const app = express();
 const PORT = process.env.PORT || 8003;
@@ -79,6 +79,7 @@ const buttonMiddleware = getButtonMiddleware({
 });
 
 const menuMiddleware = getMenuMiddleware({});
+const walletMiddleware = getWalletMiddleware({});
 
 app.get('/smart/buttons', (req : ExpressRequest, res : ExpressResponse) => {
     const nonce = randomBytes(16).toString('base64').replace(/[^a-zA-Z0-9_]/g, '');
@@ -102,12 +103,24 @@ app.get('/smart/menu', (req : ExpressRequest, res : ExpressResponse) => {
     return menuMiddleware(req, res);
 });
 
+app.get('/smart/wallet', (req : ExpressRequest, res : ExpressResponse) => {
+    const nonce = randomBytes(16).toString('base64').replace(/[^a-zA-Z0-9_]/g, '');
+    
+    res.locals = res.locals || {};
+    res.locals.nonce = nonce;
+    
+    res.header('content-security-policy', `style-src self 'nonce-${ nonce }'; script-src self 'nonce-${ nonce }';`);
+    
+    return walletMiddleware(req, res);
+});
+
 app.listen(PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`
         Smart Button server listening
           - http://localhost.paypal.com:${ PORT }/smart/buttons?clientID=alc_client1
           - http://localhost.paypal.com:${ PORT }/smart/menu?clientID=alc_client1
+          - http://localhost.paypal.com:${ PORT }/smart/wallet?clientID=alc_client1
     
     `);
 });
