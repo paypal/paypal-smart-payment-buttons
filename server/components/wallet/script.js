@@ -21,11 +21,9 @@ export async function getSmartWalletClientScript({ logBuffer, cache, debug = fal
         return await compileLocalSmartWalletClientScript();
     }
     
-    /*
     const watcher = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache });
     const { version } = await watcher.get();
     const script = await watcher.read(debug ? WALLET_CLIENT_JS : WALLET_CLIENT_MIN_JS);
     
     return { script, version };
-    */
 }
