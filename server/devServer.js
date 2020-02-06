@@ -77,9 +77,68 @@ const buttonMiddleware = getButtonMiddleware({
         }
     }
 });
+const walletMiddleware = getWalletMiddleware({
+    graphQL: (req, payload) => {
+        // $FlowFixMe
+        return Promise.resolve(payload.map(({ query }) => {
+            if (query.match(/query CreateCheckoutSession/)) {
+                return {
+                    result: {
+                        checkoutSession: {
+                            declinedInstruments: [],
+                            fundingOptions:      [
+                                {
+                                    'id':                'CC-ABC12345',
+                                    'fundingInstrument': {
+                                        'id':                       'CC-ABC12345',
+                                        'name':                     'VISA',
+                                        'issuerProductDescription': 'The Bank Card Platinum Rewards',
+                                        'type':                     'CREDIT_CARD',
+                                        'instrumentSubType':        'CREDIT',
+                                        'lastDigits':               '1234',
+                                        'image':                    {
+                                            'url': {
+                                                'href': ''
+                                            },
+                                            'width':  '96',
+                                            'height': '96'
+                                        },
+                                        'isPreferred': false
+                                    }
+                                },
+                                {
+                                    'id':                'CC-ABC56789',
+                                    'fundingInstrument': {
+                                        'id':                       'CC-ABC56789',
+                                        'name':                     'AMEX',
+                                        'issuerProductDescription': 'The Amex Rewards Card',
+                                        'type':                     'CREDIT_CARD',
+                                        'instrumentSubType':        'CREDIT',
+                                        'lastDigits':               '8654',
+                                        'image':                    {
+                                            'url': {
+                                                'href': ''
+                                            },
+                                            'width':  '96',
+                                            'height': '96'
+                                        },
+                                        'isPreferred': false
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                };
+            }
+            return {
+                data: {}
+            };
+        }));
+    }
+});
 
 const menuMiddleware = getMenuMiddleware({});
-const walletMiddleware = getWalletMiddleware({});
+
 
 app.get('/smart/buttons', (req : ExpressRequest, res : ExpressResponse) => {
     const nonce = randomBytes(16).toString('base64').replace(/[^a-zA-Z0-9_]/g, '');
@@ -120,7 +179,7 @@ app.listen(PORT, () => {
         Smart Button server listening
           - http://localhost.paypal.com:${ PORT }/smart/buttons?clientID=alc_client1
           - http://localhost.paypal.com:${ PORT }/smart/menu?clientID=alc_client1
-          - http://localhost.paypal.com:${ PORT }/smart/wallet?clientID=alc_client1
+          - http://localhost.paypal.com:${ PORT }/smart/wallet?clientID=alc_client1&orderID=ORDER123&accessToken=access1234&style.height=40
     
     `);
 });
