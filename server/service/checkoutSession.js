@@ -2,6 +2,35 @@
 import type { ExpressRequest, LoggerType } from '../types';
 import { type GraphQLBatch } from '../lib';
 
+export type CheckoutSessionOptions = {|
+    logger : LoggerType,
+    accessToken : string,
+    orderID : string
+|};
+
+type FundingInstrumentType = {|
+    id : string,
+    name : string,
+    issuerProductDescription : string,
+    instrumentSubType : string,
+    lastDigits : string,
+    image : {|
+        url : {|
+            href : string
+        |},
+        width : string,
+        height : string
+    |}
+|};
+type FundingOptionType = {|
+    id : string,
+    fundingInstrument : FundingInstrumentType,
+    isPreferred : boolean
+|};
+type CheckoutSession = {|
+    declinedInstruments : [],
+    fundingOptions : $ReadOnlyArray<FundingOptionType>
+|};
 const declineInstrumentSchema = `
     declinedInstruments {
         id
@@ -17,8 +46,7 @@ const declineInstrumentSchema = `
             width
             height
         }
-    }`
-;
+    }`;
 const fundingOptionsSchema = `
     fundingOptions(returnAllPlans: true, groupSourcesOnType: INCENTIVE) {
         id
@@ -120,7 +148,7 @@ const checkoutSessionQuery = `
         }
     }`;
 
-export async function resolveCheckoutSession(req : ExpressRequest, gqlBatch : GraphQLBatch, { logger, accessToken, orderID }) {
+export async function resolveCheckoutSession(req : ExpressRequest, gqlBatch : GraphQLBatch, { logger, accessToken, orderID } : CheckoutSessionOptions) : Promise<CheckoutSession> {
     try {
         const result = await gqlBatch({
             query:     checkoutSessionQuery,
@@ -131,13 +159,11 @@ export async function resolveCheckoutSession(req : ExpressRequest, gqlBatch : Gr
         });
         
         const checkoutSession = result.checkoutSession;
-        console.log('the checkout session is: ', checkoutSession);
         
         return checkoutSession;
         
     } catch (err) {
-        console.log('the error is: ', err);
         logger.error(req, 'checkout_session_error_fallback', { err: err.stack ? err.stack : err.toString() });
-        // TODO: what should be the default behaviour??
+        throw new Error('checkout_session_error');
     }
 }

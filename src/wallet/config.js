@@ -1,4 +1,5 @@
-import { WALLET_SIZE }from './constants/wallet';
+/* @flow */
+import { WALLET_SIZE } from './constants/wallet';
 
 export const WALLET_SIZE_STYLE = {
     

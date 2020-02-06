@@ -1,16 +1,23 @@
 /* @flow */
 /** @jsx h */
 
-import { h, render, type Node } from 'preact';
+import { h, type Node } from 'preact';
+
 import { componentStyle } from './styles';
 
+type StyleOptionsType = {|
+    styleOptions : {|
+        height : number
+    |},
+    cspNonce : string
+|};
 
-export function Style({ style, cspNonce }) {
-    const { height } = style;
+export function Style({ styleOptions, cspNonce } : StyleOptionsType) : Node {
+    const { height } = styleOptions;
     const css = componentStyle({ height });
     
     return (
-        <style cspNonce={ cspNonce }>
+        <style nonce={ cspNonce }>
             { css }
         </style>
     );

@@ -1,23 +1,40 @@
 /* @flow */
 
+// eslint-disable-next-line import/no-named-as-default
 import render from 'preact-render-to-string';
 
-import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware, graphQLBatch, type GraphQL } from '../../lib';
-import { getParams } from './params';
+import { clientErrorResponse, htmlResponse, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware, graphQLBatch, type GraphQL } from '../../lib';
 import { resolveCheckoutSession } from '../../service';
+import type { LoggerType, CacheType } from '../../types';
+
+import { getParams } from './params';
 import { EVENT } from './constants';
 import { getSmartWalletClientScript } from './script';
 
-export function getWalletMiddleware({ logger, graphQL }) {
-    return sdkMiddleware({ logger }, async ({ req, res, params, meta, logBuffer, sdkMeta }) => {
-        // logger.info(req, EVENT.RENDER);
+type WalletMiddlewareOptions = {|
+    logger? : LoggerType,
+    graphQL : GraphQL,
+    cache? : CacheType
+|};
+
+export function getWalletMiddleware({ logger = defaultLogger, graphQL, cache } : WalletMiddlewareOptions) : ExpressMiddleware {
+    return sdkMiddleware({ logger, cache }, async ({ req, res, params, meta, logBuffer }) => {
+        logger.info(req, EVENT.RENDER);
         if (logBuffer) {
             logBuffer.flush(req);
         }
     
-        const { clientID, orderID, accessToken, cspNonce, debug, style } = getParams(params, req, res);
-        const clientPromise = await getSmartWalletClientScript({ debug, logBuffer });
+        const { orderID, accessToken, cspNonce, debug, style } = getParams(params, req, res);
     
+        if (!orderID) {
+            return clientErrorResponse(res, 'Please provide an orderID query parameter');
+        }
+        if (!accessToken) {
+            return clientErrorResponse(res, 'Please provide an accessToken query parameter');
+        }
+        
+        const clientPromise = await getSmartWalletClientScript({ debug, logBuffer, cache });
+        
         const gqlBatch = graphQLBatch(req, graphQL);
         const checkoutSessionPromise = resolveCheckoutSession(req, gqlBatch, { logger, accessToken, orderID });
     
@@ -26,17 +43,13 @@ export function getWalletMiddleware({ logger, graphQL }) {
         const client = await clientPromise;
         const checkoutSession = await checkoutSessionPromise;
         
-        // const checkoutSession = result.data.checkoutSession;
-        // const { fundingOptions } = checkoutSession;
-        // console.log('the checkout session is: ', checkoutSession);
         
+        const walletStyle = '';
         
-        const walletStyle = "";
-        
-        const spb = require('../../../dist/smart-wallet');
-        
+        // commenting it as SSR is broken at the moment
+        // const spb = require('../../../dist/smart-wallet');
         // const Wallet = spb.Wallet({ cspNonce, fundingOptions, style });
-        const walletHTML = '';//render(Wallet);
+        const walletHTML = '';// render(Wallet);
         
         
         const pageHTML = `
@@ -52,5 +65,5 @@ export function getWalletMiddleware({ logger, graphQL }) {
             </body>
         `;
         return htmlResponse(res, pageHTML);
-    })
+    });
 }
