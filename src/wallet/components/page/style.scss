@@ -3,6 +3,11 @@ html, body {
     width: 100%;
     overflow: hidden;
     font-family: Helvetica Neue, HelveticaNeue, HelveticaNeue-Light, Helvetica Neue Light, helvetica, arial, sans-serif;
+    padding: 10px;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 .flex-spacer {

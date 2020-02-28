@@ -50,8 +50,8 @@ type AppProps = {|
 
 export function App({ cspNonce, checkoutSession } : AppProps) : Node {
     return (
-        <StyleSheet cspNonce={ cspNonce }>
-            <Page checkoutSession={ checkoutSession } />
+        <StyleSheet cspNonce={cspNonce}>
+            <Page checkoutSession={checkoutSession} />
         </StyleSheet>
     );
 }

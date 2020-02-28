@@ -7,13 +7,11 @@
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
+    transition: background-color 0.3s ease-in-out;
+    height: 60px;
 
-    @media only screen and (min-width: 0px) {
+    @media only screen and (max-width: 600px) {
         height: 50px;
-    }
-
-    @media only screen and (min-width: 600px) {
-        height: 60px;
     }
 
     .icon {
@@ -34,14 +32,23 @@
         vertical-align: top;
 
         .name {
-            font-size: .95em;
+            font-size: 16px;
             height: 50%;
+            margin-bottom: 5px;
+
+            @media only screen and (max-width: 600px) {
+                font-size: 13px;
+            }
         }
 
         .details {
             height: 50%;
             color: #6c7378;
-            font-size: .80em;
+            font-size: 14px;
+
+            @media only screen and (max-width: 600px) {
+                font-size: 12px;
+            }
         }
     }
 

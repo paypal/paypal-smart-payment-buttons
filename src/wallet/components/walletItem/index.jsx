@@ -9,6 +9,7 @@ import { Style } from '../style';
 
 import styles from './style.scoped.scss';
 import { useState, useEffect } from 'preact/hooks';
+import { Check } from '../../images/check.jsx';
 
 type ItemProps = {|
     selected: boolean,
@@ -71,7 +72,7 @@ const WalletItem = ({
 
     const renderSelected = () => {
         return (showSelected)
-            ? <div className="selected">check mark</div>
+            ? <div className="selected"><Check /></div>
             : ""
     }
 

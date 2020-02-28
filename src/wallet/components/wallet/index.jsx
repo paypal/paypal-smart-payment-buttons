@@ -30,14 +30,13 @@ const Wallet = ({ checkoutSession } : WalletProps) : Node => {
         return (listOpen)
             ? ""
             : <WalletItem
+                selected={true}
                 fundingOption={ selectedWalletItem }
                 selectWalletItemHandler={ setSelectedWalletItem }
                 listOpen={ listOpen }
                 listOpenHandler={ setListOpen }
             />
     }
-
-    console.log("ITEM", selectedWalletItem);
 
     const renderWalletOptions = () => {
         return (listOpen)
@@ -58,7 +57,9 @@ const Wallet = ({ checkoutSession } : WalletProps) : Node => {
             <div className='wallet'>
                 { renderSelectedWalletItem() }
                 { renderWalletOptions() }
-                <div className="drop-arrow"></div>
+                <div className="add-card-button">
+                    <a href="#">Add debit or credit card</a>
+                </div>
             </div>
         </Style>
     )
