@@ -8,6 +8,7 @@ import type { FundingOptionType } from '../../types';
 import { WalletItem } from '../walletItem';
 import { Style } from '../style';
 
+import { walletItemBuilder } from '../../util';
 import styles from './style.scoped.scss';
 
 export type CheckoutSessionType = {|
@@ -25,13 +26,18 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
         [ listOpen, setListOpen ] = useState(false),
         [ selectedWalletItem, setSelectedWalletItem ] = useState(fundingOptions[0]);
 
+    const selectNewWalletItem = (itemId) => {
+        const newItem = fundingOptions.find(option => option.id === itemId);
+        setSelectedWalletItem(newItem);
+    }
+
     const renderSelectedWalletItem = () => {
         return (listOpen)
             ? ''
             : <WalletItem
                 selected={ true }
-                fundingOption={ selectedWalletItem }
-                selectWalletItemHandler={ setSelectedWalletItem }
+                details={ walletItemBuilder(selectedWalletItem) }
+                selectWalletItemHandler={ selectNewWalletItem }
                 listOpen={ listOpen }
                 listOpenHandler={ setListOpen }
             />;
@@ -40,13 +46,13 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     const renderWalletOptions = () => {
         return (listOpen)
             ? (
-                <div>
+                <div className={`wallet-options`}>
                     {
-                        fundingOptions.map((option) => (
+                        fundingOptions.map(option => (
                             <WalletItem
                                 selected={ option.id === selectedWalletItem.id }
-                                fundingOption={ option }
-                                selectWalletItemHandler={ setSelectedWalletItem }
+                                details={ walletItemBuilder(option) }
+                                selectWalletItemHandler={ selectNewWalletItem }
                                 listOpen={ listOpen }
                                 listOpenHandler={ setListOpen }
                             />
