@@ -1,3 +1,5 @@
+/* @flow */
+
 export const walletItemBuilder = (fundingOption) => {
     const {
         fundingInstrument: {
@@ -32,5 +34,5 @@ export const walletItemBuilder = (fundingOption) => {
         instrumentSubType,
         showPreferredText: isPreferred,
         lastDigits
-    }
+    };
 };

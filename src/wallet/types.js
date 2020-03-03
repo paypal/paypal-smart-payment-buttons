@@ -28,12 +28,12 @@ export type FundingOptionType = {|
 |};
 
 export type WalletDetailsType = {|
-    id: string,
-    fundingOptionIcon: string,
-    fundingOptionTitle: string,
-    instrumentSubType: string,
-    showPreferredText: boolean,
-    lastDigits: string
+    id : string,
+    fundingOptionIcon : string,
+    fundingOptionTitle : string,
+    instrumentSubType : string,
+    showPreferredText : boolean,
+    lastDigits : string
 |};
 
 export type CheckoutSessionType = {|

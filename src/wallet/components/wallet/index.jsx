@@ -7,8 +7,8 @@ import { useState } from 'preact/hooks';
 import type { FundingOptionType } from '../../types';
 import { WalletItem } from '../walletItem';
 import { Style } from '../style';
-
 import { walletItemBuilder } from '../../util';
+
 import styles from './style.scoped.scss';
 
 export type CheckoutSessionType = {|
@@ -29,7 +29,7 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     const selectNewWalletItem = (itemId) => {
         const newItem = fundingOptions.find(option => option.id === itemId);
         setSelectedWalletItem(newItem);
-    }
+    };
 
     const renderSelectedWalletItem = () => {
         return (listOpen)
@@ -46,7 +46,7 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     const renderWalletOptions = () => {
         return (listOpen)
             ? (
-                <div className={`wallet-options`}>
+                <div className={ `wallet-options` }>
                     {
                         fundingOptions.map(option => (
                             <WalletItem

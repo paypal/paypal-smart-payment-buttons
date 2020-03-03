@@ -14,7 +14,7 @@ type ItemProps = {|
     selected : boolean,
     details : WalletDetailsType,
     listOpen : boolean,
-    selectWalletItemHandler : (item : FundingOptionType) => void,
+    selectWalletItemHandler : (item : string) => void,
     listOpenHandler : (listOpen : boolean) => void
 |};
 
