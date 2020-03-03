@@ -6,7 +6,7 @@ export type FundingInstrumentType = {|
     issuerProductDescription : string,
     instrumentSubType : string,
     lastDigits : string,
-    isPreferred: boolean,
+    isPreferred : boolean,
     image : {|
         url : {|
             href : string

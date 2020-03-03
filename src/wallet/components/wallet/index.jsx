@@ -5,8 +5,7 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 
 import type { FundingOptionType } from '../../types';
-import WalletItem from '../walletItem';
-
+import { WalletItem } from '../walletItem';
 import { Style } from '../style';
 
 import styles from './style.scoped.scss';
@@ -20,49 +19,52 @@ type WalletProps = {|
     checkoutSession : CheckoutSessionType
 |};
 
-const Wallet = ({ checkoutSession } : WalletProps) : Node => {
+export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     const
         { fundingOptions } = checkoutSession,
-        [listOpen, setListOpen] = useState(false),
-        [selectedWalletItem, setSelectedWalletItem] = useState(fundingOptions[0]);
+        [ listOpen, setListOpen ] = useState(false),
+        [ selectedWalletItem, setSelectedWalletItem ] = useState(fundingOptions[0]);
 
     const renderSelectedWalletItem = () => {
         return (listOpen)
-            ? ""
+            ? ''
             : <WalletItem
-                selected={true}
+                selected={ true }
                 fundingOption={ selectedWalletItem }
                 selectWalletItemHandler={ setSelectedWalletItem }
                 listOpen={ listOpen }
                 listOpenHandler={ setListOpen }
-            />
-    }
+            />;
+    };
 
     const renderWalletOptions = () => {
         return (listOpen)
-            ? fundingOptions.map((option) => (
-                <WalletItem
-                    selected={option.id === selectedWalletItem.id}
-                    fundingOption={ option }
-                    selectWalletItemHandler={ setSelectedWalletItem }
-                    listOpen={ listOpen }
-                    listOpenHandler={ setListOpen }
-                />
-            ))
-            : ""
-    }
+            ? (
+                <div>
+                    {
+                        fundingOptions.map((option) => (
+                            <WalletItem
+                                selected={ option.id === selectedWalletItem.id }
+                                fundingOption={ option }
+                                selectWalletItemHandler={ setSelectedWalletItem }
+                                listOpen={ listOpen }
+                                listOpenHandler={ setListOpen }
+                            />
+                        ))
+                    }
+                    <div className="add-card-button">
+                        <a href="#">Add debit or credit card</a>
+                    </div>
+                </div>
+            ) : '';
+    };
 
     return (
-        <Style css={styles}>
+        <Style css={ styles }>
             <div className='wallet'>
                 { renderSelectedWalletItem() }
                 { renderWalletOptions() }
-                <div className="add-card-button">
-                    <a href="#">Add debit or credit card</a>
-                </div>
             </div>
         </Style>
-    )
-}
-
-export default Wallet;
+    );
+};

@@ -86,4 +86,4 @@ export const Style = ({ css, children = null } : StyleProps) : Node => {
     }
 
     return children;
-}
+};
