@@ -1,0 +1,9 @@
+@import '@paypal/sdk-constants/src/styles/index.scss';
+
+.link {
+    color: $blueText;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

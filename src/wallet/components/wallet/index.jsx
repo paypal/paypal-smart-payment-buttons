@@ -4,18 +4,13 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
 
-import type { FundingOptionType } from '../../types';
+import type { CheckoutSessionType } from '../../types';
 import { WalletItem } from '../walletItem';
-import { CreditBanner } from '../credit';
+import { CreditBanner, Transition } from '../credit';
 import { buildWalletItemDetails } from '../../util';
 import { Style } from '../style';
 
 import styles from './style.scoped.scss';
-
-export type CheckoutSessionType = {|
-    declinedInstruments : [],
-    fundingOptions : $ReadOnlyArray<FundingOptionType>
-|};
 
 type WalletProps = {|
     checkoutSession : CheckoutSessionType
@@ -23,7 +18,7 @@ type WalletProps = {|
 
 export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     const
-        { fundingOptions } = checkoutSession,
+        { fundingOptions, creditPPCOffers } = checkoutSession,
         [ listOpen, setListOpen ] = useState(false),
         [ selectedWalletItem, setSelectedWalletItem ] = useState(fundingOptions[0]);
 
@@ -37,7 +32,7 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
             ? ''
             : <WalletItem
                 selected={ true }
-                details={ buildWalletItemDetails(selectedWalletItem) }
+                details={ buildWalletItemDetails(selectedWalletItem, creditPPCOffers[0]) }
                 selectWalletItemHandler={ changeSelectedWalletItem }
                 listOpen={ listOpen }
                 listOpenHandler={ setListOpen }
@@ -52,7 +47,7 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
                         fundingOptions.map((option) => (
                             <WalletItem
                                 selected={ option.id === selectedWalletItem.id }
-                                details={ buildWalletItemDetails(option) }
+                                details={ buildWalletItemDetails(option, creditPPCOffers[0]) }
                                 selectWalletItemHandler={ changeSelectedWalletItem }
                                 listOpen={ listOpen }
                                 listOpenHandler={ setListOpen }
@@ -70,8 +65,10 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     return (
         <Style css={ styles }>
             <div className='wallet'>
-                { renderSelectedWalletItem() }
-                { renderWalletOptions() }
+                <Transition fundingOption={ selectedWalletItem } creditPPCOffer={ creditPPCOffers[0] }>
+                    { renderSelectedWalletItem() }
+                    { renderWalletOptions() }
+                </Transition>
             </div>
         </Style>
     );

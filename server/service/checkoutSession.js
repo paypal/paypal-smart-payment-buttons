@@ -145,11 +145,27 @@ const fundingOptionsSchema = `
     }
 `;
 
+const creditPPCOffersSchema = `
+    creditPPCOffers {
+        rank
+        content
+        trackingDetails {
+            impressionUrl {
+                href
+            }
+            clickUrl {
+                href
+            }
+        }
+    }
+`;
+
 const checkoutSessionQuery = `
     query CreateCheckoutSession($token: String!) {
         checkoutSession(token: $token) {
             ${ declineInstrumentSchema }
             ${ fundingOptionsSchema }
+            ${ creditPPCOffersSchema }
         }
     }
 `;

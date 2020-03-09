@@ -28,6 +28,29 @@ export type FundingOptionType = {|
     allPlans : $ReadOnlyArray<PlanType>
 |};
 
+export type CreditPPCOfferType = {|
+    referenceId : string,
+    rank : number,
+    content : {
+        PresentmentStyle : string,
+        OfferType : string,
+        OfferCategory : string,
+        OfferText1 : string,
+        OfferText2 : string,
+        TermsText : string,
+        TermsLinkText : string,
+        TermsLink : string
+    },
+    trackingDetails : {
+        impressionUrl : {
+            href : string
+        },
+        clickUrl : {
+            href : string
+        }
+    }
+|};
+
 export type WalletDetailsType = {|
     id : string,
     fundingOptionIcon : string,
@@ -39,7 +62,8 @@ export type WalletDetailsType = {|
 
 export type CheckoutSessionType = {|
     declinedInstruments : [],
-    fundingOptions : $ReadOnlyArray<FundingOptionType>
+    fundingOptions : $ReadOnlyArray<FundingOptionType>,
+    creditPPCOffers : $ReadOnlyArray<CreditPPCOfferType>
 |};
 
 export type CheckoutSession = {|

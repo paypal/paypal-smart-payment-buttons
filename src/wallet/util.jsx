@@ -1,6 +1,10 @@
 /* @flow */
+/** @jsx h */
 
-import type { FundingOptionType } from './types';
+import { h } from 'preact';
+
+import type { FundingOptionType, CreditPPCOfferType } from './types';
+import { CreditSubType } from './components/credit';
 
 const getWalletImages = (type, name) => {
     const prefix = 'https://www.paypalobjects.com/ui-web';
@@ -22,7 +26,7 @@ const getWalletImages = (type, name) => {
     }
 };
 
-export const buildWalletItemDetails = (fundingOption : FundingOptionType) => {
+export const buildWalletItemDetails = (fundingOption : FundingOptionType, creditOffer : CreditPPCOfferType) => {
     const {
         fundingInstrument: {
             image,
@@ -45,7 +49,7 @@ export const buildWalletItemDetails = (fundingOption : FundingOptionType) => {
         : issuerProductDescription || name;
     
     const instrumentSubType = (subType === 'PAYPAL')
-        ? 'Pay overtime for your purchase'
+        ? <CreditSubType offer={ creditOffer } />
         : subType;
 
     const lastDigits = (subType === 'PAYPAL')

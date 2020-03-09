@@ -1,0 +1,82 @@
+@import '@paypal/sdk-constants/src/styles/index.scss';
+@import '../variables.scss';
+
+p {
+    margin: 0;
+}
+
+.banner {
+    display: flex;
+    padding: 0 20px;
+    background: transparent;
+    border: none;
+
+    &:focus {
+        outline: none;
+    }
+
+    &.prominent {
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+        padding: 16px 10px;
+        margin: 0 10px 5px 10px;
+    }
+}
+
+.icon-wrapper {
+    flex: 0 0 50px;
+    margin-right: 20px;
+    text-align: center;
+    vertical-align: center;
+}
+
+.icon {
+    max-width: 90%;
+    max-height: 90%;
+    display: inline-block;
+}
+
+.content {
+    flex: 1 1 90%;
+    text-align: left;
+
+    .headline {
+        color: $gray700;
+        margin-bottom: 0.3rem;
+        font-size: $smallScreenFontSize;
+
+        @media (min-width: $breakpoint) {
+            font-size: $defaultFontSize;
+        }
+    }
+
+    .body {
+        color: $subText;
+        line-height: 1.4;
+        margin-bottom: 0.5rem;
+        font-size: $smallScreenSubFontSize;
+
+        @media (min-width: $breakpoint) {
+            font-size: $subTextFontSize;
+        }
+    }
+
+    .terms {
+        color: $subText;
+        font-size: 11px;
+
+        @media (min-width: $breakpoint) {
+            font-size: 12px;
+        }
+
+        a {
+            color: $blueText;
+            font-weight: 600;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}

@@ -207,6 +207,42 @@ const walletMiddleware = getWalletMiddleware({
                                         'payerDisclaimer':          null
                                     }
                                 }
+                            ],
+                            creditPPCOffers: [
+                                {
+                                    referenceId:    '6667644977416578846',
+                                    rank:           1,
+                                    content:        {
+                                        CrossCurrencyTransaction:   'false',
+                                        CurrencyConversionRate:     '1.00',
+                                        BackgroundParams:           '#003087',
+                                        MessageDescription:         'EZP-VisaNotActive-Prominent-ACQ-BlueBanner',
+                                        CartAmount:                 '2000.0',
+                                        PresentmentType:            'Banner',
+                                        Product:                    'PPC',
+                                        CTAText:                    'See offers and apply',
+                                        TermsLink:                  'https://www.paypal.com/us/webapps/mpp/credit-easy-payments',
+                                        Logo:                       'https://www.paypalobjects.com/webstatic/credit/img/pp_credit_logo_white@2x.png',
+                                        CartAmountCurrencyCode:     'USD',
+                                        OfferType:                  'PALA',
+                                        VisaActive:                 'FALSE',
+                                        PresentmentStyle:           'Prominent',
+                                        BackgroundType:             'flat',
+                                        TermsLinkText:              'See terms',
+                                        TermsText:                  'Subject to credit approval.',
+                                        OfferTextTemplate:          'Enjoy special financing with PayPal Credit for your purchase of {amount}.',
+                                        OfferText1:                 'Enjoy special financing with PayPal Credit for your purchase of $2,000.00.',
+                                        OfferCategory:              'ACQ'
+                                    },
+                                    trackingDetails: {
+                                        impressionUrl: {
+                                            href: ''
+                                        },
+                                        clickUrl: {
+                                            href: ''
+                                        }
+                                    }
+                                }
                             ]
                         }
                     }
