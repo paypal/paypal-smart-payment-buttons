@@ -1,4 +1,5 @@
 /* @flow */
 export * from './banner';
 export * from './detailsSubType';
-export * from './transition';
+export * from './loader';
+export * from './util';

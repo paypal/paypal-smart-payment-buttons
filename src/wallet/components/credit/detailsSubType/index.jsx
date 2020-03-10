@@ -56,5 +56,3 @@ export const CreditSubType = ({ offer } : CreditSubTypeProps) => {
         </Style>
     );
 };
-
-export const getCreditSubType = (offer : CreditPPCOfferType) => <CreditSubType offer={ offer } />;

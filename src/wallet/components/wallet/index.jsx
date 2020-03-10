@@ -6,7 +6,7 @@ import { useState } from 'preact/hooks';
 
 import type { CheckoutSessionType } from '../../types';
 import { WalletItem } from '../walletItem';
-import { CreditBanner, Transition } from '../credit';
+import { CreditBanner, Loader, getInstallmentsUrl } from '../credit';
 import { buildWalletItemDetails } from '../../util';
 import { Style } from '../style';
 
@@ -21,6 +21,10 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
         { fundingOptions, creditPPCOffers } = checkoutSession,
         [ listOpen, setListOpen ] = useState(false),
         [ selectedWalletItem, setSelectedWalletItem ] = useState(fundingOptions[0]);
+
+    if (selectedWalletItem.fundingInstrument.instrumentSubType === 'PAYPAL' && creditPPCOffers[0].content.OfferType === 'PALA') {
+        return <Loader to={ getInstallmentsUrl() } />;
+    }
 
     const changeSelectedWalletItem = (itemId) => {
         const newItem = fundingOptions.find(option => option.id === itemId);
@@ -65,10 +69,8 @@ export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
     return (
         <Style css={ styles }>
             <div className='wallet'>
-                <Transition fundingOption={ selectedWalletItem } creditPPCOffer={ creditPPCOffers[0] }>
-                    { renderSelectedWalletItem() }
-                    { renderWalletOptions() }
-                </Transition>
+                { renderSelectedWalletItem() }
+                { renderWalletOptions() }
             </div>
         </Style>
     );
