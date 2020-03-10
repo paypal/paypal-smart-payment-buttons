@@ -51,6 +51,63 @@ const declineInstrumentSchema = `
         }
     }
 `;
+const rewardsSchema = `
+rewards {
+    id
+    relatedCardId
+    rewardType
+    availableRewards {
+        value
+        monetaryValue {
+            currencySymbol
+            currencyValue
+            currencyCode
+            currencyFormat
+        }
+    }
+    conversionMetadata {
+        conversionFactor
+        decimalPrecision {
+            toAmount
+            toRewards
+        }
+        roundingMode {
+            toAmount
+            toRewards
+        }
+    }
+    constraints {
+        minimumSpend {
+            currencySymbol
+            currencyValue
+            currencyCode
+        }
+        maximumSpend {
+            currencySymbol
+            currencyValue
+            currencyCode
+        }
+        maximumUsable {
+            currencySymbol
+            currencyValue
+            currencyCode
+        }
+    }
+    issuer {
+        name
+        instrumentType
+        issuerProductDescription
+    }
+    redemptionType
+    termsUrl
+    image(size: S) {
+        url {
+            href
+        }
+        width
+        height
+    }
+}`;
 
 const fundingOptionsSchema = `
     fundingOptions(returnAllPlans: true, groupSourcesOnType: INCENTIVE) {
@@ -70,6 +127,7 @@ const fundingOptionsSchema = `
                 height
             }
             isPreferred
+            ${ rewardsSchema }
         }
         allPlans {
             id

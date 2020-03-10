@@ -18,15 +18,16 @@ export type CheckoutSessionType = {|
 |};
 
 type WalletProps = {|
-    checkoutSession : CheckoutSessionType
+    checkoutSession : CheckoutSessionType,
+    selectedWalletItem : FundingOptionType,
+    setSelectedWalletItem : (fi : ?FundingOptionType) => void
 |};
 
-export const Wallet = ({ checkoutSession } : WalletProps) : Node => {
+export const Wallet = ({ checkoutSession, selectedWalletItem, setSelectedWalletItem } : WalletProps) : Node => {
     const
         { fundingOptions } = checkoutSession,
-        [ listOpen, setListOpen ] = useState(false),
-        [ selectedWalletItem, setSelectedWalletItem ] = useState(fundingOptions[0]);
-
+        [ listOpen, setListOpen ] = useState(false);
+    
     const changeSelectedWalletItem = (itemId) => {
         const newItem = fundingOptions.find(option => option.id === itemId);
         setSelectedWalletItem(newItem);

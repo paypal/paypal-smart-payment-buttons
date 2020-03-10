@@ -49,7 +49,7 @@ export function getWalletMiddleware({ logger = defaultLogger, graphQL, cache, ex
             const checkoutSession = await checkoutSessionPromise;
             
             const { renderWallet } = await importScript();
-            const walletHTML = renderWallet({ cspNonce, checkoutSession });
+            const walletHTML = renderWallet({ cspNonce, checkoutSession, buyerAccessToken });
 
             const pageHTML = `
                 <!DOCTYPE html>
