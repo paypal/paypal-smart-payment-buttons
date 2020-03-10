@@ -1,10 +1,7 @@
 /* @flow */
-/** @jsx h */
-
-import { h } from 'preact';
 
 import type { FundingOptionType, CreditPPCOfferType } from './types';
-import { CreditSubType } from './components/credit';
+import { getCreditSubType } from './components/credit';
 
 const getWalletImages = (type, name) => {
     const prefix = 'https://www.paypalobjects.com/ui-web';
@@ -49,7 +46,7 @@ export const buildWalletItemDetails = (fundingOption : FundingOptionType, credit
         : issuerProductDescription || name;
     
     const instrumentSubType = (subType === 'PAYPAL')
-        ? <CreditSubType offer={ creditOffer } />
+        ? getCreditSubType(creditOffer)
         : subType;
 
     const lastDigits = (subType === 'PAYPAL')
