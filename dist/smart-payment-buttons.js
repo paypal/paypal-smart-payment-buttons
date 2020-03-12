@@ -59,6 +59,24 @@ window.spb = function(modules) {
 }([ function(module, __webpack_exports__, __webpack_require__) {
     "use strict";
     __webpack_require__.r(__webpack_exports__);
+    __webpack_require__.d(__webpack_exports__, "setupButton", (function() {
+        return setupButton;
+    }));
+    __webpack_require__.d(__webpack_exports__, "TYPES", (function() {
+        return props_TYPES;
+    }));
+    __webpack_require__.d(__webpack_exports__, "getProps", (function() {
+        return getProps;
+    }));
+    __webpack_require__.d(__webpack_exports__, "getComponents", (function() {
+        return getComponents;
+    }));
+    __webpack_require__.d(__webpack_exports__, "getConfig", (function() {
+        return getConfig;
+    }));
+    __webpack_require__.d(__webpack_exports__, "getServiceData", (function() {
+        return getServiceData;
+    }));
     function getUserAgent() {
         return window.navigator.mockUserAgent || window.navigator.userAgent;
     }
@@ -590,7 +608,12 @@ window.spb = function(modules) {
                 if (!frame.contentWindow) return !0;
                 if (!frame.parentNode) return !0;
                 var doc = frame.ownerDocument;
-                return !(!doc || !doc.documentElement || doc.documentElement.contains(frame));
+                if (doc && doc.documentElement && !doc.documentElement.contains(frame)) {
+                    var parent = frame;
+                    for (;parent.parentNode && parent.parentNode !== parent; ) parent = parent.parentNode;
+                    if (!parent.host || !doc.documentElement.contains(parent.host)) return !0;
+                }
+                return !1;
             }(frame)) return !0;
         }
         return !1;
@@ -879,9 +902,6 @@ window.spb = function(modules) {
         var result = {};
         for (var key in obj) obj.hasOwnProperty(key) && filter(obj[key], key) && (result[key] = obj[key]);
         return result;
-    }
-    function identity(item) {
-        return item;
     }
     function arrayFrom(item) {
         return [].slice.call(item);
@@ -1849,6 +1869,7 @@ window.spb = function(modules) {
             }));
         };
     }
+    var props_TYPES = !0;
     function getProps(_ref) {
         var facilitatorAccessToken = _ref.facilitatorAccessToken;
         var xprops = window.xprops;
@@ -2322,14 +2343,14 @@ window.spb = function(modules) {
             var props = _ref6.props, components = _ref6.components, serviceData = _ref6.serviceData, payment = _ref6.payment, config = _ref6.config;
             if (checkoutOpen) throw new Error("Checkout already rendered");
             var Checkout = components.Checkout;
-            var sessionID = props.sessionID, buttonSessionID = props.buttonSessionID, _createOrder = props.createOrder, _onApprove = props.onApprove, _onCancel = props.onCancel, onShippingChange = props.onShippingChange, locale = props.locale, commit = props.commit, onError = props.onError, vault = props.vault, clientAccessToken = props.clientAccessToken, createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription, onClick = props.onClick;
-            var button = payment.button, win = payment.win, fundingSource = payment.fundingSource, card = payment.card, buyerAccessToken = payment.buyerAccessToken, venmoPayloadID = payment.venmoPayloadID;
+            var sessionID = props.sessionID, buttonSessionID = props.buttonSessionID, _createOrder = props.createOrder, _onApprove = props.onApprove, _onCancel = props.onCancel, onShippingChange = props.onShippingChange, locale = props.locale, commit = props.commit, onError = props.onError, vault = props.vault, clientAccessToken = props.clientAccessToken, createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription, onClick = props.onClick, enableThreeDomainSecure = props.enableThreeDomainSecure, partnerAttributionID = props.partnerAttributionID;
+            var button = payment.button, win = payment.win, fundingSource = payment.fundingSource, card = payment.card, buyerAccessToken = payment.buyerAccessToken, venmoPayloadID = payment.venmoPayloadID, buyerIntent = payment.buyerIntent, paymentMethodID = payment.paymentMethodID;
             var fundingEligibility = serviceData.fundingEligibility, buyerCountry = serviceData.buyerCountry;
             var cspNonce = config.cspNonce;
             var context = (_ref5 = {
                 win: win,
                 isClick: payment.isClick
-            }).win ? "popup" : _ref5.isClick && supportsPopups() ? "popup" : "iframe";
+            }).win || _ref5.isClick && supportsPopups() ? "popup" : "iframe";
             var _ref5;
             var approved = !1;
             var restart = memoize((function() {
@@ -2343,6 +2364,7 @@ window.spb = function(modules) {
                         win: win,
                         fundingSource: fundingSource,
                         card: card,
+                        buyerIntent: buyerIntent,
                         isClick: !1
                     }
                 }).start().finally(unresolvedPromise);
@@ -2368,49 +2390,58 @@ window.spb = function(modules) {
                     venmoPayloadID: venmoPayloadID,
                     createOrder: function() {
                         return _createOrder().then((function(orderID) {
-                            return function(_ref4) {
-                                var orderID = _ref4.orderID, vault = _ref4.vault, clientAccessToken = _ref4.clientAccessToken, createBillingAgreement = _ref4.createBillingAgreement, createSubscription = _ref4.createSubscription, fundingSource = _ref4.fundingSource, fundingEligibility = _ref4.fundingEligibility;
-                                return promise_ZalgoPromise.try((function() {
-                                    if (clientAccessToken) {
-                                        return function(_ref3) {
-                                            var vault = _ref3.vault, fundingSource = _ref3.fundingSource, fundingEligibility = _ref3.fundingEligibility;
-                                            if (!_ref3.clientAccessToken) return !1;
-                                            if (_ref3.createBillingAgreement || _ref3.createSubscription) return !1;
-                                            var fundingSourceEligible = Boolean(fundingEligibility[fundingSource] && fundingEligibility[fundingSource].vaultable);
-                                            if (vault && !fundingSourceEligible) throw new Error("SDK received vault=true parameter, but " + fundingSource + " is not vaultable.");
-                                            return !!vault || !!fundingSourceEligible;
-                                        }({
-                                            vault: vault,
-                                            clientAccessToken: clientAccessToken,
-                                            createBillingAgreement: createBillingAgreement,
-                                            createSubscription: createSubscription,
-                                            fundingSource: fundingSource,
-                                            fundingEligibility: fundingEligibility
-                                        }) ? (_ref7 = {
-                                            orderID: orderID,
-                                            clientAccessToken: clientAccessToken
-                                        }, callGraphQL({
-                                            query: "\n            mutation EnableVault(\n                $orderID : String!\n            ) {\n                enableVault(\n                    token: $orderID\n                )\n            }\n        ",
-                                            variables: {
-                                                orderID: _ref7.orderID
-                                            },
-                                            headers: (_headers7 = {}, _headers7["x-paypal-internal-euat"] = _ref7.clientAccessToken, 
-                                            _headers7)
-                                        })).catch((function(err) {
-                                            if (vault) throw err;
-                                        })) : void 0;
-                                        var _ref7, _headers7;
-                                    }
-                                }));
-                            }({
-                                orderID: orderID,
-                                vault: vault,
-                                clientAccessToken: clientAccessToken,
-                                fundingEligibility: fundingEligibility,
-                                fundingSource: fundingSource,
-                                createBillingAgreement: createBillingAgreement,
-                                createSubscription: createSubscription
-                            }).then((function() {
+                            return promise_ZalgoPromise.try((function() {
+                                return "pay" === buyerIntent ? function(_ref4) {
+                                    var orderID = _ref4.orderID, vault = _ref4.vault, clientAccessToken = _ref4.clientAccessToken, createBillingAgreement = _ref4.createBillingAgreement, createSubscription = _ref4.createSubscription, fundingSource = _ref4.fundingSource, fundingEligibility = _ref4.fundingEligibility;
+                                    return promise_ZalgoPromise.try((function() {
+                                        if (clientAccessToken) {
+                                            return function(_ref3) {
+                                                var vault = _ref3.vault, fundingSource = _ref3.fundingSource, fundingEligibility = _ref3.fundingEligibility;
+                                                if (!_ref3.clientAccessToken) return !1;
+                                                if (_ref3.createBillingAgreement || _ref3.createSubscription) return !1;
+                                                var fundingSourceEligible = Boolean(fundingEligibility[fundingSource] && fundingEligibility[fundingSource].vaultable);
+                                                if (vault && !fundingSourceEligible) throw new Error("SDK received vault=true parameter, but " + fundingSource + " is not vaultable.");
+                                                return !!vault || !!fundingSourceEligible;
+                                            }({
+                                                vault: vault,
+                                                clientAccessToken: clientAccessToken,
+                                                createBillingAgreement: createBillingAgreement,
+                                                createSubscription: createSubscription,
+                                                fundingSource: fundingSource,
+                                                fundingEligibility: fundingEligibility
+                                            }) ? (_ref7 = {
+                                                orderID: orderID,
+                                                clientAccessToken: clientAccessToken
+                                            }, callGraphQL({
+                                                query: "\n            mutation EnableVault(\n                $orderID : String!\n            ) {\n                enableVault(\n                    token: $orderID\n                )\n            }\n        ",
+                                                variables: {
+                                                    orderID: _ref7.orderID
+                                                },
+                                                headers: (_headers7 = {}, _headers7["x-paypal-internal-euat"] = _ref7.clientAccessToken, 
+                                                _headers7)
+                                            })).catch((function(err) {
+                                                if (vault) throw err;
+                                            })) : void 0;
+                                            var _ref7, _headers7;
+                                        }
+                                    }));
+                                }({
+                                    orderID: orderID,
+                                    vault: vault,
+                                    clientAccessToken: clientAccessToken,
+                                    fundingEligibility: fundingEligibility,
+                                    fundingSource: fundingSource,
+                                    createBillingAgreement: createBillingAgreement,
+                                    createSubscription: createSubscription
+                                }) : "pay_with_different_funding_shipping" === buyerIntent && clientAccessToken && paymentMethodID ? validatePaymentMethod({
+                                    clientAccessToken: clientAccessToken,
+                                    orderID: orderID,
+                                    paymentMethodID: paymentMethodID,
+                                    enableThreeDomainSecure: enableThreeDomainSecure,
+                                    partnerAttributionID: partnerAttributionID,
+                                    buttonSessionID: buttonSessionID
+                                }) : void 0;
+                            })).then((function() {
                                 return orderID;
                             }));
                         }));
@@ -3174,6 +3205,7 @@ window.spb = function(modules) {
             var tasks, cleaned;
             var approved = !1;
             var cancelled = !1;
+            var didFallback = !1;
             var close = memoize((function() {
                 return clean.all();
             }));
@@ -3184,6 +3216,7 @@ window.spb = function(modules) {
                 }, handler);
             };
             var fallbackToWebCheckout = function(fallbackWin) {
+                didFallback = !0;
                 var checkoutPayment = _extends({}, payment, {
                     win: fallbackWin,
                     isClick: !1
@@ -3431,7 +3464,7 @@ window.spb = function(modules) {
                                     if (isWindowClosed(win)) {
                                         timeout && clearTimeout(timeout);
                                         return promise_ZalgoPromise.delay(1e3).then((function() {
-                                            if (!approved && !cancelled) return promise_ZalgoPromise.all([ onCancel(), close() ]);
+                                            if (!approved && !cancelled && !didFallback) return promise_ZalgoPromise.all([ onCancel(), close() ]);
                                         })).then(src_util_noop);
                                     }
                                     if (maxtime <= 0) clearTimeout(timeout); else {
@@ -3509,7 +3542,47 @@ window.spb = function(modules) {
             };
         },
         spinner: !0
-    }, checkout ];
+    }, checkout, {
+        name: "card_fields",
+        setup: function() {
+            window.postMessage(JSON.stringify({
+                message_source: "smart_payment_buttons",
+                message_name: "identify_extension"
+            }), getDomain());
+            window.addEventListener("message", (function(_ref) {
+                var data = _ref.data;
+                if (_ref.origin === getDomain()) {
+                    try {
+                        data = JSON.parse(data);
+                    } catch (err) {
+                        return;
+                    }
+                    var message_data = data.message_data;
+                    if ("honey_extension" === data.message_source && "identify_extension" === data.message_name) {
+                        var _getLogger$info$track;
+                        var device_id = message_data.device_id, session_id = message_data.session_id;
+                        getLogger().addTrackingBuilder((function() {
+                            var _ref2;
+                            return (_ref2 = {}).honey_device_id = device_id, _ref2.honey_session_id = session_id, 
+                            _ref2;
+                        }));
+                        getLogger().info("identify_honey").track(((_getLogger$info$track = {}).transition_name = "honey_identify", 
+                        _getLogger$info$track));
+                    }
+                }
+            }));
+        },
+        isEligible: function() {
+            return !0;
+        },
+        isPaymentEligible: function() {
+            return !1;
+        },
+        init: function() {
+            throw new Error("Not Implemented");
+        },
+        inline: !0
+    } ];
     var menu_popup = {
         width: 500,
         height: 590
@@ -3558,16 +3631,15 @@ window.spb = function(modules) {
                         paymentProcessing = !0;
                         return function(_ref3) {
                             var payment = _ref3.payment, serviceData = _ref3.serviceData, config = _ref3.config, components = _ref3.components, props = _ref3.props;
-                            var button = payment.button, fundingSource = payment.fundingSource, _payment$decorateCrea = payment.decorateCreateOrder, decorateCreateOrder = void 0 === _payment$decorateCrea ? identity : _payment$decorateCrea;
+                            var button = payment.button, fundingSource = payment.fundingSource;
                             return promise_ZalgoPromise.try((function() {
                                 var _getLogger$info$info$;
-                                var personalization = serviceData.personalization, merchantID = serviceData.merchantID;
+                                var merchantID = serviceData.merchantID;
                                 var clientID = props.clientID, onClick = props.onClick, createOrder = props.createOrder;
-                                createOrder = decorateCreateOrder(createOrder);
                                 !function(personalization) {
                                     personalization && personalization.tagline && personalization.tagline.tracking && sendBeacon(personalization.tagline.tracking.click);
                                     personalization && personalization.buttonText && personalization.buttonText.tracking && sendBeacon(personalization.buttonText.tracking.click);
-                                }(personalization);
+                                }(serviceData.personalization);
                                 var _getPaymentFlow = function(_ref2) {
                                     var props = _ref2.props, payment = _ref2.payment, config = _ref2.config, components = _ref2.components, serviceData = _ref2.serviceData;
                                     for (var _i2 = 0; _i2 < PAYMENT_FLOWS.length; _i2++) {
@@ -3715,7 +3787,8 @@ window.spb = function(modules) {
                 fundingSource: _getSelectedFunding.fundingSource,
                 card: _getSelectedFunding.card,
                 paymentMethodID: _getSelectedFunding.paymentMethodID,
-                isClick: !0
+                isClick: !0,
+                buyerIntent: "pay"
             };
             !function(el) {
                 el.addEventListener("mousedown", (function() {
@@ -3731,7 +3804,7 @@ window.spb = function(modules) {
             }(button);
             !function(_ref) {
                 var props = _ref.props, payment = _ref.payment, content = _ref.content, initiatePayment = _ref.initiatePayment;
-                var clientID = props.clientID, clientAccessToken = props.clientAccessToken, enableThreeDomainSecure = props.enableThreeDomainSecure, buttonSessionID = props.buttonSessionID, partnerAttributionID = props.partnerAttributionID;
+                var clientID = props.clientID, clientAccessToken = props.clientAccessToken;
                 var button = payment.button, fundingSource = payment.fundingSource, paymentMethodID = payment.paymentMethodID;
                 var menuToggle = button.querySelector("[data-menu]");
                 var buttonParent = button.parentElement;
@@ -3776,6 +3849,10 @@ window.spb = function(modules) {
                         event.preventDefault();
                         event.stopPropagation();
                         var choices = "paypal" === fundingSource ? [ {
+                            id: "SELECT_FUNDING_SHIPPING",
+                            label: content.chooseCardOrShipping,
+                            popup: menu_popup
+                        }, {
                             id: "CHANGE_ACCOUNT",
                             label: content.useDifferentAccount,
                             popup: menu_popup
@@ -3794,7 +3871,8 @@ window.spb = function(modules) {
                                 var id = _ref2.id, win = _ref2.win;
                                 if ("CHANGE_ACCOUNT" === id) return initiatePayment({
                                     payment: _extends({}, payment, {
-                                        win: win
+                                        win: win,
+                                        buyerIntent: "pay_with_different_account"
                                     })
                                 });
                                 if ("DELETE_VAULT" === id) {
@@ -3824,24 +3902,7 @@ window.spb = function(modules) {
                                     return initiatePayment({
                                         payment: _extends({}, payment, {
                                             win: win,
-                                            decorateCreateOrder: function(createOrder) {
-                                                return memoize((function() {
-                                                    return createOrder().then((function(orderID) {
-                                                        return validatePaymentMethod({
-                                                            clientAccessToken: clientAccessToken,
-                                                            orderID: orderID,
-                                                            paymentMethodID: paymentMethodID,
-                                                            enableThreeDomainSecure: enableThreeDomainSecure,
-                                                            buttonSessionID: buttonSessionID,
-                                                            partnerAttributionID: partnerAttributionID
-                                                        }).then((function(_ref3) {
-                                                            var status = _ref3.status;
-                                                            if (200 !== status) throw new Error("Validate payment failed with status: " + status);
-                                                            return orderID;
-                                                        }));
-                                                    }));
-                                                }));
-                                            }
+                                            buyerIntent: "pay_with_different_funding_shipping"
                                         })
                                     });
                                 }
@@ -3883,7 +3944,8 @@ window.spb = function(modules) {
                             win: win,
                             button: button,
                             fundingSource: fundingSource,
-                            card: card
+                            card: card,
+                            buyerIntent: "pay"
                         }
                     });
                     button.payPromise = payPromise;
@@ -3953,7 +4015,7 @@ window.spb = function(modules) {
                 var _ref2;
                 return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
                 _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                _ref2.button_version = "2.0.199", _ref2;
+                _ref2.button_version = "2.0.202", _ref2;
             }));
             (function() {
                 if (window.document.documentMode) try {
@@ -4039,23 +4101,5 @@ window.spb = function(modules) {
             setupPaymentFlowsTask: setupPaymentFlowsTask
         }).then(src_util_noop);
     }
-    __webpack_require__.d(__webpack_exports__, "setupButton", (function() {
-        return setupButton;
-    }));
-    __webpack_require__.d(__webpack_exports__, "TYPES", (function() {
-        return !0;
-    }));
-    __webpack_require__.d(__webpack_exports__, "getProps", (function() {
-        return getProps;
-    }));
-    __webpack_require__.d(__webpack_exports__, "getComponents", (function() {
-        return getComponents;
-    }));
-    __webpack_require__.d(__webpack_exports__, "getConfig", (function() {
-        return getConfig;
-    }));
-    __webpack_require__.d(__webpack_exports__, "getServiceData", (function() {
-        return getServiceData;
-    }));
 } ]);
 //# sourceMappingURL=smart-payment-buttons.js.map

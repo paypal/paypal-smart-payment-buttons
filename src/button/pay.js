@@ -1,10 +1,10 @@
 /* @flow */
 
-import { noop, identity, stringifyError } from 'belter/src';
+import { noop, stringifyError } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { checkout, cardFields, native, vaultCapture, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
+import { checkout, cardFields, native, honey, vaultCapture, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
 import { sendBeacon, getLogger, promiseNoop } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
 
@@ -17,7 +17,8 @@ const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     cardFields,
     popupBridge,
     native,
-    checkout
+    checkout,
+    honey
 ];
 
 export function setupPaymentFlows({ props, config, serviceData, components } : { props : ButtonProps, config : Config, serviceData : ServiceData, components : Components }) : ZalgoPromise<void> {
@@ -56,13 +57,11 @@ type InitiatePaymentType = {|
 |};
 
 export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentType) : ZalgoPromise<void> {
-    const { button, fundingSource, decorateCreateOrder = identity } = payment;
+    const { button, fundingSource } = payment;
 
     return ZalgoPromise.try(() => {
         const { personalization, merchantID } = serviceData;
-        let { clientID, onClick, createOrder } = props;
-
-        createOrder = decorateCreateOrder(createOrder);
+        const { clientID, onClick, createOrder } = props;
 
         sendPersonalizationBeacons(personalization);
 
