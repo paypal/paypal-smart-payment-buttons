@@ -7,9 +7,11 @@ import { memoize } from 'belter';
 
 import type { CacheType, ExpressResponse } from '../../types';
 import { WALLET_CLIENT_JS, WALLET_CLIENT_MIN_JS, WEBPACK_CONFIG } from '../../config';
-import { isLocal, compileWebpack, babelRequire, type LoggerBufferType, evalRequireScript } from '../../lib';
+import { compileWebpack, babelRequire, type LoggerBufferType, evalRequireScript } from '../../lib';
 import { getPayPalSmartPaymentButtonsWatcher } from '../../watchers';
 import { getWebpackDevScript } from '../../lib/webpack';
+
+const isLocal = () => true;
 
 export async function compileLocalSmartWalletClientScript(res : ExpressResponse) : Promise<string> {
     const devScript = getWebpackDevScript(res);
@@ -36,7 +38,7 @@ type SmartWalletClientScript = {|
 
 export function getSmartWalletClientScript({ res, logBuffer, cache, debug = false } : {res : ExpressResponse, debug : boolean, logBuffer : ?LoggerBufferType, cache : ?CacheType } = {}) : SmartWalletClientScript {
     const getWatcher = memoize(() => getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache }));
-    
+
     const getVersion = async () => {
         if (isLocal()) {
             return ENV.LOCAL;

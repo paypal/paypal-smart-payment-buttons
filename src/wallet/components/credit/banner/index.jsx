@@ -48,7 +48,7 @@ export const CreditBanner = ({ checkoutSession } : CreditBannerProps) : Node => 
                     </p>
                 </div>
             </button>
-            <img src={ trackingDetails.impressionUrl.href } />
+            <img className="pixel" src={ trackingDetails.impressionUrl.href } />
         </Style>
     );
 };
