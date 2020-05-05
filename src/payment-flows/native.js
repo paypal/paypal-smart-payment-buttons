@@ -248,8 +248,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const getNativePopupUrl = memoize(({ sessionUID }) : string => {
-        const parentDomain = getNativePopupDomain();
-        return extendUrl(`${ parentDomain }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
+        const parentDomain = getNativeDomain();
+        return extendUrl(`${ getNativePopupDomain() }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
             query: { sdkMeta, sessionUID, buttonSessionID, parentDomain }
         });
     });
