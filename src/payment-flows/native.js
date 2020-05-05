@@ -40,7 +40,7 @@ const NATIVE_DOMAIN = 'https://www.paypal.com';
 const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
 
 // Popup domain needs to be different than native domain for app switch to work on iOS
-const NATIVE_POPUP_DOMAIN = 'https://ic.paypal.com';
+const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
 const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
 
 type NativeSocketOptions = {|
@@ -248,8 +248,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const getNativePopupUrl = memoize(({ sessionUID }) : string => {
-        return extendUrl(`${ getNativePopupDomain() }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID }
+        const parentDomain = getNativePopupDomain();
+        return extendUrl(`${ parentDomain }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
+            query: { sdkMeta, sessionUID, buttonSessionID, parentDomain }
         });
     });
 
