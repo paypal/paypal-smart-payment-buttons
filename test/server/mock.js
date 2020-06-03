@@ -124,6 +124,9 @@ export async function graphQL(req : {||}, payload : $ReadOnlyArray<{| query : st
                     credit: {
                         eligible: false
                     },
+                    paylater: {
+                        eligible: false
+                    },
                     sepa: {
                         eligible: false
                     },

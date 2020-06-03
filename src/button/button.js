@@ -97,6 +97,10 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             if (isEnabled()) {
                 paymentProcessing = true;
 
+                if (fundingSource === FUNDING.PAYLATER) {
+                    payment.creditProductIdentifier = 'PAY_LATER_GB';
+                }
+
                 return initiatePaymentFlow({ payment, config, serviceData, components, props: paymentProps }).finally(() => {
                     paymentProcessing = false;
                 });
