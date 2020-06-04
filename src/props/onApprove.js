@@ -237,10 +237,12 @@ type OnApproveXProps = {|
     onApprove : ?XOnApprove,
     partnerAttributionID : ?string,
     onError : XOnError,
-    upgradeLSAT : boolean
+    upgradeLSAT : boolean,
+    clientAccessToken : ?string,
+    vault : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
@@ -262,7 +264,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                     [FPTI_KEY.CONTEXT_ID]:   orderID
                 }).flush();
 
-            if (!billingToken && !subscriptionID) {
+            if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
                 if (!payerID) {
                     getLogger().error('onapprove_payerid_not_present', { orderID }).flush();
                     throw new Error(`payerID not present in onApprove call`);
