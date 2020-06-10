@@ -28,9 +28,7 @@ export type Payment = {|
     isClick? : boolean,
     buyerAccessToken? : ?string,
     venmoPayloadID? : string,
-    buyerIntent : $Values<typeof BUYER_INTENT>,
-    creditProductIdentifier? : string,
-    creditToken? : string
+    buyerIntent : $Values<typeof BUYER_INTENT>
 |};
 
 export type SetupOptions = {|

@@ -169,7 +169,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
         createBillingAgreement, createSubscription, onClick,
         clientID, connect, clientMetadataID: cmid } = props;
     let { button, win, fundingSource, card, isClick, buyerAccessToken = serviceData.buyerAccessToken,
-        venmoPayloadID, buyerIntent, creditProductIdentifier, creditToken } = payment;
+        venmoPayloadID, buyerIntent } = payment;
     const { fundingEligibility, buyerCountry, sdkMeta } = serviceData;
     const { cspNonce } = config;
 
@@ -285,9 +285,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
             locale,
             commit,
             cspNonce,
-            clientMetadataID: cmid,
-            creditProductIdentifier,
-            creditToken
+            clientMetadataID: cmid
         });
     };
 
