@@ -7,7 +7,7 @@ import { getParent, getTop, type CrossDomainWindowType } from 'cross-domain-util
 
 import type { ProxyWindow, ConnectOptions } from '../types';
 import { type CreateBillingAgreement, type CreateSubscription } from '../props';
-import { enableVault, exchangeAccessTokenForAuthCode, getConnectURL, upgradeFacilitatorAccessToken } from '../api';
+import { enableVault, exchangeAccessTokenForAuthCode, getConnectURL } from '../api';
 import { CONTEXT, TARGET_ELEMENT, BUYER_INTENT, FPTI_TRANSITION, FPTI_CONTEXT_TYPE } from '../constants';
 import { unresolvedPromise, getLogger } from '../lib';
 import { openPopup } from '../ui';
@@ -252,9 +252,9 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
 
             onAuth: ({ accessToken }) => {
 
-                const AT = accessToken ? accessToken : buyerAccessToken;
+                const access_token = accessToken ? accessToken : buyerAccessToken;
 
-                return onAuth({ accessToken }).then(token => {
+                return onAuth({ accessToken: access_token }).then(token => {
                     buyerAccessToken = token;
                 });
             },
