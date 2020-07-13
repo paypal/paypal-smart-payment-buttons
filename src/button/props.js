@@ -4,6 +4,10 @@ import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY } from '@paypal/sdk-constants/src';
 import type { ZalgoPromise } from 'zalgo-promise/src';
 import type { FundingEligibilityType } from '@paypal/sdk-client/src';
+import { experiment, type Experiment } from 'belter/src';
+import { getLogger } from '../lib';
+import { FPTI_KEY } from '@paypal/sdk-constants/src';
+import { FPTI_STATE, FPTI_TRANSITION, UPGRADE_LSAT_RAMP } from '../constants';
 
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
     ThreeDomainSecureFlowType, PersonalizationType, MenuFlowType, ConnectOptions } from '../types';
@@ -182,6 +186,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         upgradeLSAT = false
     } = xprops;
 
+    const upgradeLSATExperiment = createUpgradeLSATExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
+
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
 
@@ -216,7 +222,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
     const createOrder = getCreateOrder({ createOrder: xprops.createOrder, currency, intent, merchantID, partnerAttributionID }, { facilitatorAccessToken, createBillingAgreement, createSubscription });
 
-    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault }, { facilitatorAccessToken, createOrder });
+    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault, isLSATExperiment: upgradeLSATExperiment.isEnabled() }, { facilitatorAccessToken, createOrder });
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder });
@@ -353,4 +359,27 @@ export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta
         eligibility,
         serverRiskData
     };
+}
+
+function createUpgradeLSATExperiment(name: string, sample: number) : Experiment {
+    const logger = getLogger();
+
+    return experiment({
+        name,
+        sample,
+        logTreatment({ treatment, payload }) {
+            logger.track({
+                [FPTI_KEY.STATE]:           FPTI_STATE.PXP,
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.PXP,
+                [FPTI_KEY.EXPERIMENT_NAME]: name,
+                [FPTI_KEY.TREATMENT_NAME]:  treatment,
+                ...payload
+            });
+            logger.flush();
+        },
+        logCheckpoint({ treatment, payload }) {
+            logger.info(`${ name }_${ treatment }_${ checkpoint }`, payload);
+            logger.flush();
+        }
+    });
 }
