@@ -2,7 +2,7 @@
 
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { memoize } from 'belter/src';
-import type {CreateOrder} from './createOrder';
+import type { CreateOrder } from './createOrder';
 import { getLogger } from '../lib';
 import { upgradeFacilitatorAccessToken } from '../api';
 
@@ -12,21 +12,27 @@ export type XOnAuthDataType = {|
 
 export type OnAuth = () => ZalgoPromise<void>;
 
-export function getOnAuth({ facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder: CreateOrder |}) : OnAuth | void {
+export function getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment } : {| facilitatorAccessToken : string, createOrder: CreateOrder, isLSATExperiment: boolean |}) : OnAuth | void {
 
     return ({ accessToken }) => {
-        getLogger().info(`spb_onauth_access_token_${ (accessToken || buyerAccessToken)  ? 'present' : 'not_present' }`);
+        getLogger().info(`spb_onauth_access_token_${ accessToken ? 'present' : 'not_present' }`);
 
-        if (accessToken) {
-            return ZalgoPromise.try(() => {
-               // if (experiment) {
-               //     do the thing
-               // }
+        return ZalgoPromise.try(() => {
+            if (accessToken) {
+                if (isLSATExperiment) {
+                    return createOrder()
+                        .then(orderID => upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken: accessToken, orderID }))
+                        .then(() => {
+                            getLogger().info('upgrade_lsat_success');
 
-               return createOrder().then(orderID => upgradeFacilitatorAccessToken(facilitatorAccessToken, {buyerAccessToken: accessToken, orderID}));
-            }).then(() => {
-                return accessToken;
-            });
-        }
+                            return accessToken;
+                        })
+                        .catch(err => {
+                            getLogger().warn('upgrade_lsat_failure', { error: err });
+                        });
+                }
+                return accessToken
+            }
+        });
     };
 }
