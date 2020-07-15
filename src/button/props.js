@@ -4,14 +4,14 @@ import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
 import type { ZalgoPromise } from 'zalgo-promise/src';
 
-import { FPTI_STATE, FPTI_TRANSITION, UPGRADE_LSAT_RAMP } from '../constants';
+import {  UPGRADE_LSAT_RAMP } from '../constants';
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
     ThreeDomainSecureFlowType, PersonalizationType, MenuFlowType, ConnectOptions } from '../types';
 import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getLogger, getNonce } from '../lib';
+import { getNonce } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -142,29 +142,6 @@ export type ButtonProps = {|
     onAuth : OnAuth
 |};
 
-function createUpgradeLSATExperiment(name : string, sample : number) : Experiment {
-    const logger = getLogger();
-
-    return experiment({
-        name,
-        sample,
-        logTreatment({ treatment, payload }) {
-            logger.track({
-                [FPTI_KEY.STATE]:           FPTI_STATE.PXP,
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.PXP,
-                [FPTI_KEY.EXPERIMENT_NAME]: name,
-                [FPTI_KEY.TREATMENT_NAME]:  treatment,
-                ...payload
-            });
-            logger.flush();
-        },
-        logCheckpoint({ treatment, checkpoint, payload }) {
-            logger.info(`${ name }_${ treatment }_${ checkpoint }`, payload);
-            logger.flush();
-        }
-    });
-}
-
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
@@ -204,7 +181,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         upgradeLSAT = false
     } = xprops;
 
-    const upgradeLSATExperiment = createUpgradeLSATExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
+    const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
