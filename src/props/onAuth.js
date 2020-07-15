@@ -1,20 +1,21 @@
 /* @flow */
 
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { memoize } from 'belter/src';
-import type { CreateOrder } from './createOrder';
-import { getLogger } from '../lib';
+
 import { upgradeFacilitatorAccessToken } from '../api';
+import { getLogger } from '../lib';
+
+import type { CreateOrder } from './createOrder';
 
 export type XOnAuthDataType = {|
-    accessToken: string
+    accessToken : string
 |};
 
 export type OnAuth = () => ZalgoPromise<void>;
 
-export function getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment } : {| facilitatorAccessToken : string, createOrder: CreateOrder, isLSATExperiment: boolean |}) : OnAuth | void {
+export function getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment } : {| facilitatorAccessToken : string, createOrder : CreateOrder, isLSATExperiment : boolean |}) : OnAuth | void {
 
-    return ({ accessToken }) => {
+    return ({ accessToken } : XOnAuthDataType) => {
         getLogger().info(`spb_onauth_access_token_${ accessToken ? 'present' : 'not_present' }`);
 
         return ZalgoPromise.try(() => {
@@ -31,7 +32,7 @@ export function getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperimen
                             getLogger().warn('upgrade_lsat_failure', { error: err });
                         });
                 }
-                return accessToken
+                return accessToken;
             }
         });
     };

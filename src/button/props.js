@@ -4,13 +4,14 @@ import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
 import type { ZalgoPromise } from 'zalgo-promise/src';
 
+import { FPTI_STATE, FPTI_TRANSITION, UPGRADE_LSAT_RAMP } from '../constants';
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
     ThreeDomainSecureFlowType, PersonalizationType, MenuFlowType, ConnectOptions } from '../types';
 import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce } from '../lib';
+import { getLogger, getNonce } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -138,9 +139,31 @@ export type ButtonProps = {|
 
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
-
-    onAuth: OnAuth,
+    onAuth : OnAuth
 |};
+
+function createUpgradeLSATExperiment(name : string, sample : number) : Experiment {
+    const logger = getLogger();
+
+    return experiment({
+        name,
+        sample,
+        logTreatment({ treatment, payload }) {
+            logger.track({
+                [FPTI_KEY.STATE]:           FPTI_STATE.PXP,
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.PXP,
+                [FPTI_KEY.EXPERIMENT_NAME]: name,
+                [FPTI_KEY.TREATMENT_NAME]:  treatment,
+                ...payload
+            });
+            logger.flush();
+        },
+        logCheckpoint({ treatment, checkpoint, payload }) {
+            logger.info(`${ name }_${ treatment }_${ checkpoint }`, payload);
+            logger.flush();
+        }
+    });
+}
 
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
 
@@ -354,27 +377,4 @@ export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta
         eligibility,
         serverRiskData
     };
-}
-
-function createUpgradeLSATExperiment(name: string, sample: number) : Experiment {
-    const logger = getLogger();
-
-    return experiment({
-        name,
-        sample,
-        logTreatment({ treatment, payload }) {
-            logger.track({
-                [FPTI_KEY.STATE]:           FPTI_STATE.PXP,
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.PXP,
-                [FPTI_KEY.EXPERIMENT_NAME]: name,
-                [FPTI_KEY.TREATMENT_NAME]:  treatment,
-                ...payload
-            });
-            logger.flush();
-        },
-        logCheckpoint({ treatment, payload }) {
-            logger.info(`${ name }_${ treatment }_${ checkpoint }`, payload);
-            logger.flush();
-        }
-    });
 }

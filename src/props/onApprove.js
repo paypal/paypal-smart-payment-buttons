@@ -240,7 +240,7 @@ type OnApproveXProps = {|
     upgradeLSAT : boolean,
     clientAccessToken : ?string,
     vault : boolean,
-    isLSATExperiment: boolean
+    isLSATExperiment : boolean
 |};
 
 export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false, isLSATExperiment = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
