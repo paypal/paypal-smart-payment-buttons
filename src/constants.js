@@ -101,6 +101,9 @@ export const FPTI_TRANSITION = {
     NATIVE_DETECT_WEB_SWITCH: ('native_detect_web_switch' : 'native_detect_web_switch'),
     NATIVE_APP_SWITCH_ACK:    ('native_app_switch_ack' : 'native_app_switch_ack'),
     NATIVE_ERROR:             ('native_app_switch_ack' : 'native_app_switch_ack'),
+    NATIVE_SET_PROPS_ATTEMPT: ('process_set_props_attempt' : 'process_set_props_attempt'),
+    NATIVE_ATTEMPT_APP_SWITCH:('app_switch_attempted' : 'app_switch_attempted'),
+    NATIVE_POPUP_CLOSED:      ('process_popup_closed' : 'process_popup_closed'),
 
     HONEY_IDENTIFY:           ('honey_identify')
 };
