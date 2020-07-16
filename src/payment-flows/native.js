@@ -199,18 +199,14 @@ type NativeSDKProps = {|
 |};
 
 function instrumentNativeSDKProps(props : NativeSDKProps) {
-    if (props) {
-        const sanitizedProps = {
-            ...props,
-            facilitatorAccessToken: props && props.facilitatorAccessToken ? '********************' : ''
-        };
+    const sanitizedProps = {
+        ...props,
+        facilitatorAccessToken: props.facilitatorAccessToken ? '********************' : ''
+    };
 
-        getLogger().info('native_setprops_request', sanitizedProps).track({
-            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_PROPS_ATTEMPT
-        });
-    } else {
-        getLogger().info('native_setprops_request_has_enpty_props');
-    }
+    getLogger().info('native_setprops_request', sanitizedProps).track({
+        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_PROPS_ATTEMPT
+    });
 }
 
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
