@@ -202,7 +202,7 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
     if (props) {
         const sanitizedProps = {
             ...props,
-            facilitatorAccessToken : props && props.facilitatorAccessToken ? '********************' : ''
+            facilitatorAccessToken: props && props.facilitatorAccessToken ? '********************' : ''
         };
 
         getLogger().info('native_setprops_request', sanitizedProps).track({
@@ -361,7 +361,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             approved = true;
             getLogger().info(`native_message_onapprove`)
                 .track({
-                    [FPTI_KEY.TRANSITION] : FPTI_TRANSITION.NATIVE_POPUP_CLOSED
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
                 })
                 .flush();
 
@@ -440,7 +440,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const nativeUrl = getNativeUrl({ sessionUID });
 
-        getLogger().info(`native_attempt_appswitch_url_direct`, { url : nativeUrl })
+        getLogger().info(`native_attempt_appswitch_url_direct`, { url: nativeUrl })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
             }).flush();
@@ -515,7 +515,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 return createOrder().then(() => {
                     const nativeUrl = getNativeUrl({ sessionUID, pageUrl });
 
-                    getLogger().info(`native_attempt_appswitch_url_popup`, { url : nativeUrl })
+                    getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
                             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
                         }).flush();
