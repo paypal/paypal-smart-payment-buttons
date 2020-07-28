@@ -335,7 +335,7 @@ export function getRestfulGetOrderApiMock(options : Object = {}) : MockEndpoint 
         method: 'GET',
         uri:    new RegExp('/v2/checkout/orders/[^/]+'),
         data:   {
-            ack: 'success',
+            ack:  'success',
             data: {
 
             }
@@ -363,7 +363,7 @@ export function getRestfulCapturedOrderApiMock(options : Object = {}) : MockEndp
         method: 'POST',
         uri:    new RegExp('/v2/checkout/orders/[^/]+/capture'),
         data:   {
-            ack: 'success',
+            ack:  'success',
             data: {
 
             }
