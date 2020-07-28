@@ -5,7 +5,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { memoize, redirect as redir, noop } from 'belter/src';
 import { INTENT, SDK_QUERY_KEYS, FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, authorizeOrder, patchOrder, getSubscription, activateSubscription, type SubscriptionResponse, getPayment, executePayment, patchPayment, upgradeFacilitatorAccessToken, getSupplementalOrderInfo } from '../api';
+import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, authorizeOrder, patchOrder, getSubscription, activateSubscription, type SubscriptionResponse, getPayment, executePayment, patchPayment, getSupplementalOrderInfo } from '../api';
 import { ORDER_API_ERROR, FPTI_TRANSITION, FPTI_CONTEXT_TYPE } from '../constants';
 import { unresolvedPromise, getLogger } from '../lib';
 import { ENABLE_PAYMENT_API } from '../config';
@@ -250,10 +250,6 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
 
     return memoize(({ payerID, paymentID, billingToken, subscriptionID, buyerAccessToken, authCode, forceRestAPI = (upgradeLSAT || isLSATExperiment) } : OnApproveData, { restart } : OnApproveActions) => {
         return ZalgoPromise.try(() => {
-            if (upgradeLSAT && buyerAccessToken) {
-                return createOrder().then(orderID => upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }));
-            }
-        }).then(() => {
             return createOrder();
         }).then(orderID => {
             getLogger()
