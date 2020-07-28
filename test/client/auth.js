@@ -123,31 +123,30 @@ describe('auth cases', () => {
             }).expectCalls();
 
             window.xprops.onApprove = mockAsyncProp(expect('onApprove', async (data, actions) => {
-                const getOrderMock = getRestfulGetOrderApiMock( {
-                   handler: expect('getOrder', ({ headers }) => {
-                       return {
-                           ack: 'success',
-                           data: {}
-                       };
-                   })
+                const getOrderMock = getRestfulGetOrderApiMock({
+                    handler: expect('getOrder', () => {
+                        return {
+                            ack:  'success',
+                            data: {}
+                        };
+                    })
                 });
                 getOrderMock.expectCalls();
                 await actions.order.get();
                 getOrderMock.done();
 
                 const captureOrderApiMock = getRestfulCapturedOrderApiMock({
-                   handler: expect('captureOrder', ({ headers }) => {
-                       return {
-                           ack:  'success',
-                           data: {}
-                       };
-                   })
+                    handler: expect('captureOrder', () => {
+                        return {
+                            ack:  'success',
+                            data: {}
+                        };
+                    })
                 });
                 captureOrderApiMock.expectCalls();
                 await actions.order.capture();
                 captureOrderApiMock.done();
             }));
-
 
 
             mockFunction(window.paypal, 'Checkout', expect('Checkout', ({ original: CheckoutOriginal, args: [ props ] }) => {
@@ -161,7 +160,9 @@ describe('auth cases', () => {
 
             await clickButton(FUNDING.PAYPAL);
 
-            if (!isUpgradeLSATCalled) throw new Error('Failed Low Scope Access Token Upgrade');
+            if (!isUpgradeLSATCalled) {
+                throw new Error('Failed Low Scope Access Token Upgrade');
+            }
 
             upgradeLSATMock.done();
 
