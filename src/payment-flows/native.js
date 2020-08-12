@@ -436,12 +436,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const nativeUrl = getNativeUrl({ sessionUID });
 
+        const nativeWin = popup(nativeUrl);
         getLogger().info(`native_attempt_appswitch_url_direct`, { url: nativeUrl })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
             }).flush();
 
-        const nativeWin = popup(nativeUrl);
         const validatePromise = validate();
         const delayPromise = ZalgoPromise.delay(500);
 
@@ -513,7 +513,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
-                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
                         }).flush();
 
                     return { redirectUrl: nativeUrl };
