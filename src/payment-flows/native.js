@@ -440,6 +440,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         getLogger().info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
+            });
+        getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
             }).flush();
 
         const validatePromise = validate();
