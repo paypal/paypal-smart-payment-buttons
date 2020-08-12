@@ -481,6 +481,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
+        getLogger().info(`native_attempt_appswitch_url_popup`)
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
+            }).flush();
 
         const closeListener = onCloseWindow(popupWin, () => {
             return ZalgoPromise.delay(1000).then(() => {
@@ -513,7 +517,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
-                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
+                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
                         }).flush();
 
                     return { redirectUrl: nativeUrl };
