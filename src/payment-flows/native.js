@@ -437,7 +437,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrl({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
-        getLogger().info(`native_attempt_appswitch_url_direct`, { url: nativeUrl })
+        getLogger().info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
             }).flush();
@@ -481,7 +481,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
-        getLogger().info(`native_attempt_appswitch_url_popup`)
+        getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
             }).flush();
