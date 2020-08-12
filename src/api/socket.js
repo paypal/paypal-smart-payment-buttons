@@ -510,7 +510,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
 
                 open = true;
     
-                getLogger().info('smart_button').track({
+                getLogger().info('firebase_connection_opened').track({
                     [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_OPENED
                 }).flush();
