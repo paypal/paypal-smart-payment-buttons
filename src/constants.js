@@ -102,6 +102,8 @@ export const FPTI_TRANSITION = {
 
     CONNECT_REDIRECT:         ('process_connect_redirect' : 'process_connect_redirect'),
 
+    FB_CONNECTION_OPENED:     ('fb_connection_opened' : 'fb_connection_opened'),
+
     NATIVE_DETECT_APP_SWITCH:  ('native_detect_app_switch' : 'native_detect_app_switch'),
     NATIVE_DETECT_WEB_SWITCH:  ('native_detect_web_switch' : 'native_detect_web_switch'),
     NATIVE_APP_SWITCH_ACK:     ('native_app_switch_ack' : 'native_app_switch_ack'),

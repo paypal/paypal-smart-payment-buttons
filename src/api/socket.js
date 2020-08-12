@@ -3,9 +3,12 @@
 
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { uniqueID, noop, memoize } from 'belter/src';
+import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import { FIREBASE_SCRIPTS } from '../config';
 import { loadScript } from '../lib/util';
+import { getLogger } from '../lib';
+import { FPTI_TRANSITION } from '../constants';
 
 import { getFirebaseSessionToken } from './auth';
 
@@ -507,6 +510,10 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
 
                 open = true;
     
+                getLogger().info('smart_button').track({
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_OPENED
+                }).flush();
+
                 for (const handler of onOpenHandlers) {
                     handler();
                 }
