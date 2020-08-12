@@ -8,7 +8,7 @@ import { FPTI_KEY } from '@paypal/sdk-constants/src';
 import { FIREBASE_SCRIPTS } from '../config';
 import { loadScript } from '../lib/util';
 import { getLogger } from '../lib';
-import { FPTI_TRANSITION } from '../constants';
+import { FPTI_STATE, FPTI_TRANSITION } from '../constants';
 
 import { getFirebaseSessionToken } from './auth';
 
@@ -511,6 +511,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
                 open = true;
     
                 getLogger().info('smart_button').track({
+                    [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_OPENED
                 }).flush();
 
