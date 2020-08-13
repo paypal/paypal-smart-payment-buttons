@@ -2,7 +2,7 @@
 /* eslint unicorn/prefer-add-event-listener: off, max-lines: off */
 
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { uniqueID, noop, memoize } from 'belter/src';
+import { uniqueID, noop, memoize, stringifyError } from 'belter/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import { FIREBASE_SCRIPTS } from '../config';
@@ -536,7 +536,12 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
             });
         });
 
-        databasePromise.catch(noop);
+        databasePromise.catch(err => {
+            getLogger().info('native_app_switch_ack', { err: stringifyError(err) }).track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_ERRORED
+            }).flush();
+        });
 
         return {
             send: (data) => {
