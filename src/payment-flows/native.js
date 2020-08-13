@@ -437,11 +437,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrl({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
-        getLogger().info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
+        getLogger()
+            .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
+            .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
-            });
-        getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+            })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
             }).flush();
