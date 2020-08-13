@@ -113,9 +113,9 @@ export const FPTI_TRANSITION = {
     NATIVE_ERROR:              ('native_app_switch_ack' : 'native_app_switch_ack'),
     NATIVE_SET_PROPS_ATTEMPT:  ('process_set_props_attempt' : 'process_set_props_attempt'),
     NATIVE_ATTEMPT_APP_SWITCH: ('app_switch_attempted' : 'app_switch_attempted'),
+    NATIVE_POPUP_SHOWN:        ('popup_shown' : 'popup_shown'),
     NATIVE_POPUP_CLOSED:       ('process_popup_closed' : 'process_popup_closed'),
 
-    POPUP_SHOWN:               ('popup_shown' : 'popup_shown'),
     HONEY_IDENTIFY:            ('honey_identify')
 };
 

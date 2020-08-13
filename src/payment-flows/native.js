@@ -439,7 +439,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeWin = popup(nativeUrl);
         getLogger().info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
             });
         getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
             .track({
@@ -487,7 +487,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.POPUP_SHOWN
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
             }).flush();
 
         const closeListener = onCloseWindow(popupWin, () => {
