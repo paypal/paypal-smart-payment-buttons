@@ -537,7 +537,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
         });
 
         databasePromise.catch(err => {
-            getLogger().info('native_app_switch_ack', { err: stringifyError(err) }).track({
+            getLogger().info('firebase_connection_errored', { err: stringifyError(err) }).track({
                 [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_ERRORED
             }).flush();
