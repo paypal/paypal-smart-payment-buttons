@@ -104,8 +104,8 @@ export const FPTI_TRANSITION = {
 
     CONNECT_REDIRECT:         ('process_connect_redirect' : 'process_connect_redirect'),
 
-    FB_CONNECTION_OPENED:     ('fb_connection_opened' : 'fb_connection_opened'),
-    FB_CONNECTION_ERRORED:     ('fb_connection_errored' : 'fb_connection_errored'),
+    FIREBASE_CONNECTION_OPENED:     ('firebase_connection_opened' : 'firebase_connection_opened'),
+    FIREBASE_CONNECTION_ERRORED:    ('firebase_connection_errored' : 'firebase_connection_errored'),
 
     NATIVE_DETECT_APP_SWITCH:  ('native_detect_app_switch' : 'native_detect_app_switch'),
     NATIVE_DETECT_WEB_SWITCH:  ('native_detect_web_switch' : 'native_detect_web_switch'),

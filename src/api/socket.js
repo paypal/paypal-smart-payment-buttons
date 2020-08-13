@@ -512,7 +512,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
     
                 getLogger().info('firebase_connection_opened').track({
                     [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_OPENED
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FIREBASE_CONNECTION_OPENED
                 }).flush();
 
                 for (const handler of onOpenHandlers) {
@@ -539,7 +539,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
         databasePromise.catch(err => {
             getLogger().info('firebase_connection_errored', { err: stringifyError(err) }).track({
                 [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FB_CONNECTION_ERRORED
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.FIREBASE_CONNECTION_ERRORED
             }).flush();
         });
 
