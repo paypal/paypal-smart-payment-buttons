@@ -42,6 +42,32 @@ const graphQL : GraphQL = (req, payload) => {
                 }
             };
         }
+    
+        if (query.match(/query GetSmartWallet/)) {
+            return {
+                result: {
+                    smartWallet: {
+                        'payer': {
+                            'email_address': 'foo@bar.com'
+                        },
+                        'funding_options': [
+                            {
+                                'funding_sources': [
+                                    {
+                                        'credit': {
+                                            'id': 'BC-YMBX4GJLEKMQW'
+                                        }
+                                    }
+                                ],
+                                'one_click_eligibility': {
+                                    eligible: false
+                                }
+                            }
+                        ]
+                    }
+                }
+            };
+        }
 
         if (query.match(/query GetPersonalization/)) {
             return {

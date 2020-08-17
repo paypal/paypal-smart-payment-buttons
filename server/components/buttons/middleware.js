@@ -50,8 +50,8 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
             tracking(req);
 
             const { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard, userIDToken, amount,
-                merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, basicFundingEligibility, locale, onShippingChange,
-                clientMetadataID, riskData, pageSessionID, correlationID, enableBNPL, platform } = getParams(params, req, res);
+                merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, buyerAT, basicFundingEligibility, locale, onShippingChange,
+                clientMetadataID, riskData, pageSessionID, correlationID, enableBNPL, enablePWB, platform } = getParams(params, req, res);
             
             logger.info(req, `button_params`, { params: JSON.stringify(params) });
 
@@ -74,10 +74,10 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
                 logger.warn(req, 'risk_data_transport_error', { err: err.stack || err.toString() });
             }) : Promise.resolve();
 
-            const buyerAccessTokenPromise = (userIDToken && clientMetadataID && !enableBNPL) ? sendRiskDataPromise
-                .then(() => exchangeIDToken(req, gqlBatch, { logger, userIDToken, clientMetadataID, riskData })) : null;
+            // const buyerAccessTokenPromise = (userIDToken && clientMetadataID && !enableBNPL) ? sendRiskDataPromise
+            //     .then(() => exchangeIDToken(req, gqlBatch, { logger, userIDToken, clientMetadataID, riskData })) : null;
 
-            const buyerAccessToken = await buyerAccessTokenPromise;
+            const buyerAccessToken = buyerAT;
 
             const nativeEligibilityPromise = resolveNativeEligibility(req, gqlBatch, {
                 logger, clientID, merchantID: sdkMerchantID, buttonSessionID, currency, vault,
@@ -91,7 +91,7 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
 
             const walletPromise = resolveWallet(req, gqlBatch, getWallet, {
                 logger, clientID, merchantID: sdkMerchantID, buttonSessionID, currency, intent, commit, vault, amount,
-                disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, userIDToken, enableBNPL
+                disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, userIDToken, enableBNPL, enablePWB
             });
 
             gqlBatch.flush();

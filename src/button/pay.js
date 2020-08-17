@@ -4,7 +4,7 @@ import { noop, stringifyError } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { checkout, cardFields, native, honey, vaultCapture, walletCapture, walletCaptureBNPL, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
+import { checkout, cardFields, native, honey, vaultCapture, walletCapture, walletCaptureBNPL, walletPWB, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
 import { getLogger, promiseNoop } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
 
@@ -17,6 +17,7 @@ const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     vaultCapture,
     walletCaptureBNPL,
     walletCapture,
+    walletPWB,
     cardFields,
     popupBridge,
     native,
