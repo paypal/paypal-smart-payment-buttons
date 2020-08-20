@@ -11,7 +11,7 @@ import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
 import { getLogger, promiseOne, promiseNoop, unresolvedPromise } from '../lib';
-import { USER_ACTION, FPTI_TRANSITION } from '../constants';
+import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION } from '../constants';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions } from './types';
 import { checkout } from './checkout';
@@ -441,9 +441,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
             .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
             })
             .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
             }).flush();
 
@@ -488,6 +490,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
             }).flush();
 
@@ -522,6 +525,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
+                            [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
                         }).flush();
 
