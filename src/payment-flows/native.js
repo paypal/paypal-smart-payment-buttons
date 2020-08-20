@@ -549,7 +549,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                         }).flush();
 
                     return connectNative({ sessionUID }).close().then(() => {
-                    throw err;
+                        throw err;
+                    });
                 });
             });
         });
