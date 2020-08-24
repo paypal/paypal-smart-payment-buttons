@@ -130,6 +130,7 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
                 ...params, nonce: cspNonce, csp: { nonce: cspNonce },
                 fundingEligibility, content, wallet
             };
+            console.log('The button props are: ', buttonProps);
 
             try {
                 if (render.button.validateButtonProps) {

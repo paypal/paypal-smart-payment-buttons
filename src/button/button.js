@@ -52,6 +52,7 @@ try {
 }
 
 export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
+    console.log('setup button: ', opts);
     if (!window.paypal) {
         throw new Error(`PayPal SDK not loaded`);
     }
@@ -64,6 +65,8 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     const serviceData = getServiceData({
         eligibility, facilitatorAccessToken, buyerGeoCountry, serverMerchantID, fundingEligibility,
         isCardFieldsExperimentEnabled, sdkMeta, buyerAccessToken, wallet, content, serverRiskData });
+    
+    console.log('service data: ', serviceData);
     const { merchantID } = serviceData;
 
     const props = getProps({ facilitatorAccessToken });
@@ -95,6 +98,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
 
             if (isEnabled()) {
                 paymentProcessing = true;
+                console.log('calling initiate payment flow');
 
                 return initiatePaymentFlow({ payment, config, serviceData, components, props: paymentProps }).finally(() => {
                     paymentProcessing = false;
@@ -141,6 +145,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     clearSmartMenu();
     
     getButtons().forEach(button => {
+        console.log('button: ', button);
         const menuToggle = getMenuButton(button);
         const { fundingSource: paymentFundingSource, card, paymentMethodID, instrumentID, instrumentType } = getSelectedFunding(button);
 

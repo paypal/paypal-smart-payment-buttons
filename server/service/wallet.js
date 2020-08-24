@@ -224,7 +224,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
     };
     
     if (enablePWB && buyerAccessToken) {
-        console.log('pwb');
+        console.log('inside resolve wallet');
         try {
             const result = await gqlBatch({
                 query:     buildSmartWalletQuery(),
@@ -241,6 +241,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
             console.log('gql query result: ', result);
             return result.smartWallet;
         } catch (err) {
+            console.log('smart wallet query error: ', err);
             logger.error(req, 'smart_wallet_error_fallback', { err: err.stack ? err.stack : err.toString() });
             return wallet;
         }
