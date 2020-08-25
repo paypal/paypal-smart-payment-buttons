@@ -224,12 +224,12 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
     };
     
     if (enablePWB && buyerAccessToken) {
-        console.log('inside resolve wallet');
+        console.log('inside resolveWallet function');
         try {
             const result = await gqlBatch({
                 query:     buildSmartWalletQuery(),
                 variables: {
-                    clientID, merchantID, currency, amount, buyerAccessToken, vetted: false
+                    clientID, merchantID, currency, amount, userAccessToken: buyerAccessToken, vetted: false
                 },
                 accessToken: clientAccessToken
             });
