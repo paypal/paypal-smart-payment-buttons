@@ -47,23 +47,21 @@ const graphQL : GraphQL = (req, payload) => {
             return {
                 result: {
                     smartWallet: {
-                        'payer': {
-                            'email_address': 'foo@bar.com'
-                        },
-                        'funding_options': [
-                            {
-                                'funding_sources': [
-                                    {
-                                        'credit': {
-                                            'id': 'BC-YMBX4GJLEKMQW'
-                                        }
-                                    }
-                                ],
-                                'one_click_eligibility': {
-                                    eligible: false
+                        "paypal": {
+                            "instruments": [
+                                {
+                                    "label": "••0567",
+                                    "type": "card",
+                                    "oneClick": true,
+                                    "logoUrl": "https://msmaster.qa.paypal.com:14870/v1/content/media-containers/PICS/cdn-assets//00/s/MjU2WDI1NlhQTkc/p/MTAzMmFmNmEtNzJlMi00NDg5LWFkM2EtZGY4NzgwNTQyNWQ3/image_0.png",
+                                    "instrumentID": "CC-GU5R8W6GMA7LQ",
+                                    "vendor": 'VISA'
                                 }
-                            }
-                        ]
+                            ]
+                        },
+                        "card": {
+                            "instruments": []
+                        }
                     }
                 }
             };
