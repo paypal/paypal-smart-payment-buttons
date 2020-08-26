@@ -168,7 +168,7 @@ export function validateOrder(orderID : string, { env, clientID, merchantID, exp
                     }
 
                     // eslint-disable-next-line no-console
-                    console.warn(`Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing ${ SDK_QUERY_KEYS.MERCHANT_ID }=${ payeesStr } or ${ SDK_QUERY_KEYS.MERCHANT_ID }=${ (uniquePayees[0] && uniquePayees[0].email && uniquePayees[0].email.stringValue) ? uniquePayees[0].email.stringValue : 'payee@merchant.com' } to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/`);
+                    console.warn('Please ensure you are passing the correct client ID to the sdk url. https://developer.paypal.com/docs/checkout/integrate/#1-set-up-your-development-environment');
                 } else {
                     throw new Error(`Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing ${ SDK_QUERY_KEYS.MERCHANT_ID }=* to the sdk url and ${ SDK_SETTINGS.MERCHANT_ID }="${ payeesStr }" in the sdk script tag. https://developer.paypal.com/docs/checkout/reference/customize-sdk/`);
                 }
