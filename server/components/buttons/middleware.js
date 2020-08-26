@@ -128,7 +128,7 @@ export function getButtonMiddleware({ logger = defaultLogger, content: smartCont
 
             const buttonProps = {
                 ...params, nonce: cspNonce, csp: { nonce: cspNonce },
-                fundingEligibility, content, wallet
+                fundingEligibility, content, wallet, enablePWB
             };
             console.log('The button props are: ', buttonProps);
 
