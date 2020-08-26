@@ -164,6 +164,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         });
 
         if (menuToggle) {
+            console.log('prerendering menu');
             prerenderMenu({ props, components });
 
             onElementClick(menuToggle, (event) => {
