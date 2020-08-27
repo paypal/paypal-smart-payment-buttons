@@ -1,6 +1,8 @@
 /* @flow */
 /* eslint no-restricted-globals: off, promise/no-native: off, compat/compat: off */
 
+import type { ExpressRequest } from '../../server/types';
+
 type MockReq = {|
     query : { [string] : string }
 |};
@@ -67,28 +69,28 @@ export function mockRes(opts : Object = {}) : MockRes {
 
 export async function getWallet() : Promise<Object> {
     return await {
+        'payer': {
+            'email_address': 'foo@bar.com'
+        },
         'funding_options': [
             {
                 'funding_sources': [
                     {
-                        'primary_instrument': false,
                         'credit':             {
-                            'id':   'BC-YMBX4GJLEKMQW',
-                            'type': 'BILL_ME_LATER'
-                        },
-                        'one_click_eligibility': {
-                            eligible: false
+                            'id':   'BC-YMBX4GJLEKMQW'
                         }
                     }
-                ]
+                ],
+                'one_click_eligibility': {
+                    eligible: false
+                }
             }
         ]
     };
 }
 
-// eslint-disable-next-line require-await
-export async function graphQL(req : {||}, payload : $ReadOnlyArray<{| query : string, variables : Object |}>) : Promise<Object> {
-    return Promise.resolve(payload.map(request => {
+export async function graphQL(req : ExpressRequest, payload : $ReadOnlyArray<{| query : string, variables : Object |}>) : Promise<Object> {
+    return await Promise.resolve(payload.map(request => {
         if (request.query.match(/FundingEligibility/)) {
             return {
                 fundingEligibility: {
@@ -124,6 +126,9 @@ export async function graphQL(req : {||}, payload : $ReadOnlyArray<{| query : st
                         }
                     },
                     credit: {
+                        eligible: false
+                    },
+                    paylater: {
                         eligible: false
                     },
                     sepa: {
@@ -224,14 +229,19 @@ export function transportRiskData() : Promise<void> {
 export const mockContent = {
     US: {
         en: {
-            instantlyPayWith:     'Pay instantly with',
-            poweredBy:            'Powered by PayPal',
-            chooseCardOrShipping: 'Choose card or shipping',
-            useDifferentAccount:  'Use different account',
-            deleteVaultedAccount: 'Forget this account',
-            deleteVaultedCard:    'Forget this card',
-            chooseCard:           'Choose card',
-            balance:              'Balance'
+            instantlyPayWith:        'Pay instantly with',
+            poweredBy:               'Powered by PayPal',
+            chooseCardOrShipping:    'Choose card or shipping',
+            useDifferentAccount:     'Use different account',
+            deleteVaultedAccount:    'Forget this account',
+            deleteVaultedCard:       'Forget this card',
+            chooseCard:              'Choose card',
+            balance:                 'Balance',
+            payWithDifferentAccount: 'Pay with a different account',
+            payWithDifferentMethod:  'Pay with a different funding method'
         }
     }
 };
+
+/* eslint-disable-next-line no-empty-function */
+export const tracking = () => {};

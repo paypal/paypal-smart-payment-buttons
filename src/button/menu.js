@@ -31,7 +31,7 @@ export function prerenderMenu({ props, components } : {| props : ButtonProps, co
 
 export function renderMenu({ props, payment, components, choices } : ButtonDropdownProps) : ZalgoPromise<void> {
     const { clientID } = props;
-    const { button } = payment;
+    const { button, menuToggle } = payment;
     const { Menu } = components;
 
     if (!clientID) {
@@ -43,10 +43,24 @@ export function renderMenu({ props, payment, components, choices } : ButtonDropd
     const verticalOffset = button.getBoundingClientRect().bottom;
     const loadingTimeout = setTimeout(() => enableLoadingSpinner(button), 50);
 
+    const onFocusFail = () => {
+        if (menuToggle) {
+            const blur = () => {
+                menuToggle.removeEventListener('blur', blur);
+                if (smartMenu) {
+                    smartMenu.hide();
+                }
+            };
+    
+            menuToggle.addEventListener('blur', blur);
+        }
+    };
+
     return smartMenu.display({
         clientID,
         choices,
-        verticalOffset
+        verticalOffset,
+        onFocusFail
     }).then(() => {
         disableLoadingSpinner(button);
     }).finally(() => {

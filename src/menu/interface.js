@@ -7,11 +7,14 @@ import type { MenuFlowType, MenuFlowProps } from '../types';
 
 type SmartMenuProps = {|
     clientID : string,
-    Menu : MenuFlowType
+    Menu : MenuFlowType,
+    onFocus? : () => void,
+    onFocusFail? : () => void
 |};
 
 type SmartMenu = {|
-    display : (MenuFlowProps) => ZalgoPromise<void>
+    display : (MenuFlowProps) => ZalgoPromise<void>,
+    hide : () => ZalgoPromise<void>
 |};
 
 export function renderSmartMenu({ clientID, Menu } : SmartMenuProps) : SmartMenu {
@@ -21,12 +24,14 @@ export function renderSmartMenu({ clientID, Menu } : SmartMenuProps) : SmartMenu
         return renderTo(window.xprops.getParent(), '#smart-menu');
     });
 
-    const display = ({ choices, verticalOffset }) => {
+    const display = ({ choices, verticalOffset, onFocus, onFocusFail }) => {
         return render().then(() => {
             return updateProps({
                 clientID,
                 verticalOffset,
-                choices
+                choices,
+                onFocus,
+                onFocusFail
             });
         }).then(() => {
             return show();
@@ -34,7 +39,7 @@ export function renderSmartMenu({ clientID, Menu } : SmartMenuProps) : SmartMenu
     };
 
     hide();
-    render();
+    render().then(hide);
 
-    return { display };
+    return { display, hide };
 }

@@ -2,14 +2,14 @@
 
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { stringifyError } from 'belter/src';
-import { FUNDING, WALLET_INSTRUMENT } from '@paypal/sdk-constants/src';
+import { FUNDING, WALLET_INSTRUMENT, FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import type { MenuChoices, Wallet, WalletInstrument } from '../types';
-import { getSupplementalOrderInfo, oneClickApproveOrder } from '../api';
-import { BUYER_INTENT } from '../constants';
+import { getSupplementalOrderInfo, oneClickApproveOrder, updateButtonClientConfig } from '../api';
+import { BUYER_INTENT, FPTI_TRANSITION } from '../constants';
 import { getLogger } from '../lib';
 
-import type { PaymentFlow, PaymentFlowInstance, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions } from './types';
+import type { PaymentFlow, PaymentFlowInstance, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions, Payment } from './types';
 import { checkout, CHECKOUT_POPUP_DIMENSIONS } from './checkout';
 
 const WALLET_MIN_WIDTH = 250;
@@ -34,6 +34,11 @@ function isWalletCaptureEligible({ props, serviceData } : IsEligibleOptions) : b
         return false;
     }
 
+    if (window.xprops.enableBNPL) {
+        return false;
+    }
+
+
     return true;
 }
 
@@ -46,7 +51,12 @@ function getInstrument(wallet : Wallet, fundingSource : $Values<typeof FUNDING>,
         return;
     }
 
-    const instrument = walletFunding.instruments.find(inst => inst.instrumentID === instrumentID);
+    let instrument;
+    for (const inst of walletFunding.instruments) {
+        if (inst.instrumentID === instrumentID) {
+            instrument = inst;
+        }
+    }
 
     if (!instrument) {
         return;
@@ -108,7 +118,12 @@ function initWalletCapture({ props, components, payment, serviceData, config } :
         throw new Error(`Expected wallet to be present`);
     }
 
-    const instrument = walletFunding.instruments.find(inst => inst.instrumentID === instrumentID);
+    let instrument;
+    for (const inst of walletFunding.instruments) {
+        if (inst.instrumentID === instrumentID) {
+            instrument = inst;
+        }
+    }
 
     if (!instrument) {
         throw new Error(`Expected instrument to be present`);
@@ -123,7 +138,10 @@ function initWalletCapture({ props, components, payment, serviceData, config } :
     const getWebCheckoutFallback = () => {
         return checkout.init({
             props, components, serviceData, payment: {
-                ...payment, isClick: false, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING
+                ...payment,
+                isClick:       false,
+                buyerIntent:   BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING,
+                fundingSource: (instrument && instrument.type === WALLET_INSTRUMENT.CREDIT) ? FUNDING.CREDIT : fundingSource
             }, config
         });
     };
@@ -143,17 +161,13 @@ function initWalletCapture({ props, components, payment, serviceData, config } :
 
     const shippingRequired = (orderID) => {
         return getSupplementalOrderInfo(orderID).then(order => {
-            const { flags: { isShippingAddressRequired }, cart: { shippingAddress } } = order.checkoutSession;
+            const { flags: { isChangeShippingAddressAllowed } } = order.checkoutSession;
 
-            if (!isShippingAddressRequired) {
-                return false;
+            if (isChangeShippingAddressAllowed) {
+                return true;
             }
 
-            if (shippingAddress && shippingAddress.isFullAddress) {
-                return false;
-            }
-
-            return true;
+            return false;
         });
     };
 
@@ -190,7 +204,8 @@ const POPUP_OPTIONS = {
     height: CHECKOUT_POPUP_DIMENSIONS.HEIGHT
 };
 
-function setupWalletMenu({ payment, serviceData, initiatePayment } : MenuOptions) : MenuChoices {
+function setupWalletMenu({ props, payment, serviceData, components, config } : MenuOptions) : MenuChoices {
+    const { createOrder } = props;
     const { fundingSource, instrumentID } = payment;
     const { wallet, content, buyerAccessToken } = serviceData;
 
@@ -212,52 +227,81 @@ function setupWalletMenu({ payment, serviceData, initiatePayment } : MenuOptions
         throw new Error(`Can not render wallet menu without instrument`);
     }
 
-    const CHOOSE_CARD = {
-        label:    content.chooseCard || content.chooseCardOrShipping,
+    const updateClientConfig = () => {
+        return ZalgoPromise.try(() => {
+            return createOrder();
+        }).then(orderID => {
+            return updateButtonClientConfig({ fundingSource, orderID, inline: false });
+        });
+    };
+
+    const loadCheckout = ({ payment: checkoutPayment } : {| payment : Payment |}) => {
+        return checkout.init({
+            props, components, serviceData, config, payment: checkoutPayment
+        }).start();
+    };
+
+    const newFundingSource = (instrument.type === WALLET_INSTRUMENT.CREDIT)
+        ? FUNDING.CREDIT
+        : fundingSource;
+
+    const CHOOSE_FUNDING_SHIPPING = {
+        label:    content.payWithDifferentMethod,
         popup:    POPUP_OPTIONS,
         onSelect: ({ win }) => {
-            return initiatePayment({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING } });
+
+            getLogger().info('click_choose_funding').track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_FUNDING
+            }).flush();
+
+            return ZalgoPromise.try(() => {
+                return updateClientConfig();
+            }).then(() => {
+                return loadCheckout({
+                    payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING, fundingSource: newFundingSource }
+                });
+            });
         }
     };
 
     const CHOOSE_ACCOUNT = {
-        label:    content.useDifferentAccount,
+        label:    content.payWithDifferentAccount,
         popup:    POPUP_OPTIONS,
         onSelect: ({ win }) => {
-            return initiatePayment({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_ACCOUNT } });
+
+            getLogger().info('click_choose_account').track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_ACCOUNT
+            }).flush();
+
+            return loadCheckout({
+                payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_ACCOUNT, fundingSource: newFundingSource }
+            });
         }
     };
 
-    if (fundingSource === FUNDING.PAYPAL) {
-        if (instrument.type === WALLET_INSTRUMENT.CREDIT) {
-            return [
-                CHOOSE_ACCOUNT
-            ];
-        }
-
+    if (fundingSource === FUNDING.PAYPAL || fundingSource === FUNDING.CREDIT) {
         return [
-            CHOOSE_CARD,
+            CHOOSE_FUNDING_SHIPPING,
             CHOOSE_ACCOUNT
         ];
     }
-
-    if (fundingSource === FUNDING.CREDIT) {
-        return [
-            CHOOSE_ACCOUNT
-        ];
-    }
-
+    
     throw new Error(`Can not render menu for ${ fundingSource }`);
 }
 
+function updateWalletClientConfig({ orderID, payment }) : ZalgoPromise<void> {
+    const { fundingSource } = payment;
+    return updateButtonClientConfig({ fundingSource, orderID, inline: true });
+}
+
 export const walletCapture : PaymentFlow = {
-    name:              'wallet_capture',
-    setup:             setupWalletCapture,
-    isEligible:        isWalletCaptureEligible,
-    isPaymentEligible: isWalletCapturePaymentEligible,
-    init:              initWalletCapture,
-    setupMenu:         setupWalletMenu,
-    spinner:           true,
-    inline:            true,
-    instant:           true
+    name:               'wallet_capture',
+    setup:              setupWalletCapture,
+    isEligible:         isWalletCaptureEligible,
+    isPaymentEligible:  isWalletCapturePaymentEligible,
+    init:               initWalletCapture,
+    setupMenu:          setupWalletMenu,
+    updateClientConfig: updateWalletClientConfig,
+    spinner:            true,
+    inline:             true
 };

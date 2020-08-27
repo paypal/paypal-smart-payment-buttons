@@ -17,7 +17,7 @@ function setupCardFields() {
 let cardFieldsOpen = false;
 
 function isCardFieldsEligible({ props, serviceData } : IsEligibleOptions) : boolean {
-    const { vault, onShippingChange, enableStandardCardFields } = props;
+    const { vault, onShippingChange } = props;
     const { eligibility } = serviceData;
 
     if (vault) {
@@ -26,11 +26,6 @@ function isCardFieldsEligible({ props, serviceData } : IsEligibleOptions) : bool
 
     if (onShippingChange) {
         return false;
-    }
-
-    // if merchant opt-in inline guest, they will ALWAYS see inline guest guest
-    if (enableStandardCardFields) {
-        return true;
     }
 
     return eligibility.cardFields;
@@ -108,7 +103,7 @@ const slideDownButtons = () => {
 
 function initCardFields({ props, components, payment, serviceData, config } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, onCancel,
-        locale, commit, onError, sessionID, buttonSessionID } = props;
+        locale, commit, onError, sessionID, buttonSessionID, onAuth } = props;
     const { CardFields } = components;
     const { fundingSource, card } = payment;
     const { cspNonce } = config;
@@ -150,7 +145,11 @@ function initCardFields({ props, components, payment, serviceData, config } : In
         },
 
         onAuth: ({ accessToken }) => {
-            buyerAccessToken = accessToken;
+            const access_token = accessToken ? accessToken : buyerAccessToken;
+
+            return onAuth({ accessToken: access_token }).then(token => {
+                buyerAccessToken = token;
+            });
         },
 
         onCancel,

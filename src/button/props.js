@@ -1,17 +1,17 @@
 /* @flow */
 
 import type { CrossDomainWindowType } from 'cross-domain-utils/src';
-import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY } from '@paypal/sdk-constants/src';
+import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
 import type { ZalgoPromise } from 'zalgo-promise/src';
-import type { FundingEligibilityType } from '@paypal/sdk-client/src';
 
+import {  UPGRADE_LSAT_RAMP } from '../constants';
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
-    ThreeDomainSecureFlowType, PersonalizationType, MenuFlowType, ConnectOptions } from '../types';
+    ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions } from '../types';
 import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
-    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL } from '../props';
+    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce } from '../lib';
+import { getNonce, createExperiment } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -20,6 +20,7 @@ import { getOnShippingChange } from '../props/onShippingChange';
 import { getOnClick } from '../props/onClick';
 import { getCreateBillingAgreement } from '../props/createBillingAgreement';
 import { getCreateSubscription } from '../props/createSubscription';
+import { getOnAuth } from '../props/onAuth';
 
 // export something to force webpack to see this as an ES module
 export const TYPES = true;
@@ -50,6 +51,7 @@ export type ButtonXProps = {|
     clientID : ?string,
     partnerAttributionID : ?string,
     correlationID : string,
+    sdkCorrelationID? : string,
     platform : $Values<typeof PLATFORM>,
     merchantID : $ReadOnlyArray<string>,
 
@@ -69,18 +71,24 @@ export type ButtonXProps = {|
     getPopupBridge : XGetPopupBridge,
     remember : RememberFunding,
     enableThreeDomainSecure : boolean,
-    enableStandardCardFields : ?boolean,
     enableNativeCheckout : boolean | void,
     getParentDomain : () => string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
     persistRiskData : ?(ServerRiskData) => ZalgoPromise<void>,
     clientMetadataID : ?string,
+    fundingSource : ?$Values<typeof FUNDING>,
+    disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
 
     stageHost : ?string,
     apiStageHost : ?string,
     upgradeLSAT? : boolean,
     connect? : ConnectOptions,
+
+    amount : ?string,
+    userIDToken : ?string,
+    enableBNPL : ?boolean,
     
     onInit : XOnInit,
     onApprove : ?XOnApprove,
@@ -100,7 +108,7 @@ export type ButtonProps = {|
     clientID : ?string,
     partnerAttributionID : ?string,
     clientMetadataID : ?string,
-    correlationID : string,
+    sdkCorrelationID : string,
     platform : $Values<typeof PLATFORM>,
 
     vault : boolean,
@@ -119,14 +127,20 @@ export type ButtonProps = {|
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
     persistRiskData : ?(ServerRiskData) => ZalgoPromise<void>,
+    fundingSource : ?$Values<typeof FUNDING>,
+    disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
 
     stageHost : ?string,
     apiStageHost : ?string,
 
+    amount : ?string,
+    userIDToken : ?string,
+    enableBNPL : boolean,
+
     onInit : OnInit,
     onError : OnError,
     onClick : ?OnClick,
-    enableStandardCardFields : ?boolean,
     connect : ?ConnectOptions,
 
     createOrder : CreateOrder,
@@ -136,7 +150,8 @@ export type ButtonProps = {|
     onApprove : OnApprove,
 
     onCancel : OnCancel,
-    onShippingChange : ?OnShippingChange
+    onShippingChange : ?OnShippingChange,
+    onAuth : OnAuth
 |};
 
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
@@ -155,13 +170,13 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         partnerAttributionID,
         clientMetadataID,
         correlationID,
+        sdkCorrelationID = correlationID,
         getParentDomain,
         clientAccessToken,
         getPopupBridge,
         getPrerenderDetails,
         getPageUrl,
         enableThreeDomainSecure,
-        enableStandardCardFields,
         enableNativeCheckout = false,
         remember: rememberFunding,
         onError,
@@ -169,13 +184,21 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         apiStageHost,
         style,
         getParent,
+        fundingSource,
         currency,
         connect,
         intent,
         merchantID,
         persistRiskData,
-        upgradeLSAT = false
+        upgradeLSAT = false,
+        amount,
+        userIDToken,
+        enableBNPL = false,
+        disableFunding,
+        disableCard
     } = xprops;
+
+    const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
@@ -206,14 +229,35 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         }
     }
 
+    if (intent === INTENT.TOKENIZE) {
+        if (!xprops.createBillingAgreement) {
+            throw new Error(`Must pass createBillingAgreement with intent=tokenize`);
+        }
+
+        if (xprops.createOrder || xprops.createSubscription) {
+            throw new Error(`Must not pass createOrder or createSubscription with intent=tokenize`);
+        }
+    }
+
+    if (intent === INTENT.SUBSCRIPTION) {
+        if (!xprops.createSubscription) {
+            throw new Error(`Must pass createSubscription with intent=subscription`);
+        }
+
+        if (xprops.createOrder || xprops.createBillingAgreement) {
+            throw new Error(`Must not pass createOrder or createBillingAgreement with intent=tokenize`);
+        }
+    }
+
     const createBillingAgreement = getCreateBillingAgreement({ createBillingAgreement: xprops.createBillingAgreement });
     const createSubscription = getCreateSubscription({ createSubscription: xprops.createSubscription, partnerAttributionID, merchantID, clientID }, { facilitatorAccessToken });
-    
+
     const createOrder = getCreateOrder({ createOrder: xprops.createOrder, currency, intent, merchantID, partnerAttributionID }, { facilitatorAccessToken, createBillingAgreement, createSubscription });
 
-    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
+    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault, isLSATExperiment: upgradeLSATExperiment.isEnabled() }, { facilitatorAccessToken, createOrder });
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID }, { facilitatorAccessToken, createOrder });
+    const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment: upgradeLSATExperiment.isEnabled(), upgradeLSAT });
 
     return {
         env,
@@ -230,7 +274,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         clientID,
         partnerAttributionID,
         clientMetadataID,
-        correlationID,
+        sdkCorrelationID,
         merchantDomain,
         platform,
         currency,
@@ -243,9 +287,15 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         getParent,
         persistRiskData,
         connect,
+        fundingSource,
+        disableFunding,
+        disableCard,
+
+        amount,
+        userIDToken,
+        enableBNPL: enableBNPL || false,
 
         enableThreeDomainSecure,
-        enableStandardCardFields,
         enableNativeCheckout,
 
         onClick,
@@ -259,7 +309,9 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         createSubscription,
         onApprove,
         onCancel,
-        onShippingChange
+        onShippingChange,
+
+        onAuth
     };
 }
 
@@ -284,7 +336,7 @@ export type Config = {|
 export function getConfig({ serverCSPNonce, firebaseConfig } : {| serverCSPNonce : ?string, firebaseConfig : ?FirebaseConfig |}) : Config {
     const cspNonce = serverCSPNonce || getNonce();
     const { version } = paypal;
-    
+
     return {
         version,
         cspNonce,
@@ -297,7 +349,6 @@ export type ServiceData = {|
     buyerCountry : $Values<typeof COUNTRY>,
     fundingEligibility : FundingEligibilityType,
     wallet : ?Wallet,
-    personalization : PersonalizationType,
     facilitatorAccessToken : string,
     sdkMeta : string,
     buyerAccessToken : ?string,
@@ -318,7 +369,6 @@ type ServiceDataOptions = {|
     fundingEligibility : FundingEligibilityType,
     wallet : ?Wallet,
     buyerAccessToken : ?string,
-    personalization : PersonalizationType,
     serverMerchantID : $ReadOnlyArray<string>,
     sdkMeta : string,
     content : ContentType,
@@ -331,7 +381,7 @@ type ServiceDataOptions = {|
     serverRiskData : ?ServerRiskData
 |};
 
-export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta, content, buyerGeoCountry, fundingEligibility, wallet, buyerAccessToken, personalization, serverMerchantID, eligibility } : ServiceDataOptions) : ServiceData {
+export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta, content, buyerGeoCountry, fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility } : ServiceDataOptions) : ServiceData {
     return {
         merchantID:   serverMerchantID,
         buyerCountry: buyerGeoCountry || COUNTRY.US,
@@ -340,7 +390,6 @@ export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta
         sdkMeta,
         content,
         buyerAccessToken,
-        personalization,
         facilitatorAccessToken,
         eligibility,
         serverRiskData

@@ -9,6 +9,7 @@ import { noop } from 'belter';
 
 import { WEBPACK_CONFIG_WALLET_LOCAL_DEBUG } from '../webpack.config';
 
+import type { GraphQL } from './lib/graphql';
 import type { ExpressRequest, ExpressResponse } from './types';
 import { getButtonMiddleware, getMenuMiddleware, getWalletMiddleware } from './components';
 
@@ -25,12 +26,10 @@ const logger = {
     debug: noop,
     info:  noop,
     warn:  noop,
-    error: (err) => {
-        throw new Error(err);
-    }
+    error: noop
 };
 
-const graphQL = (req, payload) => {
+const graphQL : GraphQL = (req, payload) => {
     return Promise.resolve(payload.map(({ query }) => {
         if (query.match(/query GetFundingEligibility/)) {
             return {
@@ -205,31 +204,35 @@ const graphQL = (req, payload) => {
         }
 
         return {
-            data: {}
+            result: {}
         };
     }));
 };
 
 const getWallet = () => {
     return Promise.resolve({
+        'payer': {
+            'email_address': 'foo@bar.com'
+        },
         'funding_options': [
             {
                 'funding_sources': [
                     {
-                        'email':              'foo@bar.com',
-                        'credit':             {
-                            'id':   'BC-YMBX4GJLEKMQW',
-                            'type': 'BILL_ME_LATER'
-                        },
-                        'one_click_eligibility': {
-                            eligible: false
+                        'credit': {
+                            'id': 'BC-YMBX4GJLEKMQW'
                         }
                     }
-                ]
+                ],
+                'one_click_eligibility': {
+                    eligible: false
+                }
             }
         ]
     });
 };
+
+/* eslint-disable-next-line no-empty-function */
+const tracking = () => {};
 
 const getAccessToken = () => {
     return Promise.resolve('XYZ12345');
@@ -246,14 +249,16 @@ const transportRiskData = () => {
 const content = {
     US: {
         en: {
-            instantlyPayWith:     'Pay instantly with',
-            poweredBy:            'Powered by PayPal',
-            chooseCardOrShipping: 'Choose card or shipping',
-            useDifferentAccount:  'Use different account',
-            deleteVaultedAccount: 'Forget this account',
-            deleteVaultedCard:    'Forget this card',
-            chooseCard:           'Choose card',
-            balance:              'Balance'
+            instantlyPayWith:        'Pay instantly with',
+            poweredBy:               'Powered by PayPal',
+            chooseCardOrShipping:    'Choose card or shipping',
+            useDifferentAccount:     'Use different account',
+            deleteVaultedAccount:    'Forget this account',
+            deleteVaultedCard:       'Forget this card',
+            chooseCard:              'Choose card',
+            balance:                 'Balance',
+            payWithDifferentAccount: 'Pay with a different account',
+            payWithDifferentMethod:  'Pay with a different funding method'
         }
     }
 };
@@ -266,7 +271,8 @@ const buttonMiddleware = getButtonMiddleware({
     getAccessToken,
     getMerchantID,
     transportRiskData,
-    content
+    content,
+    tracking
 });
 
 const walletMiddleware = getWalletMiddleware({

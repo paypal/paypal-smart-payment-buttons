@@ -6,7 +6,7 @@ import { request, noop, memoize } from 'belter/src';
 
 import { SMART_API_URI, ORDERS_API_URL, VALIDATE_PAYMENT_METHOD_API } from '../config';
 import { getLogger } from '../lib';
-import { FPTI_TRANSITION, FPTI_CONTEXT_TYPE, HEADERS } from '../constants';
+import { FPTI_TRANSITION, FPTI_CONTEXT_TYPE, HEADERS, SMART_PAYMENT_BUTTONS, INTEGRATION_ARTIFACT, USER_EXPERIENCE_FLOW, PRODUCT_FLOW } from '../constants';
 
 import { callSmartAPI, callGraphQL, callRestAPI } from './api';
 
@@ -151,23 +151,8 @@ export function patchOrder(orderID : string, data : PatchData, { facilitatorAcce
         });
 }
 
-type PayeeResponse = {|
-    merchant? : {|
-        id? : string
-    |}
-|};
-
-export function getPayee(orderID : string) : ZalgoPromise<PayeeResponse> {
-    return callSmartAPI({
-        url:     `${ SMART_API_URI.CHECKOUT }/${ orderID }/payee`,
-        headers: {
-            [HEADERS.CLIENT_CONTEXT]: orderID
-        }
-    });
-}
-
 export type ValidatePaymentMethodOptions = {|
-    clientAccessToken : string,
+    accessToken : string,
     orderID : string,
     paymentMethodID : string,
     enableThreeDomainSecure : boolean,
@@ -193,13 +178,15 @@ type PaymentSource = {|
     contingencies? : $ReadOnlyArray<$Values<typeof VALIDATE_CONTINGENCIES>>
 |};
 
-export function validatePaymentMethod({ clientAccessToken, orderID, paymentMethodID, enableThreeDomainSecure, partnerAttributionID, clientMetadataID } : ValidatePaymentMethodOptions) : ZalgoPromise<{| status : number, body : ValidatePaymentMethodResponse, headers : { [string] : string } |}> {
+export function validatePaymentMethod({ accessToken, orderID, paymentMethodID, enableThreeDomainSecure, partnerAttributionID, clientMetadataID } : ValidatePaymentMethodOptions) : ZalgoPromise<{| status : number, body : ValidatePaymentMethodResponse, headers : { [string] : string } |}> {
     getLogger().info(`rest_api_create_order_token`);
 
     const headers : Object = {
-        [ HEADERS.AUTHORIZATION ]:          `Bearer ${ clientAccessToken }`,
+        [ HEADERS.AUTHORIZATION ]:          `Bearer ${ accessToken }`,
         [ HEADERS.PARTNER_ATTRIBUTION_ID ]: partnerAttributionID,
-        [ HEADERS.CLIENT_METADATA_ID ]:     clientMetadataID
+        [ HEADERS.CLIENT_METADATA_ID ]:     clientMetadataID,
+        [ HEADERS.APP_NAME ]:               SMART_PAYMENT_BUTTONS,
+        [ HEADERS.APP_VERSION ]:            __SMART_BUTTONS__.__MINOR_VERSION__
     };
 
     const paymentSource : PaymentSource = {
@@ -410,17 +397,20 @@ type SupplementalOrderInfo = {|
                 total : {|
                     currencyCode : string
                 |}
-            |},
-            shippingAddress? : {|
-                isFullAddress? : boolean
             |}
         |},
         buyer? : {|
             userId? : string
         |},
         flags : {|
-            isShippingAddressRequired? : boolean
-        |}
+            isChangeShippingAddressAllowed? : boolean
+        |},
+        payees? : $ReadOnlyArray<{|
+            merchantId? : string,
+            email? : {|
+                stringValue? : string
+            |}
+        |}>
     |}
 |};
 
@@ -439,14 +429,15 @@ export const getSupplementalOrderInfo = memoize((orderID : string) : ZalgoPromis
                                 currencyCode
                             }
                         }
-                        shippingAddress {
-                            isFullAddress
-                        }
                     }
                     flags {
-                        hideShipping
-                        isShippingAddressRequired
                         isChangeShippingAddressAllowed
+                    }
+                    payees {
+                        merchantId
+                        email {
+                            stringValue
+                        }
                     }
                 }
             }
@@ -457,3 +448,13 @@ export const getSupplementalOrderInfo = memoize((orderID : string) : ZalgoPromis
         }
     });
 });
+
+export function updateButtonClientConfig({ orderID, fundingSource, inline = false } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void |}) : ZalgoPromise<void> {
+    return updateClientConfig({
+        orderID,
+        fundingSource,
+        integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
+        userExperienceFlow:  inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT,
+        productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS
+    });
+}

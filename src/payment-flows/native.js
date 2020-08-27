@@ -10,8 +10,8 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
-import { USER_ACTION, FPTI_TRANSITION } from '../constants';
+import { getLogger, promiseOne, promiseNoop, unresolvedPromise } from '../lib';
+import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions } from './types';
 import { checkout } from './checkout';
@@ -107,14 +107,10 @@ function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
 let initialPageUrl;
 
 function isNativeEligible({ props, config, serviceData } : IsEligibleOptions) : boolean {
-    
+
     const { platform, onShippingChange, createBillingAgreement, createSubscription, env } = props;
     const { firebase: firebaseConfig } = config;
     const { eligibility } = serviceData;
-
-    if (env === ENV.LOCAL || env === ENV.STAGE) {
-        return false;
-    }
 
     if (platform !== PLATFORM.MOBILE) {
         return false;
@@ -144,6 +140,10 @@ function isNativeEligible({ props, config, serviceData } : IsEligibleOptions) : 
         return true;
     }
 
+    if (env === ENV.LOCAL || env === ENV.STAGE) {
+        return false;
+    }
+
     if (eligibility.nativeCheckout.paypal || eligibility.nativeCheckout.venmo) {
         return true;
     }
@@ -160,6 +160,10 @@ function isNativePaymentEligible({ payment, props, serviceData } : IsPaymentElig
     }
 
     if (!initialPageUrl) {
+        return false;
+    }
+
+    if (!NATIVE_CHECKOUT_URI[fundingSource]) {
         return false;
     }
 
@@ -198,6 +202,17 @@ type NativeSDKProps = {|
     forceEligible : boolean
 |};
 
+function instrumentNativeSDKProps(props : NativeSDKProps) {
+    const sanitizedProps = {
+        ...props,
+        facilitatorAccessToken: props.facilitatorAccessToken ? '********************' : ''
+    };
+
+    getLogger().info('native_setprops_request', sanitizedProps).track({
+        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_PROPS_ATTEMPT
+    }).flush();
+}
+
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, onCancel, onError, commit,
         buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange } = props;
@@ -230,12 +245,20 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const getNativeDomain = memoize(() : string => {
+        if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
+            return 'https://www.sandbox.paypal.com';
+        }
+
         return (env === ENV.SANDBOX)
             ? NATIVE_DOMAIN_SANDBOX
             : NATIVE_DOMAIN;
     });
 
     const getNativePopupDomain = memoize(() : string => {
+        if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
+            return 'https://history.paypal.com';
+        }
+
         return (env === ENV.SANDBOX)
             ? NATIVE_POPUP_DOMAIN_SANDBOX
             : NATIVE_POPUP_DOMAIN;
@@ -288,10 +311,15 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const setNativeProps = memoize(() => {
             return getSDKProps().then(sdkProps => {
                 getLogger().info(`native_message_setprops`).flush();
+                instrumentNativeSDKProps(sdkProps);
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
                 getLogger().info(`native_response_setprops`).track({
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
+                }).flush();
+            }).catch(err => {
+                getLogger().info(`native_response_setprops_error`).track({
+                    [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }).flush();
             });
         });
@@ -335,7 +363,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, ({ data: { payerID, paymentID, billingToken } }) => {
             approved = true;
-            getLogger().info(`native_message_onapprove`).flush();
+            getLogger().info(`native_message_onapprove`)
+                .track({
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
+                })
+                .flush();
+
             const data = { payerID, paymentID, billingToken, forceRestAPI: true };
             const actions = { restart: () => fallbackToWebCheckout() };
             return ZalgoPromise.all([
@@ -368,7 +401,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         clean.register(onErrorListener.cancel);
 
         socket.reconnect();
-        
+
         return {
             setProps: setNativeProps,
             close:    closeNative
@@ -409,13 +442,27 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const nativeWin = popup(getNativeUrl({ sessionUID }));
+        const nativeUrl = getNativeUrl({ sessionUID });
+
+        const nativeWin = popup(nativeUrl);
+        getLogger()
+            .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
+            .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+            .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
+            })
+            .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+            }).flush();
+
         const validatePromise = validate();
         const delayPromise = ZalgoPromise.delay(500);
 
         const detectWebSwitchListener = listen(nativeWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
             getLogger().info(`native_post_message_detect_web_switch`).flush();
-            return detectWebSwitch(nativeWin);
+            return detectWebSwitch(nativeWin).then(unresolvedPromise);
         });
 
         clean.register(detectWebSwitchListener.cancel);
@@ -440,6 +487,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     throw new Error(`No window found`);
                 }
             }).catch(err => {
+                getLogger().info(`native_attempt_appswitch_url_popup_errored`, { url: nativeUrl })
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                        [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    }).flush();
                 return connectNative({ sessionUID }).close().then(() => {
                     throw err;
                 });
@@ -449,6 +502,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
+        getLogger().info(`native_attempt_appswitch_popup_shown`)
+            .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
+            }).flush();
 
         const closeListener = onCloseWindow(popupWin, () => {
             return ZalgoPromise.delay(1000).then(() => {
@@ -477,7 +535,26 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 }
 
                 return createOrder().then(() => {
-                    return { redirectUrl: getNativeUrl({ sessionUID, pageUrl }) };
+                    const nativeUrl = getNativeUrl({ sessionUID, pageUrl });
+
+                    getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+                        .track({
+                            [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                        }).flush();
+
+                    return { redirectUrl: nativeUrl };
+                }).catch(err => {
+                    getLogger().info(`native_attempt_appswitch_url_popup_errored`)
+                        .track({
+                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                            [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                        }).flush();
+
+                    return connectNative({ sessionUID }).close().then(() => {
+                        throw err;
+                    });
                 });
             });
         });

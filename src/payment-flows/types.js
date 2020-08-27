@@ -2,7 +2,7 @@
 
 import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import type { ZalgoPromise } from 'zalgo-promise/src';
-import { FUNDING, CARD } from '@paypal/sdk-constants/src';
+import { FUNDING, CARD, WALLET_INSTRUMENT } from '@paypal/sdk-constants/src';
 
 import type { ButtonProps, Components, ServiceData, Config } from '../button/props';
 import type { ProxyWindow, MenuChoices } from '../types';
@@ -19,15 +19,18 @@ export type PaymentFlowInstance = {|
 
 export type Payment = {|
     button : HTMLElement,
+    menuToggle? : ?HTMLElement,
     win? : ?(ProxyWindow | CrossDomainWindowType),
     fundingSource : $Values<typeof FUNDING>,
+    instrumentType? : ?$Values<typeof WALLET_INSTRUMENT>,
     card : ?$Values<typeof CARD>,
     paymentMethodID? : ?string,
     instrumentID? : ?string,
     isClick? : boolean,
     buyerAccessToken? : ?string,
     venmoPayloadID? : string,
-    buyerIntent : $Values<typeof BUYER_INTENT>
+    buyerIntent : $Values<typeof BUYER_INTENT>,
+    createAccessToken? : () => ZalgoPromise<string>
 |};
 
 export type SetupOptions = {|
@@ -62,7 +65,13 @@ export type MenuOptions = {|
     props : ButtonProps,
     payment : Payment,
     serviceData : ServiceData,
-    initiatePayment : ({| payment : Payment |}) => ZalgoPromise<void>
+    components : Components,
+    config : Config
+|};
+
+export type UpdateClientConfigOptions = {|
+    orderID : string,
+    payment : Payment
 |};
 
 export type PaymentFlow = {|
@@ -72,8 +81,8 @@ export type PaymentFlow = {|
     isPaymentEligible : (IsPaymentEligibleOptions) => boolean,
     init : <T>(InitOptions, overrides? : T) => PaymentFlowInstance, // eslint-disable-line no-undef
     setupMenu? : (MenuOptions) => MenuChoices,
+    updateClientConfig? : (UpdateClientConfigOptions) => ZalgoPromise<void>,
     spinner? : boolean,
     inline? : boolean,
-    popup? : boolean,
-    instant? : boolean
+    popup? : boolean
 |};

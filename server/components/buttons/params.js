@@ -1,11 +1,11 @@
 /* @flow */
 /* eslint max-depth: off */
 
-import { ENV, COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, DEFAULT_COUNTRY, COUNTRY_LANGS } from '@paypal/sdk-constants';
+import type { FundingEligibilityType } from '@paypal/sdk-constants/src/types';
+import { ENV, COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, DEFAULT_COUNTRY, COUNTRY_LANGS, PLATFORM, FUNDING_PRODUCTS } from '@paypal/sdk-constants';
 import { values } from 'belter';
 
 import { HTTP_HEADER, ERROR_CODE } from '../../config';
-import type { FundingEligibility } from '../../service';
 import type { ExpressRequest, ExpressResponse, LocaleType, RiskData } from '../../types';
 import { makeError } from '../../lib';
 
@@ -35,7 +35,9 @@ type ParamsType = {|
     userIDToken? : string,
     amount? : string,
     clientMetadataID? : string,
-    riskData? : string
+    riskData? : string,
+    enableBNPL? : boolean,
+    platform : ?$Values<typeof PLATFORM>
 |};
 
 type Style = {|
@@ -57,7 +59,7 @@ type RequestParams = {|
     buttonSessionID : string,
     clientAccessToken : ?string,
     cspNonce : string,
-    basicFundingEligibility : FundingEligibility,
+    basicFundingEligibility : FundingEligibilityType,
     locale : LocaleType,
     debug : boolean,
     style : Style,
@@ -66,7 +68,10 @@ type RequestParams = {|
     amount : ?string,
     clientMetadataID : ?string,
     pageSessionID : string,
-    riskData : ?RiskData
+    riskData : ?RiskData,
+    correlationID : string,
+    enableBNPL : boolean,
+    platform : $Values<typeof PLATFORM>
 |};
 
 function getCSPNonce(res : ExpressResponse) : string {
@@ -79,7 +84,13 @@ function getCSPNonce(res : ExpressResponse) : string {
     return nonce;
 }
 
-function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibility {
+const getDefaultFundingEligibility = () : FundingEligibilityType => {
+    // $FlowFixMe
+    return {};
+};
+
+// eslint-disable-next-line complexity
+function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityType {
     const encodedFundingEligibility = req.query.fundingEligibility;
 
     if (encodedFundingEligibility && typeof encodedFundingEligibility === 'string') {
@@ -90,7 +101,7 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibility {
         } catch (err) {
             throw new makeError(ERROR_CODE.VALIDATION_ERROR, `Invalid funding eligibility: ${ encodedFundingEligibility }`, err);
         }
-        const fundingEligibility = {};
+        const fundingEligibility = getDefaultFundingEligibility();
         
         for (const fundingSource of values(FUNDING)) {
             const fundingSourceEligibilityInput = fundingEligibilityInput[fundingSource] || {};
@@ -134,14 +145,29 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibility {
                         }
                     }
                 }
+
+                const productsEligibilityInput = fundingSourceEligibilityInput.products;
+                const productsEligibility = fundingSourceEligibility.products || {};
+
+                if (productsEligibilityInput) {
+                    fundingSourceEligibility.products = productsEligibility;
+
+                    for (const product of values(FUNDING_PRODUCTS)) {
+                        const productEligibilityInput = productsEligibilityInput[product] || {};
+                        const productEligibility = productsEligibility[product] || {};
+
+                        if (typeof productEligibilityInput.eligible === 'boolean') {
+                            productEligibility.eligible = productEligibilityInput.eligible;
+                            productsEligibility[product] = productEligibility;
+                        }
+                    }
+                }
             }
         }
 
-        // $FlowFixMe
         return fundingEligibility;
     }
-
-    // $FlowFixMe
+    
     return {
         [ FUNDING.PAYPAL ]: {
             eligible: true
@@ -159,7 +185,7 @@ function getRiskDataParam(req : ExpressRequest) : ?RiskData {
     try {
         return JSON.parse(Buffer.from(serializedRiskData, 'base64').toString('utf8'));
     } catch (err) {
-        throw new makeError(ERROR_CODE.VALIDATION_ERROR, `Invalid risk data: ${ serializedRiskData }`, err);
+        // pass
     }
 }
 
@@ -229,7 +255,9 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         clientAccessToken,
         userIDToken,
         debug = false,
-        onShippingChange = false
+        onShippingChange = false,
+        enableBNPL = false,
+        platform = PLATFORM.DESKTOP
     } = params;
 
     const locale = getLocale(params);
@@ -240,6 +268,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const riskData = getRiskDataParam(req);
+    const correlationID = req.correlationId || '';
 
     return {
         env,
@@ -257,13 +286,16 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         clientAccessToken,
         basicFundingEligibility,
         cspNonce,
-        debug,
+        debug: Boolean(debug),
         style,
         onShippingChange,
         locale,
         amount,
         riskData,
         pageSessionID,
-        clientMetadataID
+        clientMetadataID,
+        correlationID,
+        enableBNPL,
+        platform
     };
 }

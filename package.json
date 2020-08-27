@@ -1,8 +1,8 @@
 {
   "name": "@paypal/smart-payment-buttons",
-  "version": "2.0.260",
+  "version": "2.0.303",
   "publishConfig": {
-    "registry": "https://registry.npmjs.com"
+    "registry": "https://registry.npmjs.org"
   },
   "description": "Serverside rendered ButtonJS",
   "main": "index.js",
@@ -13,6 +13,15 @@
   "jest": {
     "coverageDirectory": "./server-coverage/"
   },
+  "files": [
+    "dist",
+    "server",
+    "src",
+    "babel.config.js",
+    "index.js",
+    "globals.js",
+    "webpack.config.js"
+  ],
   "scripts": {
     "start": "babel-node ./server/devServer",
     "setup": "npm install && npm run flow-typed",
@@ -33,8 +42,10 @@
     "debug": "cross-env NODE_ENV=debug",
     "jest": "jest test/server --collectCoverage --collectCoverageFrom='server/' --env=node --no-cache --silent",
     "cover": "echo no-cover",
-    "prepublish": "in-publish && npm run babel || not-in-publish",
-    "postpublish": "git clean -f && git checkout ."
+    "prepublishOnly": "npm run babel",
+    "postpublish": "git clean -f && git checkout .",
+    "cdnify": "grabthar-cdnify --cdn=https://www.paypalobjects.com",
+    "postinstall": "npm_config_registry=https://npm.paypal.com npm install @paypalcorp/web --no-save --proxy='null' --https-proxy='null' || echo 'Unable to install cdnx cli tools'"
   },
   "peerDependencies": {
     "express": "^4.16.3"
@@ -42,13 +53,14 @@
   "dependencies": {
     "@paypal/checkout-components": "^5.0.30",
     "@paypal/common-components": "^1.0.10",
-    "@paypal/sdk-client": "^4.0.122",
-    "@paypal/sdk-constants": "^1.0.52",
+    "@paypal/sdk-client": "^4.0.123",
+    "@paypal/sdk-constants": "^1.0.57",
     "@paypal/sdk-logos": "^1.0.26",
+    "@paypal/sdk-release": "^5.0.138",
     "beaver-logger": "^4.0.12",
     "belter": "^1.0.19",
     "cross-domain-utils": "^2.0.16",
-    "grabthar": "^3",
+    "grabthar": "^4",
     "jsx-pragmatic": "^2",
     "preact": "^10",
     "preact-render-to-string": "^5.1.4",
@@ -59,10 +71,11 @@
   "devDependencies": {
     "babel-core": "^7.0.0-bridge.0",
     "express": "^4.16.3",
-    "flow-bin": "^0.110.1",
+    "flow-bin": "^0.131",
+    "grabthar-release": "^1.0.8",
     "grumbler-scripts": "^3.0.18",
     "post-robot": "^10.0.13",
-    "sync-browser-mocks": "^2.0.1",
+    "sync-browser-mocks": "^2.0.8",
     "webpack-mem-compile": "^1.0.2"
   },
   "license": "PayPal",

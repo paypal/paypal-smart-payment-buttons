@@ -13,7 +13,8 @@ export const WEBPACK_CONFIG = 'webpack.config';
 
 export const MODULE_DIR = join(__dirname, '..');
 
-export const BUTTON_RENDER_MODULE = '@paypal/checkout-components';
+export const BUTTON_RENDER_MODULE = '@paypal/sdk-release';
+export const BUTTON_RENDER_CHILD_MODULE = '@paypal/checkout-components';
 export const BUTTON_CLIENT_MODULE = pkg.name;
 
 export const BUTTON_RENDER_JS = 'dist/button.js';
@@ -28,3 +29,6 @@ export const WALLET_CLIENT_JS = 'dist/smart-wallet.js';
 export const WALLET_CLIENT_MIN_JS = 'dist/smart-wallet.min.js';
 
 export const BROWSER_CACHE_TIME = 6 * 60 * 60;
+
+export const SDK_CDN_NAMESPACE = 'https://www.paypalobjects.com/js-sdk-release';
+export const SMART_BUTTONS_CDN_NAMESPACE = 'https://www.paypalobjects.com/smart-payment-buttons';

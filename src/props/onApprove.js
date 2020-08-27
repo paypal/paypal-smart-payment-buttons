@@ -5,7 +5,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { memoize, redirect as redir, noop } from 'belter/src';
 import { INTENT, SDK_QUERY_KEYS, FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, authorizeOrder, patchOrder, getSubscription, activateSubscription, type SubscriptionResponse, getPayment, executePayment, patchPayment, upgradeFacilitatorAccessToken, getSupplementalOrderInfo } from '../api';
+import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, authorizeOrder, patchOrder, getSubscription, activateSubscription, type SubscriptionResponse, getPayment, executePayment, patchPayment, getSupplementalOrderInfo } from '../api';
 import { ORDER_API_ERROR, FPTI_TRANSITION, FPTI_CONTEXT_TYPE } from '../constants';
 import { unresolvedPromise, getLogger } from '../lib';
 import { ENABLE_PAYMENT_API } from '../config';
@@ -19,6 +19,7 @@ export type XOnApproveDataType = {|
     paymentID : ?string,
     subscriptionID? : ?string,
     billingToken? : ?string,
+    authCode? : ?string,
     facilitatorAccessToken : string
 |};
 
@@ -60,7 +61,7 @@ type ActionOptions = {|
 |};
 
 function buildOrderActions({ intent, orderID, restart, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI } : ActionOptions) : OrderActions {
-    
+
     const handleProcessorError = (err : mixed) : ZalgoPromise<OrderResponse> => {
         // $FlowFixMe
         const isProcessorDecline = err && err.data && err.data.details && err.data.details.some(detail => {
@@ -73,7 +74,7 @@ function buildOrderActions({ intent, orderID, restart, facilitatorAccessToken, b
 
         throw new Error('Order could not be captured');
     };
-    
+
     const get = memoize(() => {
         return getOrder(orderID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
     });
@@ -172,7 +173,7 @@ function buildXApproveActions({ intent, orderID, paymentID, payerID, restart, su
         if (!subscriptionID) {
             throw new Error(`No subscription ID present`);
         }
-        
+
         return activateSubscription(subscriptionID, { buyerAccessToken });
     });
 
@@ -209,6 +210,7 @@ export type OnApproveData = {|
     billingToken? : ?string,
     subscriptionID? : ?string,
     buyerAccessToken? : ?string,
+    authCode? : ?string,
     forceRestAPI? : boolean
 |};
 
@@ -235,20 +237,19 @@ type OnApproveXProps = {|
     onApprove : ?XOnApprove,
     partnerAttributionID : ?string,
     onError : XOnError,
-    upgradeLSAT : boolean
+    upgradeLSAT : boolean,
+    clientAccessToken : ?string,
+    vault : boolean,
+    isLSATExperiment : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false, isLSATExperiment = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
 
-    return memoize(({ payerID, paymentID, billingToken, subscriptionID, buyerAccessToken, forceRestAPI = upgradeLSAT } : OnApproveData, { restart } : OnApproveActions) => {
+    return memoize(({ payerID, paymentID, billingToken, subscriptionID, buyerAccessToken, authCode, forceRestAPI = (upgradeLSAT || isLSATExperiment) } : OnApproveData, { restart } : OnApproveActions) => {
         return ZalgoPromise.try(() => {
-            if (upgradeLSAT && buyerAccessToken) {
-                return createOrder().then(orderID => upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }));
-            }
-        }).then(() => {
             return createOrder();
         }).then(orderID => {
             getLogger()
@@ -260,16 +261,18 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                     [FPTI_KEY.CONTEXT_ID]:   orderID
                 }).flush();
 
-            if (!payerID) {
-                getSupplementalOrderInfo.reset();
+            if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
+                if (!payerID) {
+                    getLogger().error('onapprove_payerid_not_present', { orderID }).flush();
+                    // throw new Error(`payerID not present in onApprove call`);
+                }
             }
 
             return getSupplementalOrderInfo(orderID).then(supplementalData => {
                 intent = intent || (supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.intent);
                 billingToken = billingToken || (supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.billingToken);
-                payerID = payerID || (supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.buyer && supplementalData.checkoutSession.buyer.userId);
-                
-                const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken };
+
+                const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
                 const actions = buildXApproveActions({ orderID, paymentID, payerID, intent, restart, subscriptionID, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
 
                 return onApprove(data, actions).catch(err => {

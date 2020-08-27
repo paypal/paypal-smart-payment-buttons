@@ -4,17 +4,19 @@ import { noop, stringifyError } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { checkout, cardFields, native, honey, vaultCapture, walletCapture, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
-import { sendBeacon, getLogger, promiseNoop } from '../lib';
+import { checkout, cardFields, native, honey, vaultCapture, walletCapture, walletCaptureBNPL, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
+import { getLogger, promiseNoop } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
+import { updateButtonClientConfig } from '../api';
 
 import { type ButtonProps, type Config, type ServiceData, type Components } from './props';
 import { enableLoadingSpinner, disableLoadingSpinner } from './dom';
-import { updateButtonClientConfig, validateOrder } from './orders';
+import { validateOrder } from './validation';
 import { renderMenu } from './menu';
 
 const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     vaultCapture,
+    walletCaptureBNPL,
     walletCapture,
     cardFields,
     popupBridge,
@@ -41,15 +43,6 @@ export function getPaymentFlow({ props, payment, config, serviceData } : {| prop
     throw new Error(`Could not find eligible payment flow`);
 }
 
-const sendPersonalizationBeacons = (personalization) => {
-    if (personalization && personalization.tagline && personalization.tagline.tracking) {
-        sendBeacon(personalization.tagline.tracking.click);
-    }
-    if (personalization && personalization.buttonText && personalization.buttonText.tracking) {
-        sendBeacon(personalization.buttonText.tracking.click);
-    }
-};
-
 type InitiatePaymentOptions = {|
     payment : Payment,
     props : ButtonProps,
@@ -59,25 +52,29 @@ type InitiatePaymentOptions = {|
 |};
 
 export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentOptions) : ZalgoPromise<void> {
-    const { button, fundingSource } = payment;
+    const { button, fundingSource, instrumentType } = payment;
 
     return ZalgoPromise.try(() => {
-        const { personalization, merchantID } = serviceData;
+        const { merchantID } = serviceData;
         const { clientID, onClick, createOrder, env } = props;
 
-        sendPersonalizationBeacons(personalization);
-
-        const { name, init, inline, spinner, instant = false } = getPaymentFlow({ props, payment, config, components, serviceData });
+        const { name, init, inline, spinner, updateClientConfig } = getPaymentFlow({ props, payment, config, components, serviceData });
         const { click = promiseNoop, start, close } = init({ props, config, serviceData, components, payment });
 
         const clickPromise = ZalgoPromise.try(click);
         clickPromise.catch(noop);
 
-        getLogger().info(`button_click`).info(`pay_flow_${ name }`).track({
-            [FPTI_KEY.TRANSITION]:     FPTI_TRANSITION.BUTTON_CLICK,
-            [FPTI_KEY.CHOSEN_FUNDING]: fundingSource,
-            [FPTI_KEY.PAYMENT_FLOW]:   name
-        }).flush();
+        getLogger()
+            .info(`button_click`)
+            .info(`button_click_pay_flow_${ name }`)
+            .info(`button_click_fundingsource_${ fundingSource }`)
+            .info(`button_click_instrument_${ instrumentType || 'default' }`)
+            .track({
+                [FPTI_KEY.TRANSITION]:     FPTI_TRANSITION.BUTTON_CLICK,
+                [FPTI_KEY.CHOSEN_FUNDING]: fundingSource,
+                [FPTI_KEY.CHOSEN_FI_TYPE]: instrumentType,
+                [FPTI_KEY.PAYMENT_FLOW]:   name
+            }).flush();
 
         return ZalgoPromise.hash({
             valid: onClick ? onClick({ fundingSource }) : true
@@ -90,27 +87,40 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                 enableLoadingSpinner(button);
             }
 
-            const clientConfigPromise = createOrder()
-                .then(orderID => updateButtonClientConfig({ orderID, fundingSource, inline }))
-                .catch(err => getLogger().error('update_client_config_error', { err: stringifyError(err) }));
+            const updateClientConfigPromise = createOrder()
+                .then(orderID => {
+                    if (updateClientConfig) {
+                        return updateClientConfig({ orderID, payment });
+                    }
+
+                    // Do not block by default
+                    updateButtonClientConfig({ orderID, fundingSource, inline });
+                }).catch(err => getLogger().error('update_client_config_error', { err: stringifyError(err) }));
 
             const {
                 intent:   expectedIntent,
                 currency: expectedCurrency
             } = props;
 
-            return ZalgoPromise.resolve()
-                .then(() => (instant ? clientConfigPromise : null))
-                .then(() => start())
-                .then(() => createOrder())
-                .then(orderID => validateOrder(orderID, { env, clientID, merchantID, expectedCurrency, expectedIntent }))
-                .then(() => clickPromise)
-                .catch(err => {
-                    return ZalgoPromise.all([
-                        close(),
-                        ZalgoPromise.reject(err)
-                    ]);
-                }).then(noop);
+            const startPromise = ZalgoPromise.try(() => {
+                return updateClientConfigPromise;
+            }).then(() => {
+                return start();
+            });
+
+            const validateOrderPromise = createOrder().then(orderID => {
+                return validateOrder(orderID, { env, clientID, merchantID, expectedCurrency, expectedIntent });
+            });
+
+            return ZalgoPromise.all([
+                clickPromise,
+                startPromise,
+                validateOrderPromise
+            ]).catch(err => {
+                return ZalgoPromise.try(close).then(() => {
+                    throw err;
+                });
+            }).then(noop);
         });
 
     }).finally(() => {
@@ -123,11 +133,10 @@ type InitiateMenuOptions = {|
     props : ButtonProps,
     serviceData : ServiceData,
     config : Config,
-    components : Components,
-    initiatePayment : ({| payment : Payment |}) => ZalgoPromise<void>
+    components : Components
 |};
 
-export function initiateMenuFlow({ payment, serviceData, config, components, props, initiatePayment } : InitiateMenuOptions) : ZalgoPromise<void> {
+export function initiateMenuFlow({ payment, serviceData, config, components, props } : InitiateMenuOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
         const { fundingSource, button } = payment;
 
@@ -143,7 +152,7 @@ export function initiateMenuFlow({ payment, serviceData, config, components, pro
             [FPTI_KEY.PAYMENT_FLOW]:   name
         }).flush();
 
-        const choices = setupMenu({ props, payment, serviceData, initiatePayment }).map(choice => {
+        const choices = setupMenu({ props, payment, serviceData, components, config }).map(choice => {
             return {
                 ...choice,
                 onSelect: (...args) => {

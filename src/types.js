@@ -19,23 +19,6 @@ export type LocaleType = {|
     lang : $Values<typeof LANG>
 |};
 
-export type PersonalizationType = {|
-    buttonText? : {|
-        text : string,
-        tracking : {|
-            impression : string,
-            click : string
-        |}
-    |},
-    tagline? : {|
-        text : string,
-        tracking : {|
-            impression : string,
-            click : string
-        |}
-    |}
-|};
-
 export type ZoidComponentInstance<P> = {|
     render : (string, ?$Values<typeof CONTEXT>) => ZalgoPromise<void>,
     renderTo : (CrossDomainWindowType, string, ?$Values<typeof CONTEXT>) => ZalgoPromise<void>,
@@ -57,9 +40,9 @@ export type CheckoutProps = {|
     buttonSessionID : string,
     clientAccessToken? : ?string,
     createAuthCode? : () => ZalgoPromise<?string>,
-    getConnectURL? : ?() => ZalgoPromise<string>,
+    getConnectURL? : ?({| payerID : string |}) => ZalgoPromise<string>,
     createOrder : () => ZalgoPromise<string>,
-    onApprove : ({| payerID : string, paymentID : ?string, billingToken : ?string, subscriptionID : ?string |}) => ZalgoPromise<void> | void,
+    onApprove : ({| payerID : string, paymentID : ?string, billingToken : ?string, subscriptionID : ?string, authCode : ?string |}) => ZalgoPromise<void> | void,
     onAuth : ({| accessToken : string |}) => ZalgoPromise<void> | void,
     onCancel : () => ZalgoPromise<void> | void,
     onShippingChange : ?({| |}, {| resolve : () => ZalgoPromise<void>, reject : () => ZalgoPromise<void> |}) => ZalgoPromise<void> | void,
@@ -83,7 +66,7 @@ export type CardFieldsProps = {|
     buttonSessionID : string,
     clientAccessToken? : ?string,
     createOrder : () => ZalgoPromise<string>,
-    onApprove : ({| payerID : string, paymentID : ?string, billingToken : ?string, subscriptionID : ?string |}) => ZalgoPromise<void> | void,
+    onApprove : ({| payerID : string, paymentID : ?string, billingToken : ?string, subscriptionID : ?string, authCode : ?string |}) => ZalgoPromise<void> | void,
     onAuth : ({| accessToken : string |}) => ZalgoPromise<void> | void,
     onCancel : () => ZalgoPromise<void> | void,
     onError : (mixed) => ZalgoPromise<void> | void,
@@ -122,6 +105,8 @@ export type MenuChoices = $ReadOnlyArray<MenuChoice>;
 
 export type MenuFlowProps = {|
     clientID : string,
+    onFocus? : () => void,
+    onFocusFail? : () => void,
     verticalOffset? : number,
     choices? : MenuChoices
 |};
@@ -136,7 +121,9 @@ export type ContentType = {|
     deleteVaultedAccount : string,
     deleteVaultedCard : string,
     chooseCard : string,
-    balance : string
+    balance : string,
+    payWithDifferentAccount : string,
+    payWithDifferentMethod : string
 |};
 
 export type PostRobot = {|
@@ -159,7 +146,8 @@ export type WalletInstrument = {|
     instrumentID? : string,
     tokenID? : string,
     vendor? : $Values<typeof CARD>,
-    oneClick : boolean
+    oneClick : boolean,
+    accessToken? : ?string
 |};
 
 export type WalletPaymentType = {|
@@ -173,6 +161,5 @@ export type Wallet = {|
 |};
 
 export type ConnectOptions = {|
-    scopes : $ReadOnlyArray<string>,
-    billingType? : string
+    scopes : $ReadOnlyArray<string>
 |};

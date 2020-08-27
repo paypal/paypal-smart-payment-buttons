@@ -2,16 +2,16 @@
 
 import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { FUNDING } from '@paypal/sdk-constants/src';
+import { FUNDING, FPTI_KEY } from '@paypal/sdk-constants/src';
 import { destroyElement } from 'belter/src';
 
 import type { ThreeDomainSecureFlowType, MenuChoices } from '../types';
 import type { CreateOrder } from '../props';
-import { validatePaymentMethod, type ValidatePaymentMethodResponse, getSupplementalOrderInfo, deleteVault } from '../api';
-import { TARGET_ELEMENT, BUYER_INTENT } from '../constants';
+import { validatePaymentMethod, type ValidatePaymentMethodResponse, getSupplementalOrderInfo, deleteVault, updateButtonClientConfig } from '../api';
+import { TARGET_ELEMENT, BUYER_INTENT, FPTI_TRANSITION } from '../constants';
 import { getLogger } from '../lib';
 
-import type { PaymentFlow, PaymentFlowInstance, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions } from './types';
+import type { PaymentFlow, PaymentFlowInstance, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions, Payment } from './types';
 import { checkout, CHECKOUT_POPUP_DIMENSIONS } from './checkout';
 
 const VAULT_MIN_WIDTH = 250;
@@ -91,17 +91,19 @@ function handleValidateResponse({ ThreeDomainSecure, status, body, createOrder, 
 
 function initVaultCapture({ props, components, payment, serviceData, config } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, clientAccessToken, clientMetadataID: cmid,
-        enableThreeDomainSecure, sessionID, partnerAttributionID, getParent } = props;
+        enableThreeDomainSecure, sessionID, partnerAttributionID, getParent, userIDToken } = props;
     const { ThreeDomainSecure } = components;
     const { fundingSource, paymentMethodID } = payment;
+    const { facilitatorAccessToken } = serviceData;
 
     const clientMetadataID = cmid || sessionID;
+    const accessToken = userIDToken ? facilitatorAccessToken : clientAccessToken;
 
     if (!paymentMethodID) {
         throw new Error(`Payment method id required for vault capture`);
     }
 
-    if (!clientAccessToken) {
+    if (!accessToken) {
         throw new Error(`Client access token required for vault capture`);
     }
 
@@ -118,17 +120,13 @@ function initVaultCapture({ props, components, payment, serviceData, config } : 
 
     const shippingRequired = (orderID) => {
         return getSupplementalOrderInfo(orderID).then(order => {
-            const { flags: { isShippingAddressRequired }, cart: { shippingAddress } } = order.checkoutSession;
+            const { flags: { isChangeShippingAddressAllowed } } = order.checkoutSession;
 
-            if (!isShippingAddressRequired) {
-                return false;
+            if (isChangeShippingAddressAllowed) {
+                return true;
             }
 
-            if (shippingAddress && shippingAddress.isFullAddress) {
-                return false;
-            }
-
-            return true;
+            return false;
         });
     };
 
@@ -137,7 +135,7 @@ function initVaultCapture({ props, components, payment, serviceData, config } : 
             return createOrder();
         }).then(orderID => {
             return ZalgoPromise.hash({
-                validate:        validatePaymentMethod({ clientAccessToken, orderID, paymentMethodID, enableThreeDomainSecure, clientMetadataID, partnerAttributionID }),
+                validate:        validatePaymentMethod({ accessToken, orderID, paymentMethodID, enableThreeDomainSecure, clientMetadataID, partnerAttributionID }),
                 requireShipping: shippingRequired(orderID)
             });
         }).then(({ validate, requireShipping }) => {
@@ -167,61 +165,121 @@ const POPUP_OPTIONS = {
     height: CHECKOUT_POPUP_DIMENSIONS.HEIGHT
 };
 
-function setupVaultMenu({ props, payment, serviceData, initiatePayment } : MenuOptions) : MenuChoices {
-    const { clientAccessToken } = props;
+function setupVaultMenu({ props, payment, serviceData, components, config } : MenuOptions) : MenuChoices {
+    const { clientAccessToken, createOrder, enableThreeDomainSecure, partnerAttributionID, sessionID, clientMetadataID, userIDToken } = props;
     const { fundingSource, paymentMethodID, button } = payment;
-    const { content } = serviceData;
+    const { content, facilitatorAccessToken } = serviceData;
 
     if (!clientAccessToken || !paymentMethodID) {
         throw new Error(`Client access token and payment method id required`);
     }
 
+    const updateClientConfig = () => {
+        return ZalgoPromise.try(() => {
+            return createOrder();
+        }).then(orderID => {
+            return updateButtonClientConfig({ fundingSource, orderID, inline: false });
+        });
+    };
+
+    const validate = () => {
+        const accessToken = userIDToken ? facilitatorAccessToken : clientAccessToken;
+
+        return ZalgoPromise.try(() => {
+            return createOrder();
+        }).then(orderID => {
+            return validatePaymentMethod({ accessToken, orderID, paymentMethodID, enableThreeDomainSecure, partnerAttributionID, clientMetadataID: clientMetadataID || sessionID });
+        });
+    };
+
+    const loadCheckout = ({ payment: checkoutPayment } : {| payment : Payment |}) => {
+        return checkout.init({
+            props, components, serviceData, config, payment: checkoutPayment
+        }).start();
+    };
+
+    const CHOOSE_FUNDING_SHIPPING = {
+        label:    content.payWithDifferentMethod,
+        popup:    POPUP_OPTIONS,
+        onSelect: ({ win }) => {
+
+            getLogger().info('click_choose_funding').track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_FUNDING
+            }).flush();
+            
+            return ZalgoPromise.try(() => {
+                return updateClientConfig();
+            }).then(() => {
+                return validate();
+            }).then(() => {
+                return loadCheckout({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING } });
+            });
+        }
+    };
+
+    const CHOOSE_ACCOUNT = {
+        label:    content.payWithDifferentAccount,
+        popup:    POPUP_OPTIONS,
+        onSelect: ({ win }) => {
+
+            getLogger().info('click_choose_account').track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_ACCOUNT
+            }).flush();
+
+            return ZalgoPromise.try(() => {
+                return updateClientConfig();
+            }).then(() => {
+                return loadCheckout({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_ACCOUNT } });
+            });
+        }
+    };
+
+    const DELETE_CARD = {
+        label:    content.deleteVaultedCard,
+        spinner:  true,
+        onSelect: () => {
+
+            getLogger().info('click_unlink_account').track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_UNLINK_ACCOUNT
+            }).flush();
+
+            return deleteVault({ paymentMethodID, clientAccessToken }).then(() => {
+                destroyElement(button);
+            });
+        }
+    };
+
     if (fundingSource === FUNDING.PAYPAL) {
         return [
-            {
-                label:    content.chooseCard || content.chooseCardOrShipping,
-                popup:    POPUP_OPTIONS,
-                onSelect: ({ win }) => {
-                    return initiatePayment({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_FUNDING_SHIPPING } });
-                }
-            },
-            {
-                label:    content.useDifferentAccount,
-                popup:    POPUP_OPTIONS,
-                onSelect: ({ win }) => {
-                    return initiatePayment({ payment: { ...payment, win, buyerIntent: BUYER_INTENT.PAY_WITH_DIFFERENT_ACCOUNT } });
-                }
-            }
+            CHOOSE_FUNDING_SHIPPING,
+            CHOOSE_ACCOUNT
         ];
     }
 
     if (fundingSource === FUNDING.CARD) {
         return [
-            {
-                label:    content.deleteVaultedCard,
-                spinner:  true,
-                onSelect: () => {
-                    return deleteVault({ paymentMethodID, clientAccessToken }).then(() => {
-                        destroyElement(button);
-                    });
-                }
-            }
+            DELETE_CARD
         ];
     }
 
     throw new Error(`Can not render menu for ${ fundingSource }`);
 }
 
+function updateVaultClientConfig({ orderID, payment }) : ZalgoPromise<void> {
+    const { fundingSource } = payment;
+    return updateButtonClientConfig({ fundingSource, orderID, inline: true });
+}
+
 export const vaultCapture : PaymentFlow = {
-    name:              'vault_capture',
-    setup:             setupVaultCapture,
-    isEligible:        isVaultCaptureEligible,
-    isPaymentEligible: isVaultCapturePaymentEligible,
-    init:              initVaultCapture,
-    setupMenu:         setupVaultMenu,
-    spinner:           true,
-    inline:            true,
-    instant:           true
+    name:               'vault_capture',
+    setup:              setupVaultCapture,
+    isEligible:         isVaultCaptureEligible,
+    isPaymentEligible:  isVaultCapturePaymentEligible,
+    init:               initVaultCapture,
+    setupMenu:          setupVaultMenu,
+    updateClientConfig: updateVaultClientConfig,
+    spinner:            true,
+    inline:             true
 };
 
 

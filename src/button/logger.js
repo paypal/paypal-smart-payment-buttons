@@ -1,7 +1,7 @@
 /* @flow */
 
 import { isIEIntranet, getPageRenderTime } from 'belter/src';
-import { FPTI_KEY, ENV } from '@paypal/sdk-constants/src';
+import { FPTI_KEY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 
 import type { LocaleType } from '../types';
@@ -26,34 +26,38 @@ type ButtonLoggerOptions = {|
     clientID : ?string,
     partnerAttributionID : ?string,
     commit : boolean,
-    correlationID : string,
+    sdkCorrelationID : string,
+    buttonCorrelationID : string,
     locale : LocaleType,
     buttonSessionID : string,
     merchantID : $ReadOnlyArray<string>,
     merchantDomain : string,
     version : string,
-    style : ButtonStyle
+    style : ButtonStyle,
+    fundingSource : ?$Values<typeof FUNDING>
 |};
 
-export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, partnerAttributionID, commit, correlationID, locale, merchantID, merchantDomain, version, style } : ButtonLoggerOptions) : ZalgoPromise<void> {
+export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, buttonCorrelationID, locale, merchantID, merchantDomain, version, style, fundingSource } : ButtonLoggerOptions) : ZalgoPromise<void> {
     const logger = getLogger();
 
-    setupLogger({ env, sessionID, clientID, partnerAttributionID, commit, correlationID, locale, merchantID, merchantDomain, version });
+    setupLogger({ env, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, locale, merchantID, merchantDomain, version });
 
     logger.addPayloadBuilder(() => {
         return {
-            buttonSessionID
+            buttonSessionID,
+            buttonCorrelationID
         };
     });
 
     logger.addTrackingBuilder(() => {
         return {
-            [FPTI_KEY.STATE]:                  FPTI_STATE.BUTTON,
-            [FPTI_KEY.CONTEXT_TYPE]:           FPTI_CONTEXT_TYPE.BUTTON_SESSION_ID,
-            [FPTI_KEY.CONTEXT_ID]:             buttonSessionID,
-            [FPTI_KEY.STATE]:                  FPTI_STATE.BUTTON,
-            [FPTI_KEY.BUTTON_SESSION_UID]:     buttonSessionID,
-            [FPTI_KEY.BUTTON_VERSION]:         __SMART_BUTTONS__.__MINOR_VERSION__
+            [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
+            [FPTI_KEY.CONTEXT_TYPE]:                 FPTI_CONTEXT_TYPE.BUTTON_SESSION_ID,
+            [FPTI_KEY.CONTEXT_ID]:                   buttonSessionID,
+            [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
+            [FPTI_KEY.BUTTON_SESSION_UID]:           buttonSessionID,
+            [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__,
+            [FTPI_BUTTON_KEY.BUTTON_CORRELATION_ID]: buttonCorrelationID
         };
     });
 
@@ -67,6 +71,10 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
             return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
         });
 
+        const walletInstruments = Array.prototype.slice.call(document.querySelectorAll(`[${ DATA_ATTRIBUTES.INSTRUMENT_TYPE }]`)).map(el => {
+            return el.getAttribute(DATA_ATTRIBUTES.INSTRUMENT_TYPE);
+        });
+
         const { layout, color, shape, label, tagline = true } = style;
 
         logger.info(`button_render`);
@@ -77,10 +85,18 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
         logger.info(`button_render_label_${ label }`);
         logger.info(`button_render_layout_${ layout }`);
         logger.info(`button_render_tagline_${ tagline.toString() }`);
+        logger.info(`button_render_funding_count_${ fundingSources.length }`);
+        logger.info(`button_render_wallet_instrument_count_${ walletInstruments.length }`);
+
+        for (const walletInstrument of walletInstruments) {
+            logger.info(`button_render_wallet_instrument_${ walletInstrument }`);
+        }
 
         logger.track({
             [FPTI_KEY.TRANSITION]:                    FPTI_TRANSITION.BUTTON_LOAD,
             [FPTI_KEY.FUNDING_LIST]:                  fundingSources.join(':'),
+            [FPTI_KEY.FI_LIST]:                       walletInstruments.join(':'),
+            [FPTI_KEY.SELECTED_FI]:                   fundingSource,
             [FPTI_KEY.FUNDING_COUNT]:                 fundingSources.length.toString(),
             [FPTI_KEY.PAGE_LOAD_TIME]:                pageRenderTime ? pageRenderTime.toString() : '',
             [FTPI_BUTTON_KEY.BUTTON_LAYOUT]:          layout,

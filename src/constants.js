@@ -16,6 +16,8 @@ export const HEADERS = {
     CSRF_TOKEN:     'x-csrf-jwt',
     SOURCE:         'x-source',
     REQUESTED_BY:   'x-requested-by',
+    APP_NAME:       'x-app-name',
+    APP_VERSION:    'x-app-version',
     CLIENT_CONTEXT: 'paypal-client-context',
 
     PARTNER_ATTRIBUTION_ID: 'paypal-partner-attribution-id',
@@ -28,6 +30,7 @@ export const DATA_ATTRIBUTES = {
     CARD:              'data-card',
     PAYMENT_METHOD_ID: 'data-payment-method-id',
     INSTRUMENT_ID:     'data-instrument-id',
+    INSTRUMENT_TYPE:   'data-instrument-type',
     MENU:              'data-menu',
     NONCE:             'data-nonce',
     RENDER_VERSION:    'data-render-version',
@@ -62,11 +65,6 @@ export const USER_EXPERIENCE_FLOW = {
     INLINE:    'INLINE'
 };
 
-export const DOM_EVENT = {
-    MOUSEDOWN: 'mousedown',
-    HOVER:     'hover'
-};
-
 export const PRODUCT_FLOW = {
     SMART_PAYMENT_BUTTONS: 'SMART_PAYMENT_BUTTONS'
 };
@@ -80,16 +78,21 @@ export const FPTI_CONTEXT_TYPE = {
 
 export const FPTI_STATE = {
     BUTTON:   ('smart_button' : 'smart_button'),
-    WALLET:   ('smart_wallet' : 'smart_wallet')
+    WALLET:   ('smart_wallet' : 'smart_wallet'),
+    PXP:      ('PXP_CHECK' : 'PXP_CHECK')
 };
 
 export const FPTI_TRANSITION = {
     BUTTON_LOAD:              ('process_button_load' : 'process_button_load'),
     BUTTON_CLICK:             ('process_button_click' : 'process_button_click'),
+    PXP:                      ('process_pxp_check' : 'process_pxp_check'),
 
     WALLET_LOAD:              ('process_wallet_load' : 'process_wallet_load'),
 
     MENU_CLICK:               ('process_menu_click' : 'process_menu_click'),
+    CLICK_CHOOSE_FUNDING:     ('process_click_pay_with_different_payment_method' : 'process_click_pay_with_different_payment_method'),
+    CLICK_CHOOSE_ACCOUNT:     ('process_click_pay_with_different_account' : 'process_click_pay_with_different_account'),
+    CLICK_UNLINK_ACCOUNT:     ('process_click_unlink_account' : 'process_click_unlink_account'),
 
     CREATE_ORDER:             ('process_create_order' : 'process_create_order'),
     RECEIVE_ORDER:            ('process_receive_order' : 'process_receive_order'),
@@ -99,12 +102,22 @@ export const FPTI_TRANSITION = {
     CHECKOUT_APPROVE:         ('process_checkout_approve' : 'process_checkout_approve'),
     CHECKOUT_CANCEL:          ('process_checkout_cancel' : 'process_checkout_cancel'),
 
-    NATIVE_DETECT_APP_SWITCH: ('native_detect_app_switch' : 'native_detect_app_switch'),
-    NATIVE_DETECT_WEB_SWITCH: ('native_detect_web_switch' : 'native_detect_web_switch'),
-    NATIVE_APP_SWITCH_ACK:    ('native_app_switch_ack' : 'native_app_switch_ack'),
-    NATIVE_ERROR:             ('native_app_switch_ack' : 'native_app_switch_ack'),
+    CONNECT_REDIRECT:         ('process_connect_redirect' : 'process_connect_redirect'),
 
-    HONEY_IDENTIFY:           ('honey_identify')
+    FIREBASE_CONNECTION_OPENED:     ('firebase_connection_opened' : 'firebase_connection_opened'),
+    FIREBASE_CONNECTION_ERRORED:    ('firebase_connection_errored' : 'firebase_connection_errored'),
+
+    NATIVE_DETECT_APP_SWITCH:           ('native_detect_app_switch' : 'native_detect_app_switch'),
+    NATIVE_DETECT_WEB_SWITCH:           ('native_detect_web_switch' : 'native_detect_web_switch'),
+    NATIVE_APP_SWITCH_ACK:              ('native_app_switch_ack' : 'native_app_switch_ack'),
+    NATIVE_ERROR:                       ('native_app_switch_ack' : 'native_app_switch_ack'),
+    NATIVE_SET_PROPS_ATTEMPT:           ('process_set_props_attempt' : 'process_set_props_attempt'),
+    NATIVE_ATTEMPT_APP_SWITCH:          ('app_switch_attempted' : 'app_switch_attempted'),
+    NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
+    NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
+    NATIVE_POPUP_CLOSED:                ('process_popup_closed' : 'process_popup_closed'),
+
+    HONEY_IDENTIFY:                     ('honey_identify')
 };
 
 export const FPTI_BUTTON_TYPE = {
@@ -112,6 +125,7 @@ export const FPTI_BUTTON_TYPE = {
 };
 
 export const FTPI_CUSTOM_KEY = {
+    ERR_DESC:              ('int_error_desc' : 'int_error_desc'),
     HONEY_DEVICE_ID:       ('honey_device_id' : 'honey_device_id'),
     HONEY_SESSION_ID:      ('honey_session_id' : 'honey_session_id'),
     INTEGRATION_ISSUE:     ('integration_issue' : 'integration_issue'),
@@ -126,7 +140,8 @@ export const FTPI_BUTTON_KEY = {
     BUTTON_LABEL:           ('button_label' : 'button_label'),
     BUTTON_WIDTH:           ('button_width' : 'button_width'),
     BUTTON_TYPE:            ('button_type' : 'button_type'),
-    BUTTON_TAGLINE_ENABLED: ('button_tagline_enabled' : 'button_tagline_enabled')
+    BUTTON_TAGLINE_ENABLED: ('button_tagline_enabled' : 'button_tagline_enabled'),
+    BUTTON_CORRELATION_ID:  ('button_correlation_id' : 'button_correlation_id')
 };
 
 export const FTPI_WALLET_KEY = {
@@ -137,4 +152,9 @@ export const FTPI_WALLET_KEY = {
 export const USER_ACTION = {
     COMMIT:   'commit',
     CONTINUE: 'continue'
+};
+
+export const UPGRADE_LSAT_RAMP = {
+    EXP_NAME: 'UPGRADE_LSAT_EXPERIMENT',
+    RAMP:      1
 };
