@@ -13,7 +13,7 @@ import { updateButtonClientConfig } from '../button/orders';
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions, Payment } from './types';
 import { checkout, CHECKOUT_POPUP_DIMENSIONS } from './checkout';
 
-function isInlineWalletEligible({ props, serviceData } : IsEligibleOptions) : boolean {
+function isWalletEligible({ props, serviceData } : IsEligibleOptions) : boolean {
     const { wallet } = serviceData;
     const { onShippingChange } = props;
     
@@ -35,7 +35,7 @@ function isInlineWalletEligible({ props, serviceData } : IsEligibleOptions) : bo
 
 let smartWalletPromise;
 
-function setupInlineWallet({ props, config, serviceData } : SetupOptions) {
+function setupWallet({ props, config, serviceData } : SetupOptions) {
     const { env, sessionID, clientID, currency, amount, userAccessToken, enablePWB, clientMetadataID: cmid } = props;
     const { cspNonce } = config;
     const { merchantID, wallet } = serviceData;
@@ -77,7 +77,7 @@ function getInstrument(wallet : Wallet, fundingSource : $Values<typeof FUNDING>,
     return instrument;
 }
 
-function isInlineWalletPaymentEligible({ serviceData, payment } : IsPaymentEligibleOptions) : boolean {
+function isWalletPaymentEligible({ serviceData, payment } : IsPaymentEligibleOptions) : boolean {
     const { wallet } = serviceData;
     const { win, fundingSource, instrumentID } = payment;
     
@@ -106,7 +106,7 @@ function isInlineWalletPaymentEligible({ serviceData, payment } : IsPaymentEligi
     return true;
 }
 
-function initInlineWalletCapture({ props, components, payment, serviceData, config } : InitOptions) : PaymentFlowInstance {
+function initWalletCapture({ props, components, payment, serviceData, config } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, clientMetadataID } = props;
     const { fundingSource, instrumentID } = payment;
     const { wallet } = serviceData;
@@ -304,11 +304,11 @@ function updateWalletClientConfig({ orderID, payment }) : ZalgoPromise<void> {
 }
 
 export const walletPWB : PaymentFlow = {
-    name:               'inline_wallet_capture_pwb',
-    setup:              setupInlineWallet,
-    isEligible:         isInlineWalletEligible,
-    isPaymentEligible:  isInlineWalletPaymentEligible,
-    init:               initInlineWalletCapture,
+    name:               'wallet_pwb',
+    setup:              setupWallet,
+    isEligible:         isWalletEligible,
+    isPaymentEligible:  isWalletPaymentEligible,
+    init:               initWalletCapture,
     setupMenu:          setupWalletMenu,
     updateClientConfig: updateWalletClientConfig,
     spinner:            true,
