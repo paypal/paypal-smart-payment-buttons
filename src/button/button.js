@@ -52,7 +52,7 @@ try {
 }
 
 export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
-    console.log('setup button: ', opts);
+    console.log('aliased setup button: ', opts);
     if (!window.paypal) {
         throw new Error(`PayPal SDK not loaded`);
     }
