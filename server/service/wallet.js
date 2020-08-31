@@ -209,7 +209,7 @@ export type WalletOptions = {|
 
 // eslint-disable-next-line complexity
 export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatch, getWallet : GetWallet, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount, enableBNPL, userIDToken, userRefreshToken } : WalletOptions) : Promise<Wallet> {
+    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount, enableBNPL, enablePWB, userIDToken, userRefreshToken } : WalletOptions) : Promise<Wallet> {
 
     const wallet : Wallet = {
         paypal: {
@@ -222,6 +222,30 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
             instruments: []
         }
     };
+    
+    if (enablePWB && buyerAccessToken) {
+        console.log('inside resolveWallet function');
+        try {
+            const result = await gqlBatch({
+                query:     buildSmartWalletQuery(),
+                variables: {
+                    clientID, merchantID, currency, amount, userAccessToken: buyerAccessToken, vetted: false
+                },
+                accessToken: clientAccessToken
+            });
+            
+            if (!result.smartWallet) {
+                throw new Error(`No smart wallet returned`);
+            }
+            
+            console.log('gql query result: ', result);
+            return result.smartWallet;
+        } catch (err) {
+            console.log('smart wallet query error: ', err);
+            logger.error(req, 'smart_wallet_error_fallback', { err: err.stack ? err.stack : err.toString() });
+            return wallet;
+        }
+    }
 
 
     if (enableBNPL && (userIDToken || userRefreshToken || buyerAccessToken)) {

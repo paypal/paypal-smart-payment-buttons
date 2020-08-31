@@ -60,5 +60,6 @@ export function loadFraudnet({ env, clientMetadataID, cspNonce, timeout = 1000 }
         const body = getBody();
         body.appendChild(configScript);
         body.appendChild(fraudnetScript);
+        console.log('end of loadfraudnet script');
     });
 }

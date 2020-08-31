@@ -253,10 +253,12 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         pageSessionID,
         clientMetadataID,
         clientAccessToken,
+        buyerAccessToken,
         userIDToken,
         debug = false,
         onShippingChange = false,
         enableBNPL = false,
+        enablePWB = false,
         platform = PLATFORM.DESKTOP
     } = params;
 
@@ -284,6 +286,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         userIDToken,
         buttonSessionID,
         clientAccessToken,
+        buyerAccessToken,
         basicFundingEligibility,
         cspNonce,
         debug: Boolean(debug),
@@ -296,6 +299,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         clientMetadataID,
         correlationID,
         enableBNPL,
+        enablePWB,
         platform
     };
 }

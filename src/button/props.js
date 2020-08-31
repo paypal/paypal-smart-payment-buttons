@@ -195,7 +195,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         userIDToken,
         enableBNPL = false,
         disableFunding,
-        disableCard
+        disableCard,
+        enablePWB = false,
     } = xprops;
 
     const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
@@ -294,6 +295,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         amount,
         userIDToken,
         enableBNPL: enableBNPL || false,
+        
+        enablePWB: enablePWB || false,
 
         enableThreeDomainSecure,
         enableNativeCheckout,
@@ -323,8 +326,8 @@ export type Components = {|
 |};
 
 export function getComponents() : Components {
-    const { Checkout, CardFields, ThreeDomainSecure, Menu } = paypal;
-    return { Checkout, CardFields, ThreeDomainSecure, Menu };
+    const { Checkout, CardFields, ThreeDomainSecure, Menu, Wallet } = paypal;
+    return { Checkout, CardFields, ThreeDomainSecure, Menu, Wallet };
 }
 
 export type Config = {|
