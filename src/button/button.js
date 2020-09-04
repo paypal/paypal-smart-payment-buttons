@@ -31,7 +31,6 @@ type ButtonOpts = {|
     wallet : ?Wallet,
     buyerAccessToken : ?string,
     eligibility : {|
-        cardFields : boolean,
         nativeCheckout : {
             [$Values<typeof FUNDING> ] : ?boolean
         }

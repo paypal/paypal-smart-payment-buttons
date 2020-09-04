@@ -16,9 +16,8 @@ function setupCardFields() {
 
 let cardFieldsOpen = false;
 
-function isCardFieldsEligible({ props, serviceData } : IsEligibleOptions) : boolean {
+function isCardFieldsEligible({ props } : IsEligibleOptions) : boolean {
     const { vault, onShippingChange } = props;
-    const { eligibility } = serviceData;
 
     if (vault) {
         return false;
@@ -28,7 +27,7 @@ function isCardFieldsEligible({ props, serviceData } : IsEligibleOptions) : bool
         return false;
     }
 
-    return eligibility.cardFields;
+    return true;
 }
 
 function isCardFieldsPaymentEligible({ payment } : IsPaymentEligibleOptions) : boolean {

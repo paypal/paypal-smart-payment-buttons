@@ -358,7 +358,6 @@ export type ServiceData = {|
     buyerAccessToken : ?string,
     content : ContentType,
     eligibility : {|
-        cardFields : boolean,
         nativeCheckout : {
             [ $Values<typeof FUNDING> ] : ?boolean
         }
@@ -377,7 +376,6 @@ type ServiceDataOptions = {|
     sdkMeta : string,
     content : ContentType,
     eligibility : {|
-        cardFields : boolean,
         nativeCheckout : {
             [$Values<typeof FUNDING> ] : ?boolean
         }

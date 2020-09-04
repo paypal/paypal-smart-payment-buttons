@@ -1309,7 +1309,6 @@ export async function mockSetupButton(overrides? : Object = {}) : ZalgoPromise<v
         isCardFieldsExperimentEnabled: false,
         firebaseConfig:                MOCK_FIREBASE_CONFIG,
         eligibility:                   {
-            cardFields: false,
             native:     false
         },
         sdkMeta: MOCK_SDK_META,

@@ -107,7 +107,7 @@ describe('client config cases', () => {
 
             createButtonHTML({ fundingEligibility });
 
-            await mockSetupButton({ merchantID: [ 'XYZ12345' ], fundingEligibility, eligibility: { cardFields: true } });
+            await mockSetupButton({ merchantID: [ 'XYZ12345' ], fundingEligibility });
 
             await clickButton(FUNDING.CARD);
         });

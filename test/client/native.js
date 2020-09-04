@@ -102,7 +102,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -175,7 +174,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -277,7 +275,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -363,7 +360,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -470,7 +466,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -563,7 +558,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -669,7 +663,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -761,7 +754,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -855,7 +847,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -946,7 +937,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -987,7 +977,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1093,7 +1082,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1214,7 +1202,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1317,7 +1304,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1433,7 +1419,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1548,7 +1533,6 @@ describe('native chrome cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1692,7 +1676,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1811,7 +1794,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -1952,7 +1934,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2085,7 +2066,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2232,7 +2212,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2371,7 +2350,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2503,7 +2481,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2648,7 +2625,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2702,7 +2678,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2752,7 +2727,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2877,7 +2851,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -2931,7 +2904,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -3074,7 +3046,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
@@ -3235,7 +3206,6 @@ describe('native ios cases', () => {
 
             await mockSetupButton({
                 eligibility: {
-                    cardFields: false,
                     native:     true
                 }
             });
