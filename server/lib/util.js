@@ -33,6 +33,10 @@ export function javascriptResponse(res : ExpressResponse, javascript : string) {
     response(res, HTTP_STATUS_CODE.SUCCESS, HTTP_CONTENT_TYPE.JAVASCRIPT, javascript);
 }
 
+export function emptyResponse(res : ExpressResponse) {
+    response(res, HTTP_STATUS_CODE.SUCCESS, HTTP_CONTENT_TYPE.TEXT, '');
+}
+
 export function allowFrame(res : ExpressResponse) {
     res.removeHeader(HTTP_HEADER.X_FRAME_OPTIONS);
 }
@@ -198,4 +202,24 @@ export function copy<T>(obj : T) : T {
     }
     
     return JSON.parse(stringified);
+}
+
+export async function promiseTimeout<T>(promise : Promise<T>, time : number) : Promise<T> {
+    return await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            reject(new Error(`Timed out after ${ time }ms`));
+        }, time);
+
+        const res = (val) => {
+            clearTimeout(timer);
+            resolve(val);
+        };
+
+        const rej = (err) => {
+            clearTimeout(timer);
+            reject(err);
+        };
+
+        promise.then(res, rej);
+    });
 }

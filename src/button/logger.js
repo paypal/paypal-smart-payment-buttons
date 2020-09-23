@@ -1,12 +1,13 @@
 /* @flow */
 
-import { isIEIntranet, getPageRenderTime } from 'belter/src';
+import { isIEIntranet, getPageRenderTime, querySelectorAll } from 'belter/src';
 import { FPTI_KEY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 
 import type { LocaleType } from '../types';
 import { getLogger, setupLogger } from '../lib';
-import { DATA_ATTRIBUTES, FPTI_TRANSITION, FPTI_BUTTON_TYPE, FTPI_BUTTON_KEY, FPTI_STATE, FPTI_CONTEXT_TYPE } from '../constants';
+import { DATA_ATTRIBUTES, FPTI_TRANSITION, FPTI_BUTTON_TYPE, FPTI_BUTTON_KEY, FPTI_STATE, FPTI_CONTEXT_TYPE } from '../constants';
+import type { GetQueriedEligibleFunding } from '../props';
 
 import type { ButtonStyle } from './props';
 
@@ -34,10 +35,13 @@ type ButtonLoggerOptions = {|
     merchantDomain : string,
     version : string,
     style : ButtonStyle,
-    fundingSource : ?$Values<typeof FUNDING>
+    fundingSource : ?$Values<typeof FUNDING>,
+    getQueriedEligibleFunding : GetQueriedEligibleFunding
 |};
 
-export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, buttonCorrelationID, locale, merchantID, merchantDomain, version, style, fundingSource } : ButtonLoggerOptions) : ZalgoPromise<void> {
+export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, buttonCorrelationID, locale,
+    merchantID, merchantDomain, version, style, fundingSource, getQueriedEligibleFunding } : ButtonLoggerOptions) : ZalgoPromise<void> {
+
     const logger = getLogger();
 
     setupLogger({ env, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, locale, merchantID, merchantDomain, version });
@@ -57,7 +61,7 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
             [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
             [FPTI_KEY.BUTTON_SESSION_UID]:           buttonSessionID,
             [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__,
-            [FTPI_BUTTON_KEY.BUTTON_CORRELATION_ID]: buttonCorrelationID
+            [FPTI_BUTTON_KEY.BUTTON_CORRELATION_ID]: buttonCorrelationID
         };
     });
 
@@ -65,15 +69,22 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
         logger.warn('button_child_intranet_mode');
     }
 
-    return getPageRenderTime().then(pageRenderTime => {
+    return ZalgoPromise.hash({
+        pageRenderTime:         getPageRenderTime(),
+        queriedEligibleFunding: getQueriedEligibleFunding()
+    }).then(({ pageRenderTime, queriedEligibleFunding }) => {
 
-        const fundingSources = Array.prototype.slice.call(document.querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`)).map(el => {
+        const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
             return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
-        });
+        }).filter(Boolean);
 
-        const walletInstruments = Array.prototype.slice.call(document.querySelectorAll(`[${ DATA_ATTRIBUTES.INSTRUMENT_TYPE }]`)).map(el => {
+        const walletInstruments = querySelectorAll(`[${ DATA_ATTRIBUTES.INSTRUMENT_TYPE }]`).map(el => {
             return el.getAttribute(DATA_ATTRIBUTES.INSTRUMENT_TYPE);
-        });
+        }).filter(Boolean);
+
+        const payNow = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
+            return el.getAttribute(DATA_ATTRIBUTES.PAY_NOW);
+        }).some(Boolean);
 
         const { layout, color, shape, label, tagline = true } = style;
 
@@ -99,14 +110,16 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
             [FPTI_KEY.SELECTED_FI]:                   fundingSource,
             [FPTI_KEY.FUNDING_COUNT]:                 fundingSources.length.toString(),
             [FPTI_KEY.PAGE_LOAD_TIME]:                pageRenderTime ? pageRenderTime.toString() : '',
-            [FTPI_BUTTON_KEY.BUTTON_LAYOUT]:          layout,
-            [FTPI_BUTTON_KEY.BUTTON_COLOR]:           color,
-            [FTPI_BUTTON_KEY.BUTTON_SIZE]:            'responsive',
-            [FTPI_BUTTON_KEY.BUTTON_SHAPE]:           shape,
-            [FTPI_BUTTON_KEY.BUTTON_LABEL]:           label,
-            [FTPI_BUTTON_KEY.BUTTON_WIDTH]:           window.innerWidth,
-            [FTPI_BUTTON_KEY.BUTTON_TYPE]:            FPTI_BUTTON_TYPE.IFRAME,
-            [FTPI_BUTTON_KEY.BUTTON_TAGLINE_ENABLED]: tagline ? '1' : '0'
+            [FPTI_KEY.POTENTIAL_PAYMENT_METHODS]:     queriedEligibleFunding.join(':'),
+            [FPTI_KEY.PAY_NOW]:                       payNow.toString(),
+            [FPTI_BUTTON_KEY.BUTTON_LAYOUT]:          layout,
+            [FPTI_BUTTON_KEY.BUTTON_COLOR]:           color,
+            [FPTI_BUTTON_KEY.BUTTON_SIZE]:            'responsive',
+            [FPTI_BUTTON_KEY.BUTTON_SHAPE]:           shape,
+            [FPTI_BUTTON_KEY.BUTTON_LABEL]:           label,
+            [FPTI_BUTTON_KEY.BUTTON_WIDTH]:           window.innerWidth,
+            [FPTI_BUTTON_KEY.BUTTON_TYPE]:            FPTI_BUTTON_TYPE.IFRAME,
+            [FPTI_BUTTON_KEY.BUTTON_TAGLINE_ENABLED]: tagline ? '1' : '0'
         });
 
         logger.flush();

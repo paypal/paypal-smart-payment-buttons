@@ -55,7 +55,9 @@ export type CheckoutProps = {|
     commit : boolean,
     cspNonce : ?string,
     venmoPayloadID? : ?string,
-    clientMetadataID : ?string
+    clientMetadataID : ?string,
+    enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    standaloneFundingSource : ?$Values<typeof FUNDING>
 |};
 
 export type CheckoutFlowType = ZoidComponent<CheckoutProps>;
@@ -106,12 +108,14 @@ export type MenuChoices = $ReadOnlyArray<MenuChoice>;
 export type MenuFlowProps = {|
     clientID : string,
     onFocus? : () => void,
+    onBlur? : () => void,
     onFocusFail? : () => void,
     verticalOffset? : number,
     choices? : MenuChoices
 |};
 
 export type MenuFlowType = ZoidComponent<MenuFlowProps>;
+export type MenuComponentInstance = ZoidComponentInstance<MenuFlowProps>;
 
 export type ContentType = {|
     instantlyPayWith : string,
@@ -162,4 +166,11 @@ export type Wallet = {|
 
 export type ConnectOptions = {|
     scopes : $ReadOnlyArray<string>
+|};
+
+export type SmartFields = {|
+    name : string,
+    fundingSource : $Values<typeof FUNDING>,
+    confirm : (orderId : string) => ZalgoPromise<void | string>,
+    isValid : () => boolean
 |};

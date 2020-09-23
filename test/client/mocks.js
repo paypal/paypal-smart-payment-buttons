@@ -121,6 +121,7 @@ export function setupMocks() {
     };
 
     window.xprops = {
+        uid:             uniqueID(),
         clientID:        'xyz123',
         platform:        PLATFORM.DESKTOP,
         intent:          INTENT.CAPTURE,
@@ -190,8 +191,7 @@ export function mockFunction<T, A>(obj : mixed, prop : string, mock : ({| args :
 }
 
 export async function clickButton(fundingSource? : string = FUNDING.PAYPAL) : ZalgoPromise<void> {
-    const selector = `button[data-funding-source=${ fundingSource }]`;
-    const button = window.document.querySelector(selector);
+    const button = window.document.querySelector(`[data-funding-source=${ fundingSource }]`);
 
     if (!button) {
         throw new Error(`Can not find ${ fundingSource } button`);
@@ -202,8 +202,7 @@ export async function clickButton(fundingSource? : string = FUNDING.PAYPAL) : Za
 }
 
 export async function clickMenu(fundingSource? : string = FUNDING.PAYPAL) : ZalgoPromise<void> {
-    const selector = `button[data-funding-source=${ fundingSource }] [data-menu]`;
-    const menubutton = window.document.querySelector(selector);
+    const menubutton = window.document.querySelector(`[data-funding-source=${ fundingSource }]`).parentElement.querySelector(`[data-menu]`);
 
     if (!menubutton) {
         throw new Error(`Can not find ${ fundingSource } menu button`);
@@ -214,7 +213,7 @@ export async function clickMenu(fundingSource? : string = FUNDING.PAYPAL) : Zalg
 }
 
 export function enterButton(fundingSource? : string = FUNDING.PAYPAL) {
-    triggerKeyPress(window.document.querySelector(`button[data-funding-source=${ fundingSource }]`), 13);
+    triggerKeyPress(window.document.querySelector(`[data-funding-source=${ fundingSource }]`), 13);
 }
 
 export function mockMenu() : ZoidComponentInstance<MenuFlowProps> {
@@ -255,24 +254,24 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
 
                 if (cardConfig.vaultedInstruments && cardConfig.vaultedInstruments.length) {
                     const vaultedInstrument = cardConfig.vaultedInstruments[0];
-                    buttons.push(`<button data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"><div data-menu></div></div>`);
+                    buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
                 } else {
-                    buttons.push(`<button data-funding-source="${ fundingSource }"></div>`);
+                    buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }"></div></div>`);
                 }
             }
         } else {
             if (fundingConfig.vaultedInstruments && fundingConfig.vaultedInstruments.length) {
                 const vaultedInstrument = fundingConfig.vaultedInstruments[0];
-                buttons.push(`<button data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"><div data-menu></div></div>`);
+                buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
             } else if (wallet && wallet[fundingSource] && wallet[fundingSource].instruments.length) {
                 const walletInstrument = wallet[fundingSource].instruments[0];
                 if (walletInstrument.instrumentID) {
-                    buttons.push(`<button data-funding-source="${ fundingSource }" data-instrument-id="${ walletInstrument.instrumentID }"><div data-menu></div></div>`);
+                    buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-instrument-id="${ walletInstrument.instrumentID }"></div><div data-menu></div></div>`);
                 } else if (walletInstrument.paymentID) {
-                    buttons.push(`<button data-funding-source="${ fundingSource }" data-payment-method-id="${ walletInstrument.paymentID }"><div data-menu></div></div>`);
+                    buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ walletInstrument.paymentID }"></div><div data-menu></div></div>`);
                 }
             } else {
-                buttons.push(`<button data-funding-source="${ fundingSource }"></div>`);
+                buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }"></div></div>`);
             }
         }
     }
@@ -487,9 +486,9 @@ export function getGraphQLApiMock(options : Object = {}) : MockEndpoint {
     return $mockEndpoint.register({
         method:  'POST',
         uri:     '/graphql',
-        handler: ({ uri, method, query, data }) => {
+        handler: ({ uri, method, query, data, headers }) => {
             if (options.extraHandler) {
-                const result = options.extraHandler({ uri, method, query, data });
+                const result = options.extraHandler({ uri, method, query, data, headers });
                 if (result) {
                     return result;
                 }
@@ -519,6 +518,21 @@ export function getGraphQLApiMock(options : Object = {}) : MockEndpoint {
                                     }
                                 }
                             ]
+                        }
+                    }
+                };
+            }
+
+            if (data.query.includes('query GetNativeEligibility')) {
+                return {
+                    data: {
+                        mobileSDKEligibility: {
+                            paypal: {
+                                eligibility: true
+                            },
+                            venmo: {
+                                eligibility: true
+                            }
                         }
                     }
                 };
@@ -592,9 +606,9 @@ export function getValidatePaymentMethodApiMock(options : Object = {}) : MockEnd
     return $mockEndpoint.register({
         method:  'POST',
         uri:     new RegExp('/v2/checkout/orders/[^/]+/validate-payment-method'),
-        handler: ({ uri, method, query, data }) => {
+        handler: ({ uri, method, query, data, headers }) => {
             if (options.extraHandler) {
-                const result = options.extraHandler({ uri, method, query, data });
+                const result = options.extraHandler({ uri, method, query, data, headers });
                 if (result) {
                     return result;
                 }
@@ -1642,3 +1656,40 @@ const ensureWindowOpenOnClick = () => {
 };
 
 ensureWindowOpenOnClick();
+
+
+type SmartFieldsMock = {|
+    done : () => void
+|};
+
+type MockFieldsOptions = {|
+    fundingSource : string,
+    isValid : () => boolean,
+    confirm : ?() => ZalgoPromise<void | string>
+|};
+
+export function renderSmartFieldsMock({
+    fundingSource,
+    isValid,
+    confirm
+} : MockFieldsOptions) : SmartFieldsMock {
+    window.frames = [
+        {
+            exports: {
+                name:    'smart-fields',
+                fundingSource,
+                isValid,
+                confirm
+            },
+            location: window.location
+        }
+    ];
+
+    const done = () => {
+        delete window.frames;
+    };
+
+    return {
+        done
+    };
+}

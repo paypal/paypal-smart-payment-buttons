@@ -4,16 +4,11 @@ import type { FundingEligibilityType } from '@paypal/sdk-constants/src/types';
 import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING } from '@paypal/sdk-constants';
 import { strictMerge } from 'strict-merge';
 
-import { pruneQuery, buildQuery, graphqlTypes, copy, type GraphQLBatch } from '../lib';
+import { pruneQuery, buildQuery, graphqlTypes, copy, type GraphQLBatchCall } from '../lib';
+import { FUNDING_ELIGIBILITY_TIMEOUT } from '../config';
 import type { ExpressRequest, LoggerType } from '../types';
 
-type FundingEligibilityQueryOptions = {|
-    queryProducts? : boolean
-|};
-
-function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibilityType, opts? : FundingEligibilityQueryOptions) : ?string {
-    const { queryProducts = false } = opts || {};
-
+function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibilityType) : ?string {
     const InputTypes = {
         $clientID:        'String',
         $buyerCountry:    'CountryCodes',
@@ -23,6 +18,7 @@ function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibili
         $intent:          'FundingEligibilityIntent',
         $commit:          'Boolean',
         $vault:           'Boolean',
+        $enableFunding:   '[ SupportedPaymentMethodsType ]',
         $disableFunding:  '[ SupportedPaymentMethodsType ]',
         $disableCard:     '[ SupportedCardsType ]',
         $merchantID:      '[ String ]',
@@ -39,6 +35,7 @@ function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibili
         intent:          '$intent',
         commit:          '$commit',
         vault:           '$vault',
+        enableFunding:   '$enableFunding',
         disableFunding:  '$disableFunding',
         disableCard:     '$disableCard',
         merchantId:      '$merchantID',
@@ -77,10 +74,6 @@ function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibili
     };
 
     const getPayLaterProductsQuery = () => {
-        if (!queryProducts) {
-            return;
-        }
-
         return {
             flex:   getPayLaterProductQuery(),
             payIn4: getPayLaterProductQuery()
@@ -109,29 +102,29 @@ function buildFundingEligibilityQuery(basicFundingEligibility : FundingEligibili
     };
 
     const fundingQuery = {
-        [ FUNDING.PAYPAL ]:     getPayPalQuery(),
-        [ FUNDING.CARD ]:       getCardQuery(),
-        [ FUNDING.VENMO ]:      getBasicFundingEligibilityQuery(),
-        [ FUNDING.ITAU ]:       getBasicFundingEligibilityQuery(),
-        [ FUNDING.CREDIT ]:     getBasicFundingEligibilityQuery(),
-        [ FUNDING.PAYLATER ]:   getPayLaterQuery(),
-        [ FUNDING.SEPA ]:       getBasicFundingEligibilityQuery(),
-        [ FUNDING.IDEAL ]:      getBasicFundingEligibilityQuery(),
-        [ FUNDING.BANCONTACT ]: getBasicFundingEligibilityQuery(),
-        [ FUNDING.GIROPAY ]:    getBasicFundingEligibilityQuery(),
-        [ FUNDING.EPS ]:        getBasicFundingEligibilityQuery(),
-        [ FUNDING.SOFORT ]:     getBasicFundingEligibilityQuery(),
-        [ FUNDING.MYBANK ]:     getBasicFundingEligibilityQuery(),
-        [ FUNDING.P24 ]:        getBasicFundingEligibilityQuery(),
-        [ FUNDING.ZIMPLER ]:    getBasicFundingEligibilityQuery(),
-        [ FUNDING.WECHATPAY ]:  getBasicFundingEligibilityQuery(),
-        [ FUNDING.PAYU ]:       getBasicFundingEligibilityQuery(),
-        [ FUNDING.BLIK ]:       getBasicFundingEligibilityQuery(),
-        [ FUNDING.TRUSTLY ]:    getBasicFundingEligibilityQuery(),
-        [ FUNDING.OXXO ]:       getBasicFundingEligibilityQuery(),
-        [ FUNDING.MAXIMA ]:     getBasicFundingEligibilityQuery(),
-        [ FUNDING.BOLETO ]:     getBasicFundingEligibilityQuery(),
-        [ FUNDING.MERCADOPAGO ]:getBasicFundingEligibilityQuery(),
+        [ FUNDING.PAYPAL ]:      getPayPalQuery(),
+        [ FUNDING.CARD ]:        getCardQuery(),
+        [ FUNDING.VENMO ]:       getBasicFundingEligibilityQuery(),
+        [ FUNDING.ITAU ]:        getBasicFundingEligibilityQuery(),
+        [ FUNDING.CREDIT ]:      getBasicFundingEligibilityQuery(),
+        [ FUNDING.PAYLATER ]:    getPayLaterQuery(),
+        [ FUNDING.SEPA ]:        getBasicFundingEligibilityQuery(),
+        [ FUNDING.IDEAL ]:       getBasicFundingEligibilityQuery(),
+        [ FUNDING.BANCONTACT ]:  getBasicFundingEligibilityQuery(),
+        [ FUNDING.GIROPAY ]:     getBasicFundingEligibilityQuery(),
+        [ FUNDING.EPS ]:         getBasicFundingEligibilityQuery(),
+        [ FUNDING.SOFORT ]:      getBasicFundingEligibilityQuery(),
+        [ FUNDING.MYBANK ]:      getBasicFundingEligibilityQuery(),
+        [ FUNDING.P24 ]:         getBasicFundingEligibilityQuery(),
+        [ FUNDING.ZIMPLER ]:     getBasicFundingEligibilityQuery(),
+        [ FUNDING.WECHATPAY ]:   getBasicFundingEligibilityQuery(),
+        [ FUNDING.PAYU ]:        getBasicFundingEligibilityQuery(),
+        [ FUNDING.BLIK ]:        getBasicFundingEligibilityQuery(),
+        [ FUNDING.TRUSTLY ]:     getBasicFundingEligibilityQuery(),
+        [ FUNDING.OXXO ]:        getBasicFundingEligibilityQuery(),
+        [ FUNDING.MAXIMA ]:      getBasicFundingEligibilityQuery(),
+        [ FUNDING.BOLETO ]:      getBasicFundingEligibilityQuery(),
+        [ FUNDING.MERCADOPAGO ]: getBasicFundingEligibilityQuery(),
         [ FUNDING.VERKKOPANKKI ]:getBasicFundingEligibilityQuery()
     };
 
@@ -152,37 +145,30 @@ export type FundingEligibilityOptions = {|
     intent : $Values<typeof INTENT>,
     commit : $Values<typeof COMMIT>,
     vault : $Values<typeof VAULT>,
-    disableFunding : $ReadOnlyArray<?$Values<typeof FUNDING>>,
-    disableCard : $ReadOnlyArray<?$Values<typeof CARD>>,
+    enableFunding : $ReadOnlyArray<$Values<typeof FUNDING>>,
+    disableFunding : $ReadOnlyArray<$Values<typeof FUNDING>>,
+    disableCard : $ReadOnlyArray<$Values<typeof CARD>>,
     merchantID : ?$ReadOnlyArray<string>,
     buttonSessionID : string,
     clientAccessToken : ?string,
-    basicFundingEligibility : FundingEligibilityType,
-    enableBNPL : boolean
+    basicFundingEligibility : FundingEligibilityType
 |};
 
-export async function resolveFundingEligibility(req : ExpressRequest, gqlBatch : GraphQLBatch, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, basicFundingEligibility, enableBNPL } : FundingEligibilityOptions) : Promise<FundingEligibilityType> {
+export async function resolveFundingEligibility(req : ExpressRequest, gqlBatch : GraphQLBatchCall, { logger, clientID, merchantID, buttonSessionID,
+    currency, intent, commit, vault, enableFunding = [], disableFunding = [], disableCard = [], clientAccessToken, buyerCountry, basicFundingEligibility } : FundingEligibilityOptions) : Promise<FundingEligibilityType> {
 
     try {
         const ip = req.ip;
         const cookies = req.get('cookie') || '';
         const userAgent = req.get('user-agent') || '';
 
-        intent = intent ? intent.toUpperCase() : intent;
-        // $FlowFixMe
-        disableFunding = disableFunding ? disableFunding.map(source => source.toUpperCase()) : disableFunding;
-        // $FlowFixMe
-        disableCard = disableCard ? disableCard.map(source => source.toUpperCase()) : disableCard;
-
         basicFundingEligibility = copy(basicFundingEligibility);
-        
+
         if (basicFundingEligibility.card && merchantID && merchantID.length > 1) {
-            // $FlowFixMe
             delete basicFundingEligibility.card.branded;
         }
 
-        const fundingEligibilityQuery = buildFundingEligibilityQuery(basicFundingEligibility, { queryProducts: enableBNPL });
+        const fundingEligibilityQuery = buildFundingEligibilityQuery(basicFundingEligibility);
 
         if (!fundingEligibilityQuery) {
             logger.info(req, 'funding_eligibility_no_queryable_fields');
@@ -192,10 +178,15 @@ export async function resolveFundingEligibility(req : ExpressRequest, gqlBatch :
         const { fundingEligibility } = await gqlBatch({
             query:     fundingEligibilityQuery,
             variables: {
-                clientID, merchantID, buyerCountry, cookies, ip, currency, intent, commit,
-                vault, disableFunding, disableCard, userAgent, buttonSessionID
+                clientID, merchantID, buyerCountry, cookies, ip, currency, commit,
+                vault, userAgent, buttonSessionID,
+                intent:         intent.toUpperCase(),
+                disableFunding: disableFunding.map(source => source.toUpperCase()),
+                disableCard:    disableCard.map(card => card.toUpperCase()),
+                enableFunding:  enableFunding.map(source => source.toUpperCase())
             },
-            accessToken: clientAccessToken
+            accessToken: clientAccessToken,
+            timeout:     FUNDING_ELIGIBILITY_TIMEOUT
         });
 
         return strictMerge(basicFundingEligibility, fundingEligibility, (first, second) => second);

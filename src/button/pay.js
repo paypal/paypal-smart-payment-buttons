@@ -4,19 +4,20 @@ import { noop, stringifyError } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
-import { checkout, cardFields, native, honey, vaultCapture, walletCapture, walletCaptureBNPL, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
+import { checkout, cardFields, native, honey, vaultCapture, walletCapture, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
 import { getLogger, promiseNoop } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
 import { updateButtonClientConfig } from '../api';
+import type { SmartFields } from '../types';
 
 import { type ButtonProps, type Config, type ServiceData, type Components } from './props';
 import { enableLoadingSpinner, disableLoadingSpinner } from './dom';
 import { validateOrder } from './validation';
-import { renderMenu } from './menu';
+import { showButtonSmartMenu } from './menu';
+
 
 const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     vaultCapture,
-    walletCaptureBNPL,
     walletCapture,
     cardFields,
     popupBridge,
@@ -48,15 +49,16 @@ type InitiatePaymentOptions = {|
     props : ButtonProps,
     serviceData : ServiceData,
     config : Config,
-    components : Components
+    components : Components,
+    smartFields : ?SmartFields
 |};
 
-export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentOptions) : ZalgoPromise<void> {
+export function initiatePaymentFlow({ payment, serviceData, config, components, props, smartFields } : InitiatePaymentOptions) : ZalgoPromise<void> {
     const { button, fundingSource, instrumentType } = payment;
 
     return ZalgoPromise.try(() => {
         const { merchantID } = serviceData;
-        const { clientID, onClick, createOrder, env } = props;
+        const { clientID, onClick, createOrder, env, vault } = props;
 
         const { name, init, inline, spinner, updateClientConfig } = getPaymentFlow({ props, payment, config, components, serviceData });
         const { click = promiseNoop, start, close } = init({ props, config, serviceData, components, payment });
@@ -109,13 +111,16 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
             });
 
             const validateOrderPromise = createOrder().then(orderID => {
-                return validateOrder(orderID, { env, clientID, merchantID, expectedCurrency, expectedIntent });
+                return validateOrder(orderID, { env, clientID, merchantID, expectedCurrency, expectedIntent, vault });
             });
+
+            const confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
 
             return ZalgoPromise.all([
                 clickPromise,
                 startPromise,
-                validateOrderPromise
+                validateOrderPromise,
+                confirmOrderPromise
             ]).catch(err => {
                 return ZalgoPromise.try(close).then(() => {
                     throw err;
@@ -171,6 +176,6 @@ export function initiateMenuFlow({ payment, serviceData, config, components, pro
             };
         });
 
-        return renderMenu({ props, payment, components, choices });
+        return showButtonSmartMenu({ props, payment, components, choices });
     });
 }

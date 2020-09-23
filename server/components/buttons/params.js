@@ -23,6 +23,7 @@ type ParamsType = {|
     intent : $Values<typeof INTENT>,
     commit : $Values<typeof COMMIT>,
     vault : $Values<typeof VAULT>,
+    enableFunding : $ReadOnlyArray<?$Values<typeof FUNDING>>,
     disableFunding : $ReadOnlyArray<?$Values<typeof FUNDING>>,
     disableCard : $ReadOnlyArray<?$Values<typeof CARD>>,
     merchantID? : $ReadOnlyArray<string>,
@@ -36,7 +37,6 @@ type ParamsType = {|
     amount? : string,
     clientMetadataID? : string,
     riskData? : string,
-    enableBNPL? : boolean,
     platform : ?$Values<typeof PLATFORM>
 |};
 
@@ -53,6 +53,7 @@ type RequestParams = {|
     intent : $Values<typeof INTENT>,
     commit : $Values<typeof COMMIT>,
     vault : $Values<typeof VAULT>,
+    enableFunding : $ReadOnlyArray<?$Values<typeof FUNDING>>,
     disableFunding : $ReadOnlyArray<?$Values<typeof FUNDING>>,
     disableCard : $ReadOnlyArray<?$Values<typeof CARD>>,
     merchantID : ?$ReadOnlyArray<string>,
@@ -70,8 +71,8 @@ type RequestParams = {|
     pageSessionID : string,
     riskData : ?RiskData,
     correlationID : string,
-    enableBNPL : boolean,
-    platform : $Values<typeof PLATFORM>
+    platform : $Values<typeof PLATFORM>,
+    cookies : string
 |};
 
 function getCSPNonce(res : ExpressResponse) : string {
@@ -82,6 +83,21 @@ function getCSPNonce(res : ExpressResponse) : string {
     }
 
     return nonce;
+}
+
+function getCookieString(req : ExpressRequest) : string {
+    try {
+        if (!req.cookies) {
+            return '';
+        }
+
+        return Object.keys(req.cookies).map(key => {
+            return `${ key }=x;`;
+        }).join('');
+
+    } catch (err) {
+        return '';
+    }
 }
 
 const getDefaultFundingEligibility = () : FundingEligibilityType => {
@@ -246,6 +262,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         intent,
         commit,
         vault,
+        enableFunding,
         disableFunding,
         disableCard,
         merchantID,
@@ -256,7 +273,6 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         userIDToken,
         debug = false,
         onShippingChange = false,
-        enableBNPL = false,
         platform = PLATFORM.DESKTOP
     } = params;
 
@@ -270,6 +286,8 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
+    const cookies = getCookieString(req);
+
     return {
         env,
         clientID,
@@ -278,6 +296,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         intent,
         commit,
         vault,
+        enableFunding,
         disableFunding,
         disableCard,
         merchantID,
@@ -295,7 +314,7 @@ export function getParams(params : ParamsType, req : ExpressRequest, res : Expre
         pageSessionID,
         clientMetadataID,
         correlationID,
-        enableBNPL,
-        platform
+        platform,
+        cookies
     };
 }

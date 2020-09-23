@@ -34,7 +34,8 @@ export const DATA_ATTRIBUTES = {
     MENU:              'data-menu',
     NONCE:             'data-nonce',
     RENDER_VERSION:    'data-render-version',
-    CLIENT_VERSION:    'data-client-version'
+    CLIENT_VERSION:    'data-client-version',
+    PAY_NOW:           'data-pay-now'
 };
 
 export const CLASS = {
@@ -132,7 +133,7 @@ export const FTPI_CUSTOM_KEY = {
     INTEGRATION_WHITELIST: ('whitelist' : 'whitelist')
 };
 
-export const FTPI_BUTTON_KEY = {
+export const FPTI_BUTTON_KEY = {
     BUTTON_LAYOUT:          ('button_layout' : 'button_layout'),
     BUTTON_COLOR:           ('button_color' : 'button_color'),
     BUTTON_SIZE:            ('button_size' : 'button_size'),
@@ -157,4 +158,8 @@ export const USER_ACTION = {
 export const UPGRADE_LSAT_RAMP = {
     EXP_NAME: 'UPGRADE_LSAT_EXPERIMENT',
     RAMP:      1
+};
+
+export const FRAME_NAME = {
+    SMART_FIELDS: 'smart-fields'
 };

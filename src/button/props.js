@@ -2,14 +2,14 @@
 
 import type { CrossDomainWindowType } from 'cross-domain-utils/src';
 import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
-import type { ZalgoPromise } from 'zalgo-promise/src';
+import { ZalgoPromise } from 'zalgo-promise/src';
 
 import {  UPGRADE_LSAT_RAMP } from '../constants';
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
     ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions } from '../types';
 import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
-    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth } from '../props';
+    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
 import { type FirebaseConfig } from '../api';
 import { getNonce, createExperiment } from '../lib';
 import { getOnInit } from '../props/onInit';
@@ -39,12 +39,11 @@ export type ButtonStyle = {|
     tagline : boolean | void
 |};
 
-export type ServerRiskData = {||};
-
 export type ButtonXProps = {|
     env : $Values<typeof ENV>,
     locale : LocaleType,
     style : ButtonStyle,
+    uid : string,
 
     sessionID : string,
     buttonSessionID : string,
@@ -75,11 +74,12 @@ export type ButtonXProps = {|
     getParentDomain : () => string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
-    persistRiskData : ?(ServerRiskData) => ZalgoPromise<void>,
     clientMetadataID : ?string,
     fundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
+    getQueriedEligibleFunding? : GetQueriedEligibleFunding,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -88,7 +88,6 @@ export type ButtonXProps = {|
 
     amount : ?string,
     userIDToken : ?string,
-    enableBNPL : ?boolean,
     
     onInit : XOnInit,
     onApprove : ?XOnApprove,
@@ -102,6 +101,7 @@ export type ButtonProps = {|
     env : $Values<typeof ENV>,
     locale : LocaleType,
     style : ButtonStyle,
+    uid : string,
 
     sessionID : string,
     buttonSessionID : string,
@@ -126,17 +126,18 @@ export type ButtonProps = {|
     merchantDomain : string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
-    persistRiskData : ?(ServerRiskData) => ZalgoPromise<void>,
     fundingSource : ?$Values<typeof FUNDING>,
+    standaloneFundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
+    getQueriedEligibleFunding : GetQueriedEligibleFunding,
 
     stageHost : ?string,
     apiStageHost : ?string,
 
     amount : ?string,
     userIDToken : ?string,
-    enableBNPL : boolean,
 
     onInit : OnInit,
     onError : OnError,
@@ -159,6 +160,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const xprops : ButtonXProps = window.xprops;
 
     const {
+        uid,
         env,
         vault,
         commit,
@@ -189,13 +191,13 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         connect,
         intent,
         merchantID,
-        persistRiskData,
         upgradeLSAT = false,
         amount,
         userIDToken,
-        enableBNPL = false,
+        enableFunding,
         disableFunding,
-        disableCard
+        disableCard,
+        getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
     } = xprops;
 
     const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
@@ -260,6 +262,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment: upgradeLSATExperiment.isEnabled(), upgradeLSAT });
 
     return {
+        uid,
         env,
         style,
 
@@ -285,15 +288,15 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         getPageUrl,
         rememberFunding,
         getParent,
-        persistRiskData,
         connect,
         fundingSource,
+        enableFunding,
         disableFunding,
         disableCard,
+        getQueriedEligibleFunding,
 
         amount,
         userIDToken,
-        enableBNPL: enableBNPL || false,
 
         enableThreeDomainSecure,
         enableNativeCheckout,
@@ -311,7 +314,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         onCancel,
         onShippingChange,
 
-        onAuth
+        onAuth,
+        standaloneFundingSource: fundingSource
     };
 }
 
@@ -355,17 +359,16 @@ export type ServiceData = {|
     content : ContentType,
     eligibility : {|
         cardFields : boolean,
-        nativeCheckout : {
+        nativeCheckout : ?{
             [ $Values<typeof FUNDING> ] : ?boolean
         }
     |},
-    serverRiskData : ? ServerRiskData
+    cookies : string
 |};
 
 type ServiceDataOptions = {|
     facilitatorAccessToken : string,
     buyerGeoCountry : $Values<typeof COUNTRY>,
-    isCardFieldsExperimentEnabled : boolean,
     fundingEligibility : FundingEligibilityType,
     wallet : ?Wallet,
     buyerAccessToken : ?string,
@@ -374,14 +377,16 @@ type ServiceDataOptions = {|
     content : ContentType,
     eligibility : {|
         cardFields : boolean,
-        nativeCheckout : {
-            [$Values<typeof FUNDING> ] : ?boolean
+        nativeCheckout : ?{
+            [ $Values<typeof FUNDING> ] : ?boolean
         }
     |},
-    serverRiskData : ?ServerRiskData
+    cookies : string
 |};
 
-export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta, content, buyerGeoCountry, fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility } : ServiceDataOptions) : ServiceData {
+export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyerGeoCountry,
+    fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility, cookies } : ServiceDataOptions) : ServiceData {
+
     return {
         merchantID:   serverMerchantID,
         buyerCountry: buyerGeoCountry || COUNTRY.US,
@@ -392,6 +397,6 @@ export function getServiceData({ facilitatorAccessToken, serverRiskData, sdkMeta
         buyerAccessToken,
         facilitatorAccessToken,
         eligibility,
-        serverRiskData
+        cookies
     };
 }

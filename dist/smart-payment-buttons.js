@@ -849,6 +849,51 @@ window.spb = function(modules) {
             return result;
         }(child).indexOf(parent);
     }
+    function getAllChildFrames(win) {
+        var result = [];
+        for (var _i3 = 0, _getFrames2 = function(win) {
+            var result = [];
+            var frames;
+            try {
+                frames = win.frames;
+            } catch (err) {
+                frames = win;
+            }
+            var len;
+            try {
+                len = frames.length;
+            } catch (err) {}
+            if (0 === len) return result;
+            if (len) {
+                for (var i = 0; i < len; i++) {
+                    var frame = void 0;
+                    try {
+                        frame = frames[i];
+                    } catch (err) {
+                        continue;
+                    }
+                    result.push(frame);
+                }
+                return result;
+            }
+            for (var _i = 0; _i < 100; _i++) {
+                var _frame = void 0;
+                try {
+                    _frame = frames[_i];
+                } catch (err) {
+                    return result;
+                }
+                if (!_frame) return result;
+                result.push(_frame);
+            }
+            return result;
+        }(win); _i3 < _getFrames2.length; _i3++) {
+            var frame = _getFrames2[_i3];
+            result.push(frame);
+            for (var _i5 = 0, _getAllChildFrames2 = getAllChildFrames(frame); _i5 < _getAllChildFrames2.length; _i5++) result.push(_getAllChildFrames2[_i5]);
+        }
+        return result;
+    }
     function getTop(win) {
         void 0 === win && (win = window);
         try {
@@ -861,51 +906,7 @@ window.spb = function(modules) {
         try {
             if (isAncestorParent(win, window) && window.top) return window.top;
         } catch (err) {}
-        for (var _i7 = 0, _getAllChildFrames4 = function getAllChildFrames(win) {
-            var result = [];
-            for (var _i3 = 0, _getFrames2 = function(win) {
-                var result = [];
-                var frames;
-                try {
-                    frames = win.frames;
-                } catch (err) {
-                    frames = win;
-                }
-                var len;
-                try {
-                    len = frames.length;
-                } catch (err) {}
-                if (0 === len) return result;
-                if (len) {
-                    for (var i = 0; i < len; i++) {
-                        var frame = void 0;
-                        try {
-                            frame = frames[i];
-                        } catch (err) {
-                            continue;
-                        }
-                        result.push(frame);
-                    }
-                    return result;
-                }
-                for (var _i = 0; _i < 100; _i++) {
-                    var _frame = void 0;
-                    try {
-                        _frame = frames[_i];
-                    } catch (err) {
-                        return result;
-                    }
-                    if (!_frame) return result;
-                    result.push(_frame);
-                }
-                return result;
-            }(win); _i3 < _getFrames2.length; _i3++) {
-                var frame = _getFrames2[_i3];
-                result.push(frame);
-                for (var _i5 = 0, _getAllChildFrames2 = getAllChildFrames(frame); _i5 < _getAllChildFrames2.length; _i5++) result.push(_getAllChildFrames2[_i5]);
-            }
-            return result;
-        }(win); _i7 < _getAllChildFrames4.length; _i7++) {
+        for (var _i7 = 0, _getAllChildFrames4 = getAllChildFrames(win); _i7 < _getAllChildFrames4.length; _i7++) {
             var frame = _getAllChildFrames4[_i7];
             try {
                 if (frame.top) return frame.top;
@@ -1263,6 +1264,11 @@ window.spb = function(modules) {
     function arrayFrom(item) {
         return [].slice.call(item);
     }
+    memoize((function(obj) {
+        var result = [];
+        for (var key in obj) obj.hasOwnProperty(key) && result.push(obj[key]);
+        return result;
+    }));
     function isDocumentReady() {
         return Boolean(document.body) && "complete" === document.readyState;
     }
@@ -1504,6 +1510,10 @@ window.spb = function(modules) {
             xhr.send(body);
         }));
     }
+    var VAULT = {
+        TRUE: !0,
+        FALSE: !1
+    };
     var AUTO_FLUSH_LEVEL = [ "warn", "error" ];
     var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
     function httpTransport(_ref) {
@@ -1757,9 +1767,9 @@ window.spb = function(modules) {
             return body.data;
         }));
     }
-    function createAccessToken(clientID, _temp) {
+    function auth_createAccessToken(clientID, _temp) {
         var targetSubject = (void 0 === _temp ? {} : _temp).targetSubject;
-        return inlineMemoize(createAccessToken, (function() {
+        return inlineMemoize(auth_createAccessToken, (function() {
             getLogger().info("rest_api_create_access_token");
             var basicAuth = base64encode((clientID || "") + ":");
             var data = {
@@ -1821,7 +1831,7 @@ window.spb = function(modules) {
         getLogger().info("rest_api_create_order_token");
         var headers = ((_headers10 = {}).authorization = "Bearer " + accessToken, _headers10["paypal-partner-attribution-id"] = partnerAttributionID, 
         _headers10["paypal-client-metadata-id"] = clientMetadataID, _headers10["x-app-name"] = "smart-payment-buttons", 
-        _headers10["x-app-version"] = "2.0.303", _headers10);
+        _headers10["x-app-version"] = "2.0.311", _headers10);
         var paymentSource = {
             token: {
                 id: paymentMethodID,
@@ -1878,13 +1888,35 @@ window.spb = function(modules) {
         var _headers16;
         return callGraphQL({
             name: "GetCheckoutDetails",
-            query: "\n            query GetCheckoutDetails($orderID: String!) {\n                checkoutSession(token: $orderID) {\n                    cart {\n                        intent\n                        paymentId\n                        billingToken\n                        amounts {\n                            total {\n                                currencyCode\n                            }\n                        }\n                    }\n                    flags {\n                        isChangeShippingAddressAllowed\n                    }\n                    payees {\n                        merchantId\n                        email {\n                            stringValue\n                        }\n                    }\n                }\n            }\n        ",
+            query: "\n            query GetCheckoutDetails($orderID: String!) {\n                checkoutSession(token: $orderID) {\n                    cart {\n                        billingType\n                        intent\n                        paymentId\n                        billingToken\n                        amounts {\n                            total {\n                                currencyValue\n                                currencyCode\n                            }\n                        }\n                    }\n                    flags {\n                        isChangeShippingAddressAllowed\n                    }\n                    payees {\n                        merchantId\n                        email {\n                            stringValue\n                        }\n                    }\n                }\n            }\n        ",
             variables: {
                 orderID: orderID
             },
             headers: (_headers16 = {}, _headers16["paypal-client-context"] = orderID, _headers16)
         });
     }));
+    function updateButtonClientConfig(_ref14) {
+        var _ref14$inline = _ref14.inline;
+        return callGraphQL({
+            name: "UpdateClientConfig",
+            query: "\n            mutation UpdateClientConfig(\n                $orderID : String!,\n                $fundingSource : ButtonFundingSourceType!,\n                $integrationArtifact : IntegrationArtifactType!,\n                $userExperienceFlow : UserExperienceFlowType!,\n                $productFlow : ProductFlowType!\n            ) {\n                updateClientConfig(\n                    token: $orderID,\n                    fundingSource: $fundingSource,\n                    integrationArtifact: $integrationArtifact,\n                    userExperienceFlow: $userExperienceFlow,\n                    productFlow: $productFlow\n                )\n            }\n        ",
+            variables: {
+                orderID: orderID = (_ref9 = {
+                    orderID: _ref14.orderID,
+                    fundingSource: _ref14.fundingSource,
+                    integrationArtifact: "PAYPAL_JS_SDK",
+                    userExperienceFlow: void 0 !== _ref14$inline && _ref14$inline ? "INLINE" : "INCONTEXT",
+                    productFlow: "SMART_PAYMENT_BUTTONS"
+                }).orderID,
+                fundingSource: _ref9.fundingSource,
+                integrationArtifact: _ref9.integrationArtifact,
+                userExperienceFlow: _ref9.userExperienceFlow,
+                productFlow: _ref9.productFlow
+            },
+            headers: (_headers13 = {}, _headers13["paypal-client-context"] = orderID, _headers13)
+        }).then(src_util_noop);
+        var _ref9, _headers13, orderID;
+    }
     function createRequest(accessToken, subscriptionPayload, partnerAttributionID) {
         return request({
             method: "post",
@@ -1929,10 +1961,31 @@ window.spb = function(modules) {
     }));
     var zalgo_promise = __webpack_require__(0);
     var _FRAUDNET_URL;
-    var FRAUDNET_URL = ((_FRAUDNET_URL = {}).local = "https://www.msmaster.qa.paypal.com/en_US/m/fb-raw.js", 
-    _FRAUDNET_URL.stage = "https://www.msmaster.qa.paypal.com/en_US/m/fb-raw.js", _FRAUDNET_URL.sandbox = "https://c.paypal.com/da/r/fb.js", 
-    _FRAUDNET_URL.production = "https://c.paypal.com/da/r/fb.js", _FRAUDNET_URL.test = "https://c.paypal.com/da/r/fb.js", 
-    _FRAUDNET_URL);
+    var FRAUDNET_URL = ((_FRAUDNET_URL = {}).local = "https://www.stage2d0107.stage.paypal.com/FDRegression/fb.js", 
+    _FRAUDNET_URL.stage = "https://www.stage2d0107.stage.paypal.com/FDRegression/fb.js", 
+    _FRAUDNET_URL.sandbox = "https://c.paypal.com/da/r/fb.js", _FRAUDNET_URL.production = "https://c.paypal.com/da/r/fb.js", 
+    _FRAUDNET_URL.test = "https://c.paypal.com/da/r/fb.js", _FRAUDNET_URL);
+    function getNativeEligibility(_ref2) {
+        var buttonSessionID = _ref2.buttonSessionID, cookies = _ref2.cookies;
+        return callGraphQL({
+            name: "GetNativeEligibility",
+            query: "\n            query GetNativeEligibility(\n                $vault : Boolean,\n                $shippingCallbackEnabled : Boolean,\n                $merchantID : String,\n                $clientID : String,\n                $buyerCountry : String,\n                $currency : String,\n                $userAgent : String,\n                $buttonSessionID : String,\n                $cookies : String\n            ) {\n                mobileSDKEligibility(\n                    vault: $vault,\n                    shippingCallbackEnabled: $shippingCallbackEnabled,\n                    merchantID: $merchantID,\n                    facilitatorClientID: $clientID,\n                    buyerCountry: $buyerCountry,\n                    currency: $currency,\n                    userAgent: $userAgent,\n                    buttonSessionID: $buttonSessionID,\n                    cookies: $cookies\n                ) {\n                    paypal {\n                        eligibility\n                        ineligibilityReason\n                    }\n                    venmo {\n                        eligibility\n                        ineligibilityReason\n                    }\n                }\n            }\n        ",
+            variables: {
+                vault: _ref2.vault,
+                shippingCallbackEnabled: _ref2.shippingCallbackEnabled,
+                merchantID: _ref2.merchantID,
+                clientID: _ref2.clientID,
+                buyerCountry: _ref2.buyerCountry,
+                currency: _ref2.currency,
+                userAgent: getUserAgent(),
+                buttonSessionID: buttonSessionID,
+                cookies: cookies
+            }
+        }).then((function(gqlResult) {
+            if (!gqlResult || !gqlResult.mobileSDKEligibility) throw new Error("GraphQL GetNativeEligibility returned no mobileSDKEligibility object");
+            return gqlResult.mobileSDKEligibility;
+        }));
+    }
     function getCreateOrder(_ref4, _ref5) {
         var createOrder = _ref4.createOrder, currency = _ref4.currency;
         var createBillingAgreement = _ref5.createBillingAgreement, createSubscription = _ref5.createSubscription;
@@ -2073,7 +2126,7 @@ window.spb = function(modules) {
                     var data = {
                         orderID: orderID,
                         payerID: payerID,
-                        paymentID: paymentID,
+                        paymentID: paymentID = paymentID || supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.paymentId,
                         billingToken: billingToken = billingToken || supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.billingToken,
                         subscriptionID: subscriptionID,
                         facilitatorAccessToken: facilitatorAccessToken,
@@ -2435,7 +2488,9 @@ window.spb = function(modules) {
     function getProps(_ref) {
         var facilitatorAccessToken = _ref.facilitatorAccessToken;
         var xprops = window.xprops;
-        var env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, onError = xprops.onError, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, persistRiskData = xprops.persistRiskData, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 !== _xprops$upgradeLSAT && _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, _xprops$enableBNPL = xprops.enableBNPL, enableBNPL = void 0 !== _xprops$enableBNPL && _xprops$enableBNPL, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard;
+        var env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, onError = xprops.onError, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, persistRiskData = xprops.persistRiskData, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 !== _xprops$upgradeLSAT && _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, _xprops$enableBNPL = xprops.enableBNPL, enableBNPL = void 0 !== _xprops$enableBNPL && _xprops$enableBNPL, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
+            return promise_ZalgoPromise.resolve([]);
+        } : _xprops$getQueriedEli;
         var upgradeLSATExperiment = (name = "UPGRADE_LSAT_EXPERIMENT", logger = getLogger(), 
         function(_ref) {
             var name = _ref.name, _ref$sample = _ref.sample, sample = void 0 === _ref$sample ? 50 : _ref$sample, _ref$logTreatment = _ref.logTreatment, logTreatment = void 0 === _ref$logTreatment ? src_util_noop : _ref$logTreatment, _ref$logCheckpoint = _ref.logCheckpoint, logCheckpoint = void 0 === _ref$logCheckpoint ? src_util_noop : _ref$logCheckpoint;
@@ -2572,6 +2627,14 @@ window.spb = function(modules) {
             if (xprops.createOrder) throw new Error("Do not pass both createSubscription and createBillingAgreement");
             if (!xprops.vault) throw new Error("Must pass vault=true to sdk to use createSubscription");
         }
+        if ("tokenize" === intent) {
+            if (!xprops.createBillingAgreement) throw new Error("Must pass createBillingAgreement with intent=tokenize");
+            if (xprops.createOrder || xprops.createSubscription) throw new Error("Must not pass createOrder or createSubscription with intent=tokenize");
+        }
+        if ("subscription" === intent) {
+            if (!xprops.createSubscription) throw new Error("Must pass createSubscription with intent=subscription");
+            if (xprops.createOrder || xprops.createBillingAgreement) throw new Error("Must not pass createOrder or createBillingAgreement with intent=tokenize");
+        }
         var createBillingAgreement = function(_ref) {
             var createBillingAgreement = _ref.createBillingAgreement;
             if (createBillingAgreement) return function() {
@@ -2589,7 +2652,7 @@ window.spb = function(modules) {
             if (createSubscription) {
                 if (merchantID && merchantID[0]) {
                     getLogger().info("src_props_subscriptions_recreate_access_token_cache");
-                    createAccessToken(clientID, {
+                    auth_createAccessToken(clientID, {
                         targetSubject: merchantID[0]
                     });
                 }
@@ -2605,7 +2668,7 @@ window.spb = function(modules) {
                                         if (!subscriptionPayload) throw new Error("Expected subscription payload to be passed");
                                         if (merchantID && merchantID[0]) {
                                             getLogger().info("rest_api_subscriptions_recreate_access_token");
-                                            return createAccessToken(clientID, {
+                                            return auth_createAccessToken(clientID, {
                                                 targetSubject: merchantID[0]
                                             }).then((function(thirdPartyAccessToken) {
                                                 return createRequest(thirdPartyAccessToken, subscriptionPayload, partnerAttributionID);
@@ -2627,7 +2690,7 @@ window.spb = function(modules) {
                                         if (!subscriptionPayload) throw new Error("Expected subscription payload to be passed");
                                         if (merchantID && merchantID[0]) {
                                             getLogger().info("rest_api_subscriptions_recreate_access_token");
-                                            return createAccessToken(clientID, {
+                                            return auth_createAccessToken(clientID, {
                                                 targetSubject: merchantID[0]
                                             }).then((function(thirdPartyAccessToken) {
                                                 return reviseRequest(thirdPartyAccessToken, subscriptionID, subscriptionPayload, partnerAttributionID);
@@ -2698,8 +2761,10 @@ window.spb = function(modules) {
             persistRiskData: persistRiskData,
             connect: connect,
             fundingSource: fundingSource,
+            enableFunding: enableFunding,
             disableFunding: disableFunding,
             disableCard: disableCard,
+            getQueriedEligibleFunding: getQueriedEligibleFunding,
             amount: amount,
             userIDToken: userIDToken,
             enableBNPL: enableBNPL || !1,
@@ -2744,7 +2809,8 @@ window.spb = function(modules) {
                 createOrder: createOrder,
                 isLSATExperiment: upgradeLSATExperiment.isEnabled(),
                 upgradeLSAT: upgradeLSAT
-            })
+            }),
+            standaloneFundingSource: fundingSource
         };
     }
     function getComponents() {
@@ -2776,7 +2842,8 @@ window.spb = function(modules) {
             buyerAccessToken: _ref3.buyerAccessToken,
             facilitatorAccessToken: _ref3.facilitatorAccessToken,
             eligibility: _ref3.eligibility,
-            serverRiskData: _ref3.serverRiskData
+            serverRiskData: _ref3.serverRiskData,
+            cookies: _ref3.cookies
         };
     }
     function enableLoadingSpinner(button) {
@@ -2983,49 +3050,6 @@ window.spb = function(modules) {
             class: "loader"
         }))), children));
     }
-    function updateButtonClientConfig(_ref) {
-        var _ref$inline = _ref.inline;
-        return callGraphQL({
-            name: "UpdateClientConfig",
-            query: "\n            mutation UpdateClientConfig(\n                $orderID : String!,\n                $fundingSource : ButtonFundingSourceType!,\n                $integrationArtifact : IntegrationArtifactType!,\n                $userExperienceFlow : UserExperienceFlowType!,\n                $productFlow : ProductFlowType!\n            ) {\n                updateClientConfig(\n                    token: $orderID,\n                    fundingSource: $fundingSource,\n                    integrationArtifact: $integrationArtifact,\n                    userExperienceFlow: $userExperienceFlow,\n                    productFlow: $productFlow\n                )\n            }\n        ",
-            variables: {
-                orderID: orderID = (_ref9 = {
-                    orderID: _ref.orderID,
-                    fundingSource: _ref.fundingSource,
-                    integrationArtifact: "PAYPAL_JS_SDK",
-                    userExperienceFlow: void 0 !== _ref$inline && _ref$inline ? "INLINE" : "INCONTEXT",
-                    productFlow: "SMART_PAYMENT_BUTTONS"
-                }).orderID,
-                fundingSource: _ref9.fundingSource,
-                integrationArtifact: _ref9.integrationArtifact,
-                userExperienceFlow: _ref9.userExperienceFlow,
-                productFlow: _ref9.productFlow
-            },
-            headers: (_headers13 = {}, _headers13["paypal-client-context"] = orderID, _headers13)
-        }).then(src_util_noop);
-        var _ref9, _headers13, orderID;
-    }
-    function isValidMerchantIDs(merchantIDs, payees) {
-        if (merchantIDs.length !== payees.length) return !1;
-        var merchantEmails = [];
-        var merchantIds = [];
-        merchantIDs.forEach((function(id) {
-            isEmailAddress(id) ? merchantEmails.push(id.toLowerCase()) : merchantIds.push(id);
-        }));
-        var foundEmail = merchantEmails.every((function(email) {
-            return payees.some((function(payee) {
-                return email === (payee.email && payee.email.stringValue && payee.email.stringValue.toLowerCase());
-            }));
-        }));
-        var foundMerchantId = merchantIds.every((function(id) {
-            return payees.some((function(payee) {
-                return id === payee.merchantId;
-            }));
-        }));
-        return !(!foundEmail || !foundMerchantId) && payees.every((function(payee) {
-            return merchantIds.indexOf(payee.merchantId) > -1 || merchantEmails.indexOf(payee.email && payee.email.stringValue && payee.email.stringValue.toLowerCase()) > -1;
-        }));
-    }
     var checkoutOpen = !1;
     var canRenderTop = !1;
     var checkout = {
@@ -3050,7 +3074,7 @@ window.spb = function(modules) {
             var props = _ref8.props, components = _ref8.components, serviceData = _ref8.serviceData, payment = _ref8.payment, config = _ref8.config;
             if (checkoutOpen) throw new Error("Checkout already rendered");
             var Checkout = components.Checkout;
-            var sessionID = props.sessionID, buttonSessionID = props.buttonSessionID, _createOrder = props.createOrder, _onApprove = props.onApprove, _onCancel = props.onCancel, onShippingChange = props.onShippingChange, locale = props.locale, commit = props.commit, onError = props.onError, vault = props.vault, clientAccessToken = props.clientAccessToken, createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription, onClick = props.onClick, clientID = props.clientID, connect = props.connect, cmid = props.clientMetadataID, _onAuth = props.onAuth, currency = props.currency, intent = props.intent, disableFunding = props.disableFunding, disableCard = props.disableCard;
+            var sessionID = props.sessionID, buttonSessionID = props.buttonSessionID, _createOrder = props.createOrder, _onApprove = props.onApprove, _onCancel = props.onCancel, onShippingChange = props.onShippingChange, locale = props.locale, commit = props.commit, onError = props.onError, vault = props.vault, clientAccessToken = props.clientAccessToken, createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription, onClick = props.onClick, clientID = props.clientID, connect = props.connect, cmid = props.clientMetadataID, _onAuth = props.onAuth, currency = props.currency, intent = props.intent, disableFunding = props.disableFunding, disableCard = props.disableCard, enableFunding = props.enableFunding, standaloneFundingSource = props.standaloneFundingSource;
             var button = payment.button, win = payment.win, fundingSource = payment.fundingSource, card = payment.card, _payment$buyerAccessT = payment.buyerAccessToken, buyerAccessToken = void 0 === _payment$buyerAccessT ? serviceData.buyerAccessToken : _payment$buyerAccessT, venmoPayloadID = payment.venmoPayloadID, buyerIntent = payment.buyerIntent;
             var fundingEligibility = serviceData.fundingEligibility, buyerCountry = serviceData.buyerCountry, sdkMeta = serviceData.sdkMeta, merchantID = serviceData.merchantID;
             var cspNonce = config.cspNonce;
@@ -3342,7 +3366,9 @@ window.spb = function(modules) {
                     locale: locale,
                     commit: commit,
                     cspNonce: cspNonce,
-                    clientMetadataID: cmid
+                    clientMetadataID: cmid,
+                    enableFunding: enableFunding,
+                    standaloneFundingSource: standaloneFundingSource
                 })).renderTo((top = getTop(window), canRenderTop && top ? top : utils_getParent() ? utils_getParent() : window), "body", context).catch((function(err) {
                     if (checkoutOpen) throw err;
                 }));
@@ -4064,7 +4090,7 @@ window.spb = function(modules) {
                         }).clientID,
                         merchantID: _ref.merchantID,
                         currency: _ref.currency,
-                        amount: _ref.amount,
+                        amount: void 0 === (_ref$amount = _ref.amount) ? "0.00" : _ref$amount,
                         userIDToken: _ref.userIDToken,
                         vetted: void 0 === (_ref$vetted = _ref.vetted) || _ref$vetted
                     },
@@ -4073,7 +4099,7 @@ window.spb = function(modules) {
                 }).then((function(_ref2) {
                     return _ref2.smartWallet;
                 }));
-                var _ref, _headers, _ref$vetted;
+                var _ref, _headers, _ref$amount, _ref$vetted;
             })).catch((function(err) {
                 getLogger().warn("load_smart_wallet_error", {
                     err: stringifyError(err)
@@ -4102,7 +4128,7 @@ window.spb = function(modules) {
         },
         init: function(_ref4) {
             var props = _ref4.props, components = _ref4.components, payment = _ref4.payment, serviceData = _ref4.serviceData, config = _ref4.config;
-            var createOrder = props.createOrder, onApprove = props.onApprove, clientMetadataID = props.clientMetadataID;
+            var createOrder = props.createOrder, onApprove = props.onApprove, clientMetadataID = props.clientMetadataID, vault = props.vault;
             var fundingSource = payment.fundingSource, instrumentID = payment.instrumentID;
             var wallet = serviceData.wallet;
             if (!wallet || !smartWalletPromise) throw new Error("No smart wallet found");
@@ -4115,12 +4141,12 @@ window.spb = function(modules) {
                     serviceData: serviceData,
                     payment: _extends({}, payment, {
                         createAccessToken: function() {
-                            return smartWalletPromise.then((function(smartWallet) {
+                            return smartWalletPromise ? smartWalletPromise.then((function(smartWallet) {
                                 var smartInstrument = wallet_capture_bnpl_getInstrument(smartWallet, fundingSource, instrumentID);
                                 if (!smartInstrument) throw new Error("Instrument not found");
                                 if (!smartInstrument.accessToken) throw new Error("Instrument access token not found");
                                 return smartInstrument.accessToken;
-                            }));
+                            })) : promise_ZalgoPromise.resolve();
                         },
                         isClick: !1,
                         buyerIntent: "pay_with_different_funding_shipping",
@@ -4133,7 +4159,7 @@ window.spb = function(modules) {
                 getLogger().info("web_checkout_fallback").flush();
                 return getWebCheckoutFallback().start();
             };
-            if (!instrument.oneClick || smartWalletErrored) return getWebCheckoutFallback();
+            if (!instrument.oneClick || smartWalletErrored || vault) return getWebCheckoutFallback();
             var restart = function() {
                 return fallbackToWebCheckout();
             };
@@ -4224,7 +4250,15 @@ window.spb = function(modules) {
                             payment: _extends({}, payment, {
                                 win: win,
                                 buyerIntent: "pay_with_different_funding_shipping",
-                                fundingSource: newFundingSource
+                                fundingSource: newFundingSource,
+                                createAccessToken: function() {
+                                    return smartWalletPromise.then((function(smartWallet) {
+                                        var smartInstrument = wallet_capture_bnpl_getInstrument(smartWallet, fundingSource, instrumentID);
+                                        if (!smartInstrument) throw new Error("Instrument not found");
+                                        if (!smartInstrument.accessToken) throw new Error("Instrument access token not found");
+                                        return smartInstrument.accessToken;
+                                    }));
+                                }
                             })
                         });
                     }));
@@ -4567,7 +4601,45 @@ window.spb = function(modules) {
         return !1;
     }
     var initialPageUrl;
+    var nativeEligibility;
     var parentPopupBridge;
+    function isValidMerchantIDs(merchantIDs, payees) {
+        if (merchantIDs.length !== payees.length) return !1;
+        var merchantEmails = [];
+        var merchantIds = [];
+        merchantIDs.forEach((function(id) {
+            isEmailAddress(id) ? merchantEmails.push(id.toLowerCase()) : merchantIds.push(id);
+        }));
+        var foundEmail = merchantEmails.every((function(email) {
+            return payees.some((function(payee) {
+                return email === (payee.email && payee.email.stringValue && payee.email.stringValue.toLowerCase());
+            }));
+        }));
+        var foundMerchantId = merchantIds.every((function(id) {
+            return payees.some((function(payee) {
+                return id === payee.merchantId;
+            }));
+        }));
+        return !(!foundEmail || !foundMerchantId) && payees.every((function(payee) {
+            return merchantIds.indexOf(payee.merchantId) > -1 || merchantEmails.indexOf(payee.email && payee.email.stringValue && payee.email.stringValue.toLowerCase()) > -1;
+        }));
+    }
+    function triggerIntegrationError(_ref2) {
+        var _getLogger$warn$track;
+        var error = _ref2.error, _ref2$message = _ref2.message, message = void 0 === _ref2$message ? error : _ref2$message, clientID = _ref2.clientID, orderID = _ref2.orderID, _ref2$loggerPayload = _ref2.loggerPayload, loggerPayload = void 0 === _ref2$loggerPayload ? {} : _ref2$loggerPayload, _ref2$throwError = _ref2.throwError, throwError = void 0 === _ref2$throwError || _ref2$throwError;
+        var isWhitelisted = "sandbox" === _ref2.env ? clientID && -1 !== SANDBOX_ORDER_VALIDATION_WHITELIST.indexOf(clientID) : clientID && -1 !== ORDER_VALIDATION_WHITELIST.indexOf(clientID);
+        var shouldThrow = throwError && !isWhitelisted;
+        getLogger().warn(error, loggerPayload).track((_getLogger$warn$track = {}, _getLogger$warn$track.transition_name = "process_order_validate", 
+        _getLogger$warn$track.context_type = "EC-Token", _getLogger$warn$track.token = orderID, 
+        _getLogger$warn$track.context_id = orderID, _getLogger$warn$track.integration_issue = error, 
+        _getLogger$warn$track.whitelist = shouldThrow ? "false" : "true", _getLogger$warn$track.ext_error_desc = message, 
+        _getLogger$warn$track)).flush();
+        if (shouldThrow) {
+            console.error(message);
+            throw new Error(message);
+        }
+        console.warn(message);
+    }
     function renderSmartMenu(_ref) {
         var clientID = _ref.clientID;
         var _Menu = (0, _ref.Menu)({
@@ -4655,18 +4727,33 @@ window.spb = function(modules) {
     }, {
         name: "native",
         setup: function(_ref5) {
-            var props = _ref5.props;
+            var props = _ref5.props, serviceData = _ref5.serviceData;
             return promise_ZalgoPromise.try((function() {
-                return (0, props.getPageUrl)().then((function(pageUrl) {
+                var getPageUrl = props.getPageUrl, clientID = props.clientID, currency = props.currency, platform = props.platform, vault = props.vault, buttonSessionID = props.buttonSessionID;
+                var merchantID = serviceData.merchantID, buyerCountry = serviceData.buyerCountry, cookies = serviceData.cookies;
+                var shippingCallbackEnabled = Boolean(props.onShippingChange);
+                return promise_ZalgoPromise.all([ getNativeEligibility({
+                    vault: vault,
+                    platform: platform,
+                    shippingCallbackEnabled: shippingCallbackEnabled,
+                    merchantID: merchantID[0],
+                    clientID: clientID,
+                    buyerCountry: buyerCountry,
+                    currency: currency,
+                    buttonSessionID: buttonSessionID,
+                    cookies: cookies
+                }).then((function(result) {
+                    nativeEligibility = result;
+                })), getPageUrl().then((function(pageUrl) {
                     initialPageUrl = pageUrl;
-                }));
-            }));
+                })) ]);
+            })).then(src_util_noop);
         },
         isEligible: function(_ref3) {
             var props = _ref3.props;
             var createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription, env = props.env;
             var firebaseConfig = _ref3.config.firebase;
-            var eligibility = _ref3.serviceData.eligibility;
+            var merchantID = _ref3.serviceData.merchantID;
             return !("mobile" !== props.platform || props.onShippingChange && !isNativeOptedIn({
                 props: props
             }) || createBillingAgreement || createSubscription || !supportsPopups() || !firebaseConfig || !(isIos() && function(ua) {
@@ -4674,15 +4761,15 @@ window.spb = function(modules) {
                 return /Safari/.test(ua) && !isChrome(ua);
             }() || isAndroidChrome()) || !isNativeOptedIn({
                 props: props
-            }) && ("local" === env || "stage" === env || !eligibility.nativeCheckout.paypal && !eligibility.nativeCheckout.venmo));
+            }) && ("local" === env || "stage" === env || merchantID.length > 1));
         },
         isPaymentEligible: function(_ref4) {
             var payment = _ref4.payment;
             var fundingSource = payment.fundingSource;
             var eligibility = _ref4.serviceData.eligibility;
-            return !(payment.win || !initialPageUrl || !isNativeOptedIn({
+            return !(payment.win || !initialPageUrl || !NATIVE_CHECKOUT_URI[fundingSource] || !isNativeOptedIn({
                 props: _ref4.props
-            }) && !eligibility.nativeCheckout[fundingSource]);
+            }) && (!eligibility.nativeCheckout || !eligibility.nativeCheckout[fundingSource]) && !(nativeEligibility && nativeEligibility[fundingSource] && nativeEligibility[fundingSource].eligibility));
         },
         init: function(_ref6) {
             var props = _ref6.props, components = _ref6.components, config = _ref6.config, payment = _ref6.payment, serviceData = _ref6.serviceData;
@@ -5189,6 +5276,7 @@ window.spb = function(modules) {
             buyerGeoCountry: opts.buyerCountry,
             serverMerchantID: opts.merchantID,
             fundingEligibility: fundingEligibility,
+            cookies: opts.cookies,
             isCardFieldsExperimentEnabled: opts.isCardFieldsExperimentEnabled,
             sdkMeta: opts.sdkMeta,
             buyerAccessToken: opts.buyerAccessToken,
@@ -5200,7 +5288,7 @@ window.spb = function(modules) {
         var props = getProps({
             facilitatorAccessToken: facilitatorAccessToken
         });
-        var env = props.env, sessionID = props.sessionID, partnerAttributionID = props.partnerAttributionID, commit = props.commit, sdkCorrelationID = props.sdkCorrelationID, locale = props.locale, buttonSessionID = props.buttonSessionID, merchantDomain = props.merchantDomain, onInit = props.onInit, getPrerenderDetails = props.getPrerenderDetails, rememberFunding = props.rememberFunding, style = props.style, persistRiskData = props.persistRiskData, fundingSource = props.fundingSource;
+        var env = props.env, sessionID = props.sessionID, partnerAttributionID = props.partnerAttributionID, commit = props.commit, sdkCorrelationID = props.sdkCorrelationID, locale = props.locale, buttonSessionID = props.buttonSessionID, merchantDomain = props.merchantDomain, onInit = props.onInit, getPrerenderDetails = props.getPrerenderDetails, rememberFunding = props.rememberFunding, getQueriedEligibleFunding = props.getQueriedEligibleFunding, style = props.style, persistRiskData = props.persistRiskData, fundingSource = props.fundingSource, intent = props.intent, createBillingAgreement = props.createBillingAgreement, createSubscription = props.createSubscription;
         var config = getConfig({
             serverCSPNonce: serverCSPNonce,
             firebaseConfig: firebaseConfig
@@ -5215,171 +5303,271 @@ window.spb = function(modules) {
             var payment = _ref.payment, paymentProps = _ref.props;
             return promise_ZalgoPromise.try((function() {
                 if (!paymentProcessing) {
-                    var win = payment.win;
+                    var win = payment.win, paymentFundingSource = payment.fundingSource;
                     var onClick = paymentProps.onClick;
-                    onClick && onClick({
-                        fundingSource: payment.fundingSource
-                    });
-                    if (isEnabled()) {
-                        paymentProcessing = !0;
-                        return function(_ref3) {
-                            var payment = _ref3.payment, serviceData = _ref3.serviceData, config = _ref3.config, components = _ref3.components, props = _ref3.props;
-                            var button = payment.button, fundingSource = payment.fundingSource, instrumentType = payment.instrumentType;
-                            return promise_ZalgoPromise.try((function() {
-                                var _getLogger$info$info$;
-                                var merchantID = serviceData.merchantID;
-                                var clientID = props.clientID, onClick = props.onClick, createOrder = props.createOrder, env = props.env;
-                                var _getPaymentFlow = getPaymentFlow({
-                                    props: props,
-                                    payment: payment,
-                                    config: config,
-                                    components: components,
-                                    serviceData: serviceData
-                                }), name = _getPaymentFlow.name, inline = _getPaymentFlow.inline, spinner = _getPaymentFlow.spinner, updateClientConfig = _getPaymentFlow.updateClientConfig;
-                                var _init = (0, _getPaymentFlow.init)({
-                                    props: props,
-                                    config: config,
-                                    serviceData: serviceData,
-                                    components: components,
-                                    payment: payment
-                                }), _init$click = _init.click, start = _init.start, close = _init.close;
-                                var clickPromise = promise_ZalgoPromise.try(void 0 === _init$click ? promiseNoop : _init$click);
-                                clickPromise.catch(src_util_noop);
-                                getLogger().info("button_click").info("button_click_pay_flow_" + name).info("button_click_fundingsource_" + fundingSource).info("button_click_instrument_" + (instrumentType || "default")).track((_getLogger$info$info$ = {}, 
-                                _getLogger$info$info$.transition_name = "process_button_click", _getLogger$info$info$.selected_payment_method = fundingSource, 
-                                _getLogger$info$info$.chosen_fi_type = instrumentType, _getLogger$info$info$.payment_flow = name, 
-                                _getLogger$info$info$)).flush();
-                                return promise_ZalgoPromise.hash({
-                                    valid: !onClick || onClick({
-                                        fundingSource: fundingSource
-                                    })
-                                }).then((function(_ref4) {
-                                    if (_ref4.valid) {
-                                        spinner && enableLoadingSpinner(button);
-                                        var updateClientConfigPromise = createOrder().then((function(orderID) {
-                                            if (updateClientConfig) return updateClientConfig({
-                                                orderID: orderID,
-                                                payment: payment
-                                            });
-                                            updateButtonClientConfig({
-                                                orderID: orderID,
-                                                fundingSource: fundingSource,
-                                                inline: inline
-                                            });
-                                        })).catch((function(err) {
-                                            return getLogger().error("update_client_config_error", {
-                                                err: stringifyError(err)
-                                            });
-                                        }));
-                                        var expectedIntent = props.intent, expectedCurrency = props.currency;
-                                        var startPromise = promise_ZalgoPromise.try((function() {
-                                            return updateClientConfigPromise;
-                                        })).then((function() {
-                                            return start();
-                                        }));
-                                        var validateOrderPromise = createOrder().then((function(orderID) {
-                                            return function(orderID, _ref2) {
-                                                var env = _ref2.env, clientID = _ref2.clientID, merchantID = _ref2.merchantID, expectedCurrency = _ref2.expectedCurrency, expectedIntent = _ref2.expectedIntent;
-                                                return getSupplementalOrderInfo(orderID).then((function(order) {
-                                                    var cart = order.checkoutSession.cart;
-                                                    var intent = "sale" === cart.intent.toLowerCase() ? "capture" : cart.intent.toLowerCase();
-                                                    var currency = cart.amounts && cart.amounts.total.currencyCode;
-                                                    if (intent !== expectedIntent) throw new Error("Expected intent from order api call to be " + expectedIntent + ", got " + intent + ". Please ensure you are passing intent=" + intent + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/");
-                                                    if (currency && currency !== expectedCurrency) throw new Error("Expected currency from order api call to be " + expectedCurrency + ", got " + currency + ". Please ensure you are passing currency=" + currency + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/");
-                                                    if (!merchantID || 0 === merchantID.length) throw new Error("Could not determine correct merchant id");
-                                                    var payees = order.checkoutSession.payees;
-                                                    if (!payees) return getLogger().warn("supplemental_order_missing_payees").flush();
-                                                    if (!payees.length) return getLogger().warn("supplemental_order_payees_empty").flush();
-                                                    var dict = {};
-                                                    var uniquePayees = [];
-                                                    for (var _i2 = 0; _i2 < payees.length; _i2++) {
-                                                        var payee = payees[_i2];
-                                                        if (!(payee.merchantId || payee.email && payee.email.stringValue)) return getLogger().warn("supplemental_order_payees_missing_value", {
-                                                            payees: JSON.stringify(payees)
-                                                        }).flush();
-                                                        if (payee.merchantId) {
-                                                            if (!dict[payee.merchantId]) {
-                                                                dict[payee.merchantId] = 1;
+                    var smartFields = function(fundingSource) {
+                        try {
+                            for (var _i2 = 0, _getAllFramesInWindow2 = function(win) {
+                                var top = getTop(win);
+                                if (!top) throw new Error("Can not determine top window");
+                                var result = [].concat(getAllChildFrames(top), [ top ]);
+                                -1 === result.indexOf(win) && (result = [].concat(result, [ win ], getAllChildFrames(win)));
+                                return result;
+                            }(window); _i2 < _getAllFramesInWindow2.length; _i2++) {
+                                var win = _getAllFramesInWindow2[_i2];
+                                if (isSameDomain(win) && win.exports && "smart-fields" === win.exports.name && win.exports.fundingSource === fundingSource) return win.exports;
+                            }
+                        } catch (err) {}
+                    }(paymentFundingSource);
+                    if (!smartFields || smartFields.isValid()) {
+                        onClick && onClick({
+                            fundingSource: paymentFundingSource
+                        });
+                        if (isEnabled()) {
+                            paymentProcessing = !0;
+                            return function(_ref3) {
+                                var payment = _ref3.payment, serviceData = _ref3.serviceData, config = _ref3.config, components = _ref3.components, props = _ref3.props;
+                                var button = payment.button, fundingSource = payment.fundingSource, instrumentType = payment.instrumentType;
+                                return promise_ZalgoPromise.try((function() {
+                                    var _getLogger$info$info$;
+                                    var merchantID = serviceData.merchantID;
+                                    var clientID = props.clientID, onClick = props.onClick, createOrder = props.createOrder, env = props.env, vault = props.vault;
+                                    var _getPaymentFlow = getPaymentFlow({
+                                        props: props,
+                                        payment: payment,
+                                        config: config,
+                                        components: components,
+                                        serviceData: serviceData
+                                    }), name = _getPaymentFlow.name, inline = _getPaymentFlow.inline, spinner = _getPaymentFlow.spinner, updateClientConfig = _getPaymentFlow.updateClientConfig;
+                                    var _init = (0, _getPaymentFlow.init)({
+                                        props: props,
+                                        config: config,
+                                        serviceData: serviceData,
+                                        components: components,
+                                        payment: payment
+                                    }), _init$click = _init.click, start = _init.start, close = _init.close;
+                                    var clickPromise = promise_ZalgoPromise.try(void 0 === _init$click ? promiseNoop : _init$click);
+                                    clickPromise.catch(src_util_noop);
+                                    getLogger().info("button_click").info("button_click_pay_flow_" + name).info("button_click_fundingsource_" + fundingSource).info("button_click_instrument_" + (instrumentType || "default")).track((_getLogger$info$info$ = {}, 
+                                    _getLogger$info$info$.transition_name = "process_button_click", _getLogger$info$info$.selected_payment_method = fundingSource, 
+                                    _getLogger$info$info$.chosen_fi_type = instrumentType, _getLogger$info$info$.payment_flow = name, 
+                                    _getLogger$info$info$)).flush();
+                                    return promise_ZalgoPromise.hash({
+                                        valid: !onClick || onClick({
+                                            fundingSource: fundingSource
+                                        })
+                                    }).then((function(_ref4) {
+                                        if (_ref4.valid) {
+                                            spinner && enableLoadingSpinner(button);
+                                            var updateClientConfigPromise = createOrder().then((function(orderID) {
+                                                if (updateClientConfig) return updateClientConfig({
+                                                    orderID: orderID,
+                                                    payment: payment
+                                                });
+                                                updateButtonClientConfig({
+                                                    orderID: orderID,
+                                                    fundingSource: fundingSource,
+                                                    inline: inline
+                                                });
+                                            })).catch((function(err) {
+                                                return getLogger().error("update_client_config_error", {
+                                                    err: stringifyError(err)
+                                                });
+                                            }));
+                                            var expectedIntent = props.intent, expectedCurrency = props.currency;
+                                            var startPromise = promise_ZalgoPromise.try((function() {
+                                                return updateClientConfigPromise;
+                                            })).then((function() {
+                                                return start();
+                                            }));
+                                            var validateOrderPromise = createOrder().then((function(orderID) {
+                                                return function(orderID, _ref3) {
+                                                    var env = _ref3.env, clientID = _ref3.clientID, merchantID = _ref3.merchantID, expectedCurrency = _ref3.expectedCurrency, expectedIntent = _ref3.expectedIntent, vault = _ref3.vault;
+                                                    var logger = getLogger();
+                                                    return getSupplementalOrderInfo(orderID).then((function(order) {
+                                                        var cart = order.checkoutSession.cart;
+                                                        var intent = "sale" === cart.intent.toLowerCase() ? "capture" : cart.intent.toLowerCase();
+                                                        var currency = cart.amounts && cart.amounts.total.currencyCode;
+                                                        var amount = cart.amounts && cart.amounts.total.currencyValue;
+                                                        var billingType = cart.billingType;
+                                                        intent !== expectedIntent && triggerIntegrationError({
+                                                            error: "smart_button_validation_error_incorrect_intent",
+                                                            message: "Expected intent from order api call to be " + expectedIntent + ", got " + intent + ". Please ensure you are passing intent=" + intent + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                            loggerPayload: {
+                                                                intent: intent,
+                                                                expectedIntent: expectedIntent
+                                                            },
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID
+                                                        });
+                                                        currency && currency !== expectedCurrency && triggerIntegrationError({
+                                                            error: "smart_button_validation_error_incorrect_currency",
+                                                            message: "Expected currency from order api call to be " + expectedCurrency + ", got " + currency + ". Please ensure you are passing currency=" + currency + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                            loggerPayload: {
+                                                                currency: currency,
+                                                                expectedCurrency: expectedCurrency
+                                                            },
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID
+                                                        });
+                                                        merchantID && 0 !== merchantID.length || triggerIntegrationError({
+                                                            error: "smart_button_validation_error_no_merchant_id",
+                                                            message: "Could not determine correct merchant id",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID
+                                                        });
+                                                        billingType && !vault && triggerIntegrationError({
+                                                            error: "smart_button_validation_error_billing_" + (amount ? "with" : "without") + "_purchase_no_vault",
+                                                            message: "Expected vault=" + VAULT.TRUE.toString() + " for a billing transaction",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID,
+                                                            loggerPayload: {
+                                                                billingType: billingType,
+                                                                vault: vault
+                                                            },
+                                                            throwError: !1
+                                                        });
+                                                        !vault || billingType || window.xprops.createBillingAgreement || window.xprops.createSubscription || window.xprops.clientAccessToken || window.xprops.userIDToken || triggerIntegrationError({
+                                                            error: "smart_button_validation_error_vault_passed_not_needed",
+                                                            message: "Expected vault=" + VAULT.FALSE.toString() + " for a non-billing, non-subscription transaction",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID,
+                                                            loggerPayload: {
+                                                                vault: vault,
+                                                                billingType: billingType
+                                                            },
+                                                            throwError: !1
+                                                        });
+                                                        var payees = order.checkoutSession.payees;
+                                                        if (!payees) return triggerIntegrationError({
+                                                            error: "smart_button_validation_error_supplemental_order_missing_payees",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID,
+                                                            throwError: !1
+                                                        });
+                                                        if (!payees.length) return triggerIntegrationError({
+                                                            error: "smart_button_validation_error_supplemental_order_no_payees",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID,
+                                                            throwError: !1
+                                                        });
+                                                        var dict = {};
+                                                        var uniquePayees = [];
+                                                        for (var _i2 = 0; _i2 < payees.length; _i2++) {
+                                                            var payee = payees[_i2];
+                                                            if (!(payee.merchantId || payee.email && payee.email.stringValue)) return triggerIntegrationError({
+                                                                error: "smart_button_validation_error_supplemental_order_missing_values",
+                                                                env: env,
+                                                                clientID: clientID,
+                                                                orderID: orderID,
+                                                                loggerPayload: {
+                                                                    payees: JSON.stringify(payees)
+                                                                },
+                                                                throwError: !1
+                                                            });
+                                                            if (payee.merchantId) {
+                                                                if (!dict[payee.merchantId]) {
+                                                                    dict[payee.merchantId] = 1;
+                                                                    uniquePayees.push(payee);
+                                                                }
+                                                            } else if (payee.email && payee.email.stringValue && !dict[payee.email.stringValue]) {
+                                                                dict[payee.email.stringValue] = 1;
                                                                 uniquePayees.push(payee);
                                                             }
-                                                        } else if (payee.email && payee.email.stringValue && !dict[payee.email.stringValue]) {
-                                                            dict[payee.email.stringValue] = 1;
-                                                            uniquePayees.push(payee);
                                                         }
-                                                    }
-                                                    var payeesStr = uniquePayees.map((function(payee) {
-                                                        if (payee.merchantId) return payee.merchantId;
-                                                        if (payee.email && payee.email.stringValue) return payee.email.stringValue;
-                                                        throw new Error("Invalid payee state: " + JSON.stringify(uniquePayees));
-                                                    })).join(",");
-                                                    var xpropMerchantID = window.xprops.merchantID;
-                                                    if (xpropMerchantID && xpropMerchantID.length) {
-                                                        if (!isValidMerchantIDs(xpropMerchantID, uniquePayees)) {
-                                                            getLogger().warn("explicit_payee_transaction_mismatch", {
+                                                        var payeesStr = uniquePayees.map((function(payee) {
+                                                            if (payee.merchantId) return payee.merchantId;
+                                                            if (payee.email && payee.email.stringValue) return payee.email.stringValue;
+                                                            triggerIntegrationError({
+                                                                error: "smart_button_validation_error_invalid_payee_state",
+                                                                message: "Invalid payee state: " + JSON.stringify(uniquePayees),
+                                                                loggerPayload: {
+                                                                    uniquePayees: JSON.stringify(uniquePayees)
+                                                                },
+                                                                env: env,
+                                                                clientID: clientID,
+                                                                orderID: orderID
+                                                            });
+                                                            throw new Error("Payees Incorrect");
+                                                        })).join(",");
+                                                        var xpropMerchantID = window.xprops.merchantID;
+                                                        if (xpropMerchantID && xpropMerchantID.length) isValidMerchantIDs(xpropMerchantID, uniquePayees) || triggerIntegrationError(1 === uniquePayees.length ? {
+                                                            error: "smart_button_validation_error_payee_no_match",
+                                                            message: "Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=" + payeesStr + " or merchant-id=" + (uniquePayees[0] && uniquePayees[0].email && uniquePayees[0].email.stringValue ? uniquePayees[0].email.stringValue : "payee@merchant.com") + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID
+                                                        } : {
+                                                            error: "smart_button_validation_error_payee_no_match",
+                                                            message: 'Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=* to the sdk url and data-merchant-id="' + payeesStr + '" in the sdk script tag. https://developer.paypal.com/docs/checkout/reference/customize-sdk/',
+                                                            env: env,
+                                                            clientID: clientID,
+                                                            orderID: orderID
+                                                        }); else if (!isValidMerchantIDs(merchantID, uniquePayees)) {
+                                                            logger.warn("smart_button_validation_error_derived_payee_transaction_mismatch", {
                                                                 payees: JSON.stringify(uniquePayees),
                                                                 merchantID: JSON.stringify(merchantID)
-                                                            }).flush();
-                                                            throw 1 === uniquePayees.length ? new Error("Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=" + payeesStr + " or merchant-id=" + (uniquePayees[0] && uniquePayees[0].email && uniquePayees[0].email.stringValue ? uniquePayees[0].email.stringValue : "payee@merchant.com") + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/") : new Error('Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=* to the sdk url and data-merchant-id="' + payeesStr + '" in the sdk script tag. https://developer.paypal.com/docs/checkout/reference/customize-sdk/');
+                                                            });
+                                                            if (1 === uniquePayees.length) {
+                                                                "sandbox" === env && logger.warn("smart_button_validation_error_derived_payee_transaction_mismatch_sandbox", {
+                                                                    payees: JSON.stringify(payees),
+                                                                    merchantID: JSON.stringify(merchantID)
+                                                                });
+                                                                triggerIntegrationError({
+                                                                    error: "smart_button_validation_error_payee_no_match",
+                                                                    message: "Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=" + payeesStr + " or merchant-id=" + (uniquePayees[0] && uniquePayees[0].email && uniquePayees[0].email.stringValue ? uniquePayees[0].email.stringValue : "payee@merchant.com") + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                                    env: env,
+                                                                    clientID: clientID,
+                                                                    orderID: orderID,
+                                                                    throwError: !1
+                                                                });
+                                                            } else triggerIntegrationError({
+                                                                error: "smart_button_validation_error_payee_no_match",
+                                                                message: 'Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=* to the sdk url and data-merchant-id="' + payeesStr + '" in the sdk script tag. https://developer.paypal.com/docs/checkout/reference/customize-sdk/',
+                                                                env: env,
+                                                                clientID: clientID,
+                                                                orderID: orderID
+                                                            });
                                                         }
-                                                    } else if (!isValidMerchantIDs(merchantID, uniquePayees)) {
-                                                        getLogger().warn("derived_payee_transaction_mismatch", {
-                                                            payees: JSON.stringify(uniquePayees),
-                                                            merchantID: JSON.stringify(merchantID)
-                                                        }).flush();
-                                                        if (1 !== uniquePayees.length) throw new Error('Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=* to the sdk url and data-merchant-id="' + payeesStr + '" in the sdk script tag. https://developer.paypal.com/docs/checkout/reference/customize-sdk/');
-                                                        "sandbox" === env && getLogger().warn("derived_payee_transaction_mismatch_sandbox", {
-                                                            payees: JSON.stringify(payees),
-                                                            merchantID: JSON.stringify(merchantID)
-                                                        }).flush();
-                                                        console.warn("Payee(s) passed in transaction does not match expected merchant id. Please ensure you are passing merchant-id=" + payeesStr + " or merchant-id=" + (uniquePayees[0] && uniquePayees[0].email && uniquePayees[0].email.stringValue ? uniquePayees[0].email.stringValue : "payee@merchant.com") + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/");
-                                                    }
-                                                })).catch((function(err) {
-                                                    var _getLogger$warn$warn$;
-                                                    var isSandbox = "sandbox" === env;
-                                                    var isWhitelisted = isSandbox ? clientID && -1 !== SANDBOX_ORDER_VALIDATION_WHITELIST.indexOf(clientID) : clientID && -1 !== ORDER_VALIDATION_WHITELIST.indexOf(clientID);
-                                                    getLogger().warn((isSandbox ? "sandbox_" : "") + "order_validation_error" + (isWhitelisted ? "_whitelist" : ""), {
-                                                        err: stringifyError(err)
-                                                    }).warn((isSandbox ? "sandbox_" : "") + "order_validation_error" + (isWhitelisted ? "_whitelist" : "") + "_" + (clientID || "unknown"), {
-                                                        err: stringifyError(err)
-                                                    }).track((_getLogger$warn$warn$ = {}, _getLogger$warn$warn$.transition_name = "process_order_validate", 
-                                                    _getLogger$warn$warn$.context_type = "EC-Token", _getLogger$warn$warn$.token = orderID, 
-                                                    _getLogger$warn$warn$.context_id = orderID, _getLogger$warn$warn$.integration_issue = stringifyErrorMessage(err), 
-                                                    _getLogger$warn$warn$.whitelist = isWhitelisted ? "true" : "false", _getLogger$warn$warn$)).flush();
-                                                    if (!isWhitelisted) {
-                                                        console.error(stringifyError(err));
-                                                        throw err;
-                                                    }
-                                                    console.warn(stringifyError(err));
-                                                }));
-                                            }(orderID, {
-                                                env: env,
-                                                clientID: clientID,
-                                                merchantID: merchantID,
-                                                expectedCurrency: expectedCurrency,
-                                                expectedIntent: expectedIntent
-                                            });
-                                        }));
-                                        return promise_ZalgoPromise.all([ clickPromise, startPromise, validateOrderPromise ]).catch((function(err) {
-                                            return promise_ZalgoPromise.try(close).then((function() {
-                                                throw err;
+                                                    }));
+                                                }(orderID, {
+                                                    env: env,
+                                                    clientID: clientID,
+                                                    merchantID: merchantID,
+                                                    expectedCurrency: expectedCurrency,
+                                                    expectedIntent: expectedIntent,
+                                                    vault: vault
+                                                });
                                             }));
-                                        })).then(src_util_noop);
-                                    }
+                                            return promise_ZalgoPromise.all([ clickPromise, startPromise, validateOrderPromise ]).catch((function(err) {
+                                                return promise_ZalgoPromise.try(close).then((function() {
+                                                    throw err;
+                                                }));
+                                            })).then(src_util_noop);
+                                        }
+                                    }));
+                                })).finally((function() {
+                                    disableLoadingSpinner(button);
                                 }));
-                            })).finally((function() {
-                                disableLoadingSpinner(button);
+                            }({
+                                payment: payment,
+                                config: config,
+                                serviceData: serviceData,
+                                components: components,
+                                props: paymentProps
+                            }).finally((function() {
+                                paymentProcessing = !1;
                             }));
-                        }({
-                            payment: payment,
-                            config: config,
-                            serviceData: serviceData,
-                            components: components,
-                            props: paymentProps
-                        }).finally((function() {
-                            paymentProcessing = !1;
-                        }));
-                    }
-                    win && win.close();
+                        }
+                        win && win.close();
+                    } else win && win.close();
                 }
             })).catch((function(err) {
                 var _getLogger$info$track;
@@ -5593,7 +5781,7 @@ window.spb = function(modules) {
             fundingEligibility: fundingEligibility
         });
         var setupButtonLogsTask = function(_ref) {
-            var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, clientID = _ref.clientID, partnerAttributionID = _ref.partnerAttributionID, commit = _ref.commit, sdkCorrelationID = _ref.sdkCorrelationID, buttonCorrelationID = _ref.buttonCorrelationID, locale = _ref.locale, merchantID = _ref.merchantID, merchantDomain = _ref.merchantDomain, version = _ref.version, style = _ref.style, fundingSource = _ref.fundingSource;
+            var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, clientID = _ref.clientID, partnerAttributionID = _ref.partnerAttributionID, commit = _ref.commit, sdkCorrelationID = _ref.sdkCorrelationID, buttonCorrelationID = _ref.buttonCorrelationID, locale = _ref.locale, merchantID = _ref.merchantID, merchantDomain = _ref.merchantDomain, version = _ref.version, style = _ref.style, fundingSource = _ref.fundingSource, getQueriedEligibleFunding = _ref.getQueriedEligibleFunding;
             var logger = getLogger();
             !function(_ref) {
                 var env = _ref.env, sessionID = _ref.sessionID, clientID = _ref.clientID, partnerAttributionID = _ref.partnerAttributionID, commit = _ref.commit, sdkCorrelationID = _ref.sdkCorrelationID, locale = _ref.locale, merchantID = _ref.merchantID, merchantDomain = _ref.merchantDomain, version = _ref.version;
@@ -5648,7 +5836,7 @@ window.spb = function(modules) {
                 var _ref2;
                 return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
                 _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                _ref2.button_version = "2.0.303", _ref2.button_correlation_id = buttonCorrelationID, 
+                _ref2.button_version = "2.0.311", _ref2.button_correlation_id = buttonCorrelationID, 
                 _ref2;
             }));
             (function() {
@@ -5665,20 +5853,27 @@ window.spb = function(modules) {
                 }
                 return !1;
             })() && logger.warn("button_child_intranet_mode");
-            return waitForDocumentReady().then((function() {
-                var performance = getPerformance();
-                if (performance) {
-                    var timing = performance.timing;
-                    return timing.connectEnd && timing.domInteractive ? timing.domInteractive - timing.connectEnd : void 0;
-                }
-            })).then((function(pageRenderTime) {
+            return promise_ZalgoPromise.hash({
+                pageRenderTime: waitForDocumentReady().then((function() {
+                    var performance = getPerformance();
+                    if (performance) {
+                        var timing = performance.timing;
+                        return timing.connectEnd && timing.domInteractive ? timing.domInteractive - timing.connectEnd : void 0;
+                    }
+                })),
+                queriedEligibleFunding: getQueriedEligibleFunding()
+            }).then((function(_ref3) {
                 var _logger$track;
-                var fundingSources = [].slice.call(document.querySelectorAll("[data-funding-source]")).map((function(el) {
+                var pageRenderTime = _ref3.pageRenderTime, queriedEligibleFunding = _ref3.queriedEligibleFunding;
+                var fundingSources = querySelectorAll("[data-funding-source]").map((function(el) {
                     return el.getAttribute("data-funding-source");
-                }));
-                var walletInstruments = [].slice.call(document.querySelectorAll("[data-instrument-type]")).map((function(el) {
+                })).filter(Boolean);
+                var walletInstruments = querySelectorAll("[data-instrument-type]").map((function(el) {
                     return el.getAttribute("data-instrument-type");
-                }));
+                })).filter(Boolean);
+                var payNow = querySelectorAll("[data-funding-source]").map((function(el) {
+                    return el.getAttribute("data-pay-now");
+                })).some(Boolean);
                 var layout = style.layout, color = style.color, shape = style.shape, label = style.label, _style$tagline = style.tagline, tagline = void 0 === _style$tagline || _style$tagline;
                 logger.info("button_render");
                 logger.info("button_render_template_version_" + (document.body && document.body.getAttribute("data-render-version") || "unknown").replace(/[^a-zA-Z0-9]+/g, "_"));
@@ -5694,6 +5889,7 @@ window.spb = function(modules) {
                 logger.track(((_logger$track = {}).transition_name = "process_button_load", _logger$track.eligible_payment_methods = fundingSources.join(":"), 
                 _logger$track.fi_list = walletInstruments.join(":"), _logger$track.merchant_selected_funding_source = fundingSource, 
                 _logger$track.eligible_payment_count = fundingSources.length.toString(), _logger$track.page_load_time = pageRenderTime ? pageRenderTime.toString() : "", 
+                _logger$track.potential_payment_methods = queriedEligibleFunding.join(":"), _logger$track.pay_now = payNow.toString(), 
                 _logger$track.button_layout = layout, _logger$track.button_color = color, _logger$track.button_size = "responsive", 
                 _logger$track.button_shape = shape, _logger$track.button_label = label, _logger$track.button_width = window.innerWidth, 
                 _logger$track.button_type = "iframe", _logger$track.button_tagline_enabled = tagline ? "1" : "0", 
@@ -5714,7 +5910,8 @@ window.spb = function(modules) {
             merchantID: merchantID,
             buttonSessionID: buttonSessionID,
             merchantDomain: merchantDomain,
-            fundingSource: fundingSource
+            fundingSource: fundingSource,
+            getQueriedEligibleFunding: getQueriedEligibleFunding
         });
         var setupPaymentFlowsTask = function(_ref) {
             var props = _ref.props, config = _ref.config, serviceData = _ref.serviceData, components = _ref.components;
@@ -5737,6 +5934,29 @@ window.spb = function(modules) {
             components: components
         });
         var setupPersistRiskDataTask = persistRiskData && serverRiskData ? persistRiskData(serverRiskData) : null;
+        var validatePropsTask = setupButtonLogsTask.then((function() {
+            return function(_ref) {
+                var intent = _ref.intent, createBillingAgreement = _ref.createBillingAgreement, createSubscription = _ref.createSubscription;
+                var logger = getLogger();
+                if (createBillingAgreement && "tokenize" !== intent) {
+                    logger.warn("smart_button_validation_error_expected_intent_tokenize", {
+                        intent: intent
+                    });
+                    console.warn("Expected intent=tokenize to be passed to SDK, but got intent=" + intent);
+                }
+                if (createSubscription && "subscription" !== intent) {
+                    logger.warn("smart_button_validation_error_expected_intent_subscription", {
+                        intent: intent
+                    });
+                    console.warn("Expected intent=subscription to be passed to SDK, but got intent=" + intent);
+                }
+                logger.flush();
+            }({
+                intent: intent,
+                createBillingAgreement: createBillingAgreement,
+                createSubscription: createSubscription
+            });
+        }));
         return promise_ZalgoPromise.hash({
             initPromise: initPromise,
             facilitatorAccessToken: facilitatorAccessToken,
@@ -5744,7 +5964,8 @@ window.spb = function(modules) {
             setupPrerenderTask: setupPrerenderTask,
             setupRememberTask: setupRememberTask,
             setupPaymentFlowsTask: setupPaymentFlowsTask,
-            setupPersistRiskDataTask: setupPersistRiskDataTask
+            setupPersistRiskDataTask: setupPersistRiskDataTask,
+            validatePropsTask: validatePropsTask
         }).then(src_util_noop);
     }
 } ]);

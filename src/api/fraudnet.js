@@ -2,12 +2,13 @@
 
 import { ZalgoPromise } from 'zalgo-promise';
 import { ENV } from '@paypal/sdk-constants/src';
+import { memoize } from 'belter/src';
 
 import { getBody } from '../lib';
 
 const FRAUDNET_URL = {
-    [ ENV.LOCAL ]:      'https://www.msmaster.qa.paypal.com/en_US/m/fb-raw.js',
-    [ ENV.STAGE ]:      'https://www.msmaster.qa.paypal.com/en_US/m/fb-raw.js',
+    [ ENV.LOCAL ]:      'https://www.stage2d0107.stage.paypal.com/FDRegression/fb.js',
+    [ ENV.STAGE ]:      'https://www.stage2d0107.stage.paypal.com/FDRegression/fb.js',
     [ ENV.SANDBOX ]:    'https://c.paypal.com/da/r/fb.js',
     [ ENV.PRODUCTION ]: 'https://c.paypal.com/da/r/fb.js',
     [ ENV.TEST ]:       'https://c.paypal.com/da/r/fb.js'
@@ -30,8 +31,12 @@ type FraudnetConfig = {|
     sandbox? : boolean
 |};
 
-export function loadFraudnet({ env, clientMetadataID, cspNonce, timeout = 1000 } : FraudnetOptions) : ZalgoPromise<void> {
+export const loadFraudnet = memoize(({ env, clientMetadataID, cspNonce, timeout = 1000 } : FraudnetOptions) : ZalgoPromise<void> => {
     return new ZalgoPromise(resolve => {
+        if (__TEST__) {
+            return resolve();
+        }
+
         const config : FraudnetConfig = {
             f:   clientMetadataID,
             s:   FRAUDNET_APP_NAME,
@@ -61,4 +66,4 @@ export function loadFraudnet({ env, clientMetadataID, cspNonce, timeout = 1000 }
         body.appendChild(configScript);
         body.appendChild(fraudnetScript);
     });
-}
+});
