@@ -344,10 +344,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
                 getLogger().info(`native_response_setprops`).track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
                 }).flush();
             }).catch(err => {
                 getLogger().info(`native_response_setprops_error`).track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }).flush();
             });
