@@ -63,8 +63,21 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
         config:           firebaseConfig
     });
 
+    const closeNative = memoize(() => {
+        const clean = cleanup();
+        return nativeSocket.send(SOCKET_MESSAGE.CLOSE).then(() => {
+            return clean.all();
+        });
+    });
+
     nativeSocket.onError(err => {
-        getLogger().error('native_socket_error', { err: stringifyError(err) });
+        getLogger().error('native_socket_error', { err: stringifyError(err) })
+            .track({
+                [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
+                [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifyError(err) }`
+            }).flush();
+        closeNative();
     });
 
     return nativeSocket;
