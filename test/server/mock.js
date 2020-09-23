@@ -184,6 +184,9 @@ export async function graphQL(req : ExpressRequest, payload : $ReadOnlyArray<{| 
                     },
                     mercadopago: {
                         eligible: false
+                    },
+                    verkkopankki: {
+                        eligible: false
                     }
                 }
             };
