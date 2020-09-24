@@ -483,6 +483,65 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return win;
     });
 
+    const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
+        const nativeUrl = getNativeUrl({ sessionUID });
+
+        const nativeWin = popup(nativeUrl);
+        getLogger()
+            .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
+            .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+            .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
+            })
+            .track({
+                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+            }).flush();
+
+        const validatePromise = validate();
+        const delayPromise = ZalgoPromise.delay(500);
+
+        const detectWebSwitchListener = listen(nativeWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
+            getLogger().info(`native_post_message_detect_web_switch`).flush();
+            return detectWebSwitch(nativeWin).then(unresolvedPromise);
+        });
+
+        clean.register(detectWebSwitchListener.cancel);
+
+        return validatePromise.then(valid => {
+            if (!valid) {
+                return delayPromise.then(() => {
+                    if (didAppSwitch(nativeWin)) {
+                        return connectNative({ sessionUID }).close();
+                    }
+                }).then(() => {
+                    return close();
+                });
+            }
+
+            return createOrder().then(() => {
+                if (didAppSwitch(nativeWin)) {
+                    return detectAppSwitch({ sessionUID });
+                } else if (nativeWin) {
+                    return detectWebSwitch(nativeWin);
+                } else {
+                    throw new Error(`No window found`);
+                }
+            }).catch(err => {
+                getLogger().info(`native_attempt_appswitch_url_popup_errored`, { url: nativeUrl })
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                        [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    }).flush();
+                return connectNative({ sessionUID }).close().then(() => {
+                    throw err;
+                });
+            });
+        });
+    };
+
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
         getLogger().info(`native_attempt_appswitch_popup_shown`)
@@ -595,7 +654,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const click = () => {
         return ZalgoPromise.try(() => {
             const sessionUID = uniqueID();
-            return initPopupAppSwitch({ sessionUID });
+            return userDirectAppSwitch() ? initDirectAppSwitch({sessionUID}) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {
                 getLogger().error(`native_error`, { err: stringifyError(err) }).track({
