@@ -83,6 +83,14 @@ function isAndroidChrome() : boolean {
     return isAndroid() && isChrome();
 }
 
+function useDirectAppSwitch() : boolean {
+    return isAndroidChrome();
+}
+
+function didAppSwitch(popupWin : ?CrossDomainWindowType) : boolean {
+    return !popupWin || isWindowClosed(popupWin);
+}
+
 function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
     const { enableNativeCheckout } = props;
 
@@ -654,7 +662,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const click = () => {
         return ZalgoPromise.try(() => {
             const sessionUID = uniqueID();
-            return userDirectAppSwitch() ? initDirectAppSwitch({sessionUID}) : initPopupAppSwitch({ sessionUID });
+            return useDirectAppSwitch() ? initDirectAppSwitch({ sessionUID }) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {
                 getLogger().error(`native_error`, { err: stringifyError(err) }).track({
