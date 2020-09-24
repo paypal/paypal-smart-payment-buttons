@@ -285,7 +285,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             : NATIVE_POPUP_DOMAIN;
     });
 
-    const getNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, sdkProps = null } : {| sessionUID : string, pageUrl? : string, sdkProps? : NativeSDKProps |}) : string => {
+    const getNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, sdkProps } : {| sessionUID : string, pageUrl : string, sdkProps : NativeSDKProps |}) : string => {
         return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
                 sdkMeta,
@@ -302,6 +302,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 apiStageHost:   apiStageHost || '',
                 forceEligible:  String(sdkProps.forceEligible)
             }
+        });
+    });
+
+    const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
+        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
+            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl }
         });
     });
 
@@ -492,7 +498,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const nativeUrl = getNativeUrl({ sessionUID });
+        const nativeUrl = getNativeUrlForAndroid({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
         getLogger()
