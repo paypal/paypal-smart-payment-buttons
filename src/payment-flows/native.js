@@ -10,7 +10,7 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
+import { getLogger, promiseOne, promiseNoop, unresolvedPromise } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
 
@@ -285,7 +285,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             : NATIVE_POPUP_DOMAIN;
     });
 
-    const getNativeUrl = memoize(({ sessionUID, pageUrl, sdkProps } : {| sessionUID : string, pageUrl : string, sdkProps : NativeSDKProps |}) : string => {
+    const getNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, sdkProps = null } : {| sessionUID : string, pageUrl? : string, sdkProps? : NativeSDKProps |}) : string => {
         return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
                 sdkMeta,
