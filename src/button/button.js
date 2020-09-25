@@ -23,7 +23,6 @@ type ButtonOpts = {|
     buyerCountry : $Values<typeof COUNTRY>,
     cspNonce? : string,
     merchantID : $ReadOnlyArray<string>,
-    isCardFieldsExperimentEnabled : boolean,
     firebaseConfig? : FirebaseConfig,
     facilitatorAccessToken : string,
     content : ContentType,
@@ -58,17 +57,17 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     }
 
     const { facilitatorAccessToken, eligibility, fundingEligibility, buyerCountry: buyerGeoCountry, sdkMeta, buyerAccessToken, wallet, cookies,
-        cspNonce: serverCSPNonce, merchantID: serverMerchantID, isCardFieldsExperimentEnabled, firebaseConfig, content, correlationID: buttonCorrelationID = '' } = opts;
+        cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, correlationID: buttonCorrelationID = '' } = opts;
 
     const clientID = window.xprops.clientID;
 
     const serviceData = getServiceData({
         eligibility, facilitatorAccessToken, buyerGeoCountry, serverMerchantID, fundingEligibility, cookies,
-        isCardFieldsExperimentEnabled, sdkMeta, buyerAccessToken, wallet, content });
+        sdkMeta, buyerAccessToken, wallet, content });
     const { merchantID } = serviceData;
 
     const props = getProps({ facilitatorAccessToken });
-    const { env, sessionID, partnerAttributionID, commit, sdkCorrelationID, locale,
+    const { env, sessionID, partnerAttributionID, commit, sdkCorrelationID, locale, onError,
         buttonSessionID, merchantDomain, onInit, getPrerenderDetails, rememberFunding, getQueriedEligibleFunding,
         style, fundingSource, intent, createBillingAgreement, createSubscription } = props;
         
@@ -167,7 +166,8 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             const payPromise = initiatePayment({ payment, props: paymentProps });
 
             payPromise.catch(err => {
-                getLogger().info('click_initiate_payment_reject', { err: stringifyError(err) }).flush();
+                getLogger().error('click_initiate_payment_reject', { err: stringifyError(err) }).flush();
+                onError(err);
             });
 
             // $FlowFixMe
@@ -207,7 +207,8 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             const payPromise = initiatePayment({ payment, props: paymentProps });
 
             payPromise.catch(err => {
-                getLogger().info('prerender_initiate_payment_reject', { err: stringifyError(err) }).flush();
+                getLogger().error('prerender_initiate_payment_reject', { err: stringifyError(err) }).flush();
+                onError(err);
             });
 
             // $FlowFixMe
