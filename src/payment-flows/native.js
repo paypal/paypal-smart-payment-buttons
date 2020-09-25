@@ -343,8 +343,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
-    const populateSDKProps = (orderID) : ZalgoPromise<NativeSDKProps> => {
-        return ZalgoPromise.try(() => {
+    const getSDKProps = memoize(() : ZalgoPromise<NativeSDKProps> => {
+        return createOrder().then(orderID => {
             const userAgent = getUserAgent();
             const webCheckoutUrl = getWebCheckoutUrl({ orderID });
             const forceEligible = isNativeOptedIn({ props });
@@ -354,16 +354,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 orderID, facilitatorAccessToken, pageUrl, commit, webCheckoutUrl,
                 userAgent, buttonSessionID, env, stageHost, apiStageHost, forceEligible
             };
-        });
-    };
-
-    const getSDKProps = memoize((orderId) : ZalgoPromise<NativeSDKProps> => {
-        if (orderId && orderId.length) {
-            return populateSDKProps(orderId);
-        }
-
-        return createOrder().then(orderID => {
-            return populateSDKProps(orderID);
         });
     });
 
@@ -605,8 +595,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
 
-                return createOrder().then(orderId => {
-                    getSDKProps(orderId).then(sdkProps => {
+                return createOrder().then(() => {
+                    getSDKProps().then(sdkProps => {
                         const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
 
                         getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
