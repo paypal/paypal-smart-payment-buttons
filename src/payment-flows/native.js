@@ -285,29 +285,29 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             : NATIVE_POPUP_DOMAIN;
     });
 
+    const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
+        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
+            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl }
+        });
+    });
+
     const getNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, sdkProps } : {| sessionUID : string, pageUrl : string, sdkProps : NativeSDKProps |}) : string => {
         return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
                 sdkMeta,
                 sessionUID,
-                orderID:        sdkProps.orderID || '',
+                orderID:        sdkProps ? sdkProps.orderID : '',
                 facilitatorAccessToken,
                 pageUrl,
                 commit:         String(commit),
-                webCheckoutUrl: sdkProps.webCheckoutUrl || '',
-                userAgent:      sdkProps.userAgent || '',
+                webCheckoutUrl: sdkProps ? sdkProps.webCheckoutUrl : '',
+                userAgent:      sdkProps ? sdkProps.userAgent : '',
                 buttonSessionID,
                 env,
                 stageHost:      stageHost || '',
                 apiStageHost:   apiStageHost || '',
-                forceEligible:  String(sdkProps.forceEligible)
+                forceEligible:  String(sdkProps ? sdkProps.forceEligible : 'false')
             }
-        });
-    });
-
-    const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
-        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl }
         });
     });
 
