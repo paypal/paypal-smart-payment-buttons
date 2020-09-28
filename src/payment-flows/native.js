@@ -595,18 +595,16 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
 
-                return createOrder().then(() => {
-                    getSDKProps().then(sdkProps => {
-                        const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+                return getSDKProps().then(sdkProps => {
+                    const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
 
-                        getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
-                            .track({
-                                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
-                            }).flush();
+                    getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+                        .track({
+                            [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                        }).flush();
 
-                        return { redirectUrl: nativeUrl };
-                    });
+                    return { redirectUrl: nativeUrl };
                 }).catch(err => {
                     getLogger().info(`native_attempt_appswitch_url_popup_errored`)
                         .track({
