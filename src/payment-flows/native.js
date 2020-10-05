@@ -438,10 +438,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return connectNative({ sessionUID }).setProps();
     });
 
-    const detectWebSwitch = once((fallbackWin : ?CrossDomainWindowType) => {
+    const detectWebSwitch = once(({ sessionUID, fallbackWin } : {| sessionUID : string, fallbackWin : ?CrossDomainWindowType |}) => {
         getLogger().info(`native_detect_web_switch`).track({
             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_DETECT_WEB_SWITCH
         }).flush();
+
+        connectNative({ sessionUID }).close();
 
         return fallbackToWebCheckout(fallbackWin);
     });
@@ -484,7 +486,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const detectWebSwitchListener = listen(nativeWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
             getLogger().info(`native_post_message_detect_web_switch`).flush();
-            return detectWebSwitch(nativeWin).then(unresolvedPromise);
+            return detectWebSwitch({ sessionUID, nativeWin }).then(unresolvedPromise);
         });
 
         clean.register(detectWebSwitchListener.cancel);
@@ -504,7 +506,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 if (didAppSwitch(nativeWin)) {
                     return detectAppSwitch({ sessionUID });
                 } else if (nativeWin) {
-                    return detectWebSwitch(nativeWin);
+                    return detectWebSwitch({ sessionUID, nativeWin });
                 } else {
                     throw new Error(`No window found`);
                 }
@@ -593,7 +595,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const detectWebSwitchListener = listen(popupWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
             getLogger().info(`native_post_message_detect_web_switch`).flush();
-            return detectWebSwitch(popupWin);
+            return detectWebSwitch({ sessionUID, popupWin });
         });
 
         clean.register(awaitRedirectListener.cancel);
