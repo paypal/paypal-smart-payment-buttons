@@ -350,7 +350,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const onApproveCallback = ({ data: { payerID, paymentID, billingToken } }) => {
         approved = true;
-        getLogger().info(`native_message_onapprove`)
+        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
             })
