@@ -460,9 +460,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         };
     });
 
-    const detectAppSwitch = once(({ sessionUID } : {| sessionUID : string, orderId : string |}) => {
-        getLogger().info(`native_detect_app_switch`).track({
-            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_DETECT_APP_SWITCH
+    const detectAppSwitch = once(({ sessionUID, orderId } : {| sessionUID : string, orderId : string |}) => {
+        getLogger().info(`native_detect_app_switch`, { orderId }).track({
+            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_DETECT_APP_SWITCH,
+            'info_msg':            orderId // [FPTI_KEY.INFO_MSG]:   orderId
         }).flush();
 
         return connectNative({ sessionUID }).setProps();
