@@ -10,7 +10,7 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop, unresolvedPromise } from '../lib';
+import { getLogger, promiseOne, promiseNoop } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
 
@@ -67,14 +67,6 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
         targetApp:        TARGET_APP,
         config:           firebaseConfig
     });
-
-    const closeNative = memoize(() => {
-        const clean = cleanup();
-        return nativeSocket.send(SOCKET_MESSAGE.CLOSE).then(() => {
-            return clean.all();
-        });
-    });
-
     nativeSocket.onError(err => {
         getLogger().error('native_socket_error', { err: stringifyError(err) })
             .track({
@@ -82,7 +74,6 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
                 [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifyError(err) }`
             }).flush();
-        closeNative();
     });
 
     return nativeSocket;
@@ -520,13 +511,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const validatePromise = validate();
         const delayPromise = ZalgoPromise.delay(500);
-
-        const detectWebSwitchListener = listen(nativeWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
-            getLogger().info(`native_post_message_detect_web_switch`).flush();
-            return detectWebSwitch(nativeWin).then(unresolvedPromise);
-        });
-
-        clean.register(detectWebSwitchListener.cancel);
 
         return validatePromise.then(valid => {
             if (!valid) {

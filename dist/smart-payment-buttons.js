@@ -1280,22 +1280,23 @@ window.spb = function(modules) {
         function isDocumentReady() {
             return Boolean(document.body) && "complete" === document.readyState;
         }
+        function isDocumentInteractive() {
+            return Boolean(document.body) && "interactive" === document.readyState;
+        }
         function urlEncode(str) {
             return str.replace(/\?/g, "%3F").replace(/&/g, "%26").replace(/#/g, "%23").replace(/\+/g, "%2B");
         }
-        function waitForDocumentReady() {
-            return inlineMemoize(waitForDocumentReady, (function() {
-                return new promise_ZalgoPromise((function(resolve) {
-                    if (isDocumentReady()) return resolve();
-                    var interval = setInterval((function() {
-                        if (isDocumentReady()) {
-                            clearInterval(interval);
-                            return resolve();
-                        }
-                    }), 10);
-                }));
+        var waitForDocumentReady = memoize((function() {
+            return new promise_ZalgoPromise((function(resolve) {
+                if (isDocumentReady() || isDocumentInteractive()) return resolve();
+                var interval = setInterval((function() {
+                    if (isDocumentReady() || isDocumentInteractive()) {
+                        clearInterval(interval);
+                        return resolve();
+                    }
+                }), 10);
             }));
-        }
+        }));
         function parseQuery(queryString) {
             return inlineMemoize(parseQuery, (function() {
                 var params = {};
@@ -1382,6 +1383,37 @@ window.spb = function(modules) {
             this.message = message;
         }
         PopupOpenError.prototype = Object.create(Error.prototype);
+        var currentScript = "undefined" != typeof document ? document.currentScript : null;
+        var getCurrentScript = memoize((function() {
+            if (currentScript) return currentScript;
+            if (currentScript = function() {
+                try {
+                    var stack = function() {
+                        try {
+                            throw new Error("_");
+                        } catch (err) {
+                            return err.stack || "";
+                        }
+                    }();
+                    var stackDetails = /.*at [^(]*\((.*):(.+):(.+)\)$/gi.exec(stack);
+                    var scriptLocation = stackDetails && stackDetails[1];
+                    if (!scriptLocation) return;
+                    for (var _i20 = 0, _Array$prototype$slic2 = [].slice.call(document.getElementsByTagName("script")).reverse(); _i20 < _Array$prototype$slic2.length; _i20++) {
+                        var script = _Array$prototype$slic2[_i20];
+                        if (script.src && script.src === scriptLocation) return script;
+                    }
+                } catch (err) {}
+            }()) return currentScript;
+            throw new Error("Can not determine current script");
+        }));
+        memoize((function() {
+            var script = getCurrentScript();
+            var uid = script.getAttribute("data-uid");
+            if (uid && "string" == typeof uid) return uid;
+            uid = uniqueID();
+            script.setAttribute("data-uid", uid);
+            return uid;
+        }));
         function getStorage(_ref) {
             var name = _ref.name, _ref$lifetime = _ref.lifetime, lifetime = void 0 === _ref$lifetime ? 12e5 : _ref$lifetime;
             return inlineMemoize(getStorage, (function() {
@@ -1525,11 +1557,18 @@ window.spb = function(modules) {
         var AUTO_FLUSH_LEVEL = [ "warn", "error" ];
         var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
         function httpTransport(_ref) {
-            return request({
-                url: _ref.url,
-                method: _ref.method,
-                headers: _ref.headers,
-                json: _ref.json
+            var url = _ref.url, method = _ref.method, headers = _ref.headers, json = _ref.json, _ref$enableSendBeacon = _ref.enableSendBeacon, enableSendBeacon = void 0 !== _ref$enableSendBeacon && _ref$enableSendBeacon;
+            var hasHeaders = headers && Object.keys(headers).length;
+            return window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob ? new promise_ZalgoPromise((function(resolve) {
+                var blob = new Blob([ JSON.stringify(json) ], {
+                    type: "application/json"
+                });
+                resolve(window.navigator.sendBeacon(url, blob));
+            })) : request({
+                url: url,
+                method: method,
+                headers: headers,
+                json: json
             }).then(src_util_noop);
         }
         function extendIfDefined(target, source) {
@@ -1548,7 +1587,7 @@ window.spb = function(modules) {
         function getLogger() {
             return inlineMemoize(getLogger, (function() {
                 return function(_ref2) {
-                    var url = _ref2.url, prefix = _ref2.prefix, _ref2$logLevel = _ref2.logLevel, logLevel = void 0 === _ref2$logLevel ? "debug" : _ref2$logLevel, _ref2$transport = _ref2.transport, transport = void 0 === _ref2$transport ? httpTransport : _ref2$transport, _ref2$flushInterval = _ref2.flushInterval, flushInterval = void 0 === _ref2$flushInterval ? 6e4 : _ref2$flushInterval;
+                    var url = _ref2.url, prefix = _ref2.prefix, _ref2$logLevel = _ref2.logLevel, logLevel = void 0 === _ref2$logLevel ? "debug" : _ref2$logLevel, _ref2$transport = _ref2.transport, transport = void 0 === _ref2$transport ? httpTransport : _ref2$transport, _ref2$flushInterval = _ref2.flushInterval, flushInterval = void 0 === _ref2$flushInterval ? 6e4 : _ref2$flushInterval, _ref2$enableSendBeaco = _ref2.enableSendBeacon, enableSendBeacon = void 0 !== _ref2$enableSendBeaco && _ref2$enableSendBeaco;
                     var events = [];
                     var tracking = [];
                     var payloadBuilders = [];
@@ -1573,7 +1612,7 @@ window.spb = function(modules) {
                                 var headers = {};
                                 for (var _i4 = 0; _i4 < headerBuilders.length; _i4++) extendIfDefined(headers, (0, 
                                 headerBuilders[_i4])(headers));
-                                var req = transport({
+                                var res = transport({
                                     method: "POST",
                                     url: url,
                                     headers: headers,
@@ -1581,11 +1620,12 @@ window.spb = function(modules) {
                                         events: events,
                                         meta: meta,
                                         tracking: tracking
-                                    }
+                                    },
+                                    enableSendBeacon: enableSendBeacon
                                 });
                                 events = [];
                                 tracking = [];
-                                return req.then(src_util_noop);
+                                return res.then(src_util_noop);
                             }
                         }));
                     }
@@ -1639,6 +1679,14 @@ window.spb = function(modules) {
                         }), time);
                     }());
                     var method, time;
+                    if ("object" == typeof window) {
+                        window.addEventListener("beforeunload", (function() {
+                            immediateFlush();
+                        }));
+                        window.addEventListener("unload", (function() {
+                            immediateFlush();
+                        }));
+                    }
                     var logger = {
                         debug: function(event, payload) {
                             return log("debug", event, payload);
@@ -1841,7 +1889,7 @@ window.spb = function(modules) {
             getLogger().info("rest_api_create_order_token");
             var headers = ((_headers10 = {}).authorization = "Bearer " + accessToken, _headers10["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers10["paypal-client-metadata-id"] = clientMetadataID, _headers10["x-app-name"] = "smart-payment-buttons", 
-            _headers10["x-app-version"] = "2.0.312", _headers10);
+            _headers10["x-app-version"] = "2.0.318", _headers10);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -2152,6 +2200,11 @@ window.spb = function(modules) {
                             }
                         } ]
                     });
+                })).catch((function(err) {
+                    getLogger().error("create_order_error", {
+                        err: stringifyError(err)
+                    });
+                    throw err;
                 })).then((function(orderID) {
                     var _getLogger$track;
                     if (!orderID || "string" != typeof orderID) throw new Error("Expected an order id to be passed");
@@ -2554,7 +2607,7 @@ window.spb = function(modules) {
         function getProps(_ref) {
             var facilitatorAccessToken = _ref.facilitatorAccessToken;
             var xprops = window.xprops;
-            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, onError = xprops.onError, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 !== _xprops$upgradeLSAT && _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
+            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 !== _xprops$upgradeLSAT && _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
                 return promise_ZalgoPromise.resolve([]);
             } : _xprops$getQueriedEli;
             var upgradeLSATExperiment = (name = "UPGRADE_LSAT_EXPERIMENT", logger = getLogger(), 
@@ -2802,6 +2855,28 @@ window.spb = function(modules) {
                 createBillingAgreement: createBillingAgreement,
                 createSubscription: createSubscription
             });
+            var onError = function(_ref) {
+                var onError = _ref.onError;
+                var onErrorHandler = onError ? (handler = onError, seenErrors = [], seenStringifiedErrors = {}, 
+                function(err) {
+                    if (-1 === seenErrors.indexOf(err)) {
+                        seenErrors.push(err);
+                        var stringifiedError = stringifyError(err);
+                        if (!seenStringifiedErrors[stringifiedError]) {
+                            seenStringifiedErrors[stringifiedError] = !0;
+                            return handler(err);
+                        }
+                    }
+                }) : src_util_noop;
+                var handler, seenErrors, seenStringifiedErrors;
+                return function(err) {
+                    return promise_ZalgoPromise.try((function() {
+                        return onErrorHandler(err);
+                    }));
+                };
+            }({
+                onError: xprops.onError
+            });
             return {
                 uid: uid,
                 env: env,
@@ -2935,9 +3010,9 @@ window.spb = function(modules) {
                 this.children = void 0;
                 this.onRender = void 0;
                 this.name = name;
-                this.props = props;
+                this.props = props || {};
                 this.children = children;
-                var onRender = props.onRender;
+                var onRender = this.props.onRender;
                 if ("function" == typeof onRender) {
                     this.onRender = onRender;
                     delete props.onRender;
@@ -2983,8 +3058,9 @@ window.spb = function(modules) {
                 this.props = void 0;
                 this.children = void 0;
                 this.component = component;
-                this.props = props;
+                this.props = props || {};
                 this.children = children;
+                this.props.children = children;
             }
             var _proto4 = ComponentNode.prototype;
             _proto4.renderComponent = function(renderer) {
@@ -3006,7 +3082,7 @@ window.spb = function(modules) {
             var result = [];
             for (var _i6 = 0; _i6 < children.length; _i6++) {
                 var child = children[_i6];
-                if (child) if ("string" == typeof child || "number" == typeof child) result.push(new node_TextNode("" + child)); else {
+                if (child) if ("string" == typeof child || "number" == typeof child) result.push(new node_TextNode(child.toString())); else {
                     if ("boolean" == typeof child) continue;
                     if (Array.isArray(child)) for (var _i8 = 0, _normalizeChildren2 = normalizeChildren(child); _i8 < _normalizeChildren2.length; _i8++) result.push(_normalizeChildren2[_i8]); else {
                         if (!child || "element" !== child.type && "text" !== child.type && "component" !== child.type) throw new TypeError("Unrecognized node type: " + typeof child);
@@ -3018,7 +3094,6 @@ window.spb = function(modules) {
         }
         var node_node = function(element, props) {
             for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) children[_key - 2] = arguments[_key];
-            props = props || {};
             children = normalizeChildren(children);
             if ("string" == typeof element) return new node_ElementNode(element, props, children);
             if ("function" == typeof element) return new node_ComponentNode(element, props, children);
@@ -3531,7 +3606,7 @@ window.spb = function(modules) {
                     close: close
                 };
             },
-            updateClientConfig: function(_ref12) {
+            updateFlowClientConfig: function(_ref12) {
                 var orderID = _ref12.orderID, payment = _ref12.payment;
                 return promise_ZalgoPromise.try((function() {
                     var buyerIntent = payment.buyerIntent;
@@ -3814,7 +3889,7 @@ window.spb = function(modules) {
                 var fundingSource = payment.fundingSource, paymentMethodID = payment.paymentMethodID, button = payment.button;
                 var content = serviceData.content, facilitatorAccessToken = serviceData.facilitatorAccessToken;
                 if (!clientAccessToken || !paymentMethodID) throw new Error("Client access token and payment method id required");
-                var updateClientConfig = function() {
+                var updateMenuClientConfig = function() {
                     return promise_ZalgoPromise.try((function() {
                         return createOrder();
                     })).then((function(orderID) {
@@ -3843,7 +3918,7 @@ window.spb = function(modules) {
                         getLogger().info("click_choose_funding").track((_getLogger$info$track = {}, _getLogger$info$track.transition_name = "process_click_pay_with_different_payment_method", 
                         _getLogger$info$track)).flush();
                         return promise_ZalgoPromise.try((function() {
-                            return updateClientConfig();
+                            return updateMenuClientConfig();
                         })).then((function() {
                             return accessToken = userIDToken ? facilitatorAccessToken : clientAccessToken, promise_ZalgoPromise.try((function() {
                                 return createOrder();
@@ -3876,7 +3951,7 @@ window.spb = function(modules) {
                         getLogger().info("click_choose_account").track((_getLogger$info$track2 = {}, _getLogger$info$track2.transition_name = "process_click_pay_with_different_account", 
                         _getLogger$info$track2)).flush();
                         return promise_ZalgoPromise.try((function() {
-                            return updateClientConfig();
+                            return updateMenuClientConfig();
                         })).then((function() {
                             return loadCheckout({
                                 payment: _extends({}, payment, {
@@ -3916,7 +3991,7 @@ window.spb = function(modules) {
                 } ];
                 throw new Error("Can not render menu for " + fundingSource);
             },
-            updateClientConfig: function(_ref11) {
+            updateFlowClientConfig: function(_ref11) {
                 return updateButtonClientConfig({
                     fundingSource: _ref11.payment.fundingSource,
                     orderID: _ref11.orderID,
@@ -4141,7 +4216,7 @@ window.spb = function(modules) {
                 } ];
                 throw new Error("Can not render menu for " + fundingSource);
             },
-            updateClientConfig: function(_ref11) {
+            updateFlowClientConfig: function(_ref11) {
                 return updateButtonClientConfig({
                     fundingSource: _ref11.payment.fundingSource,
                     orderID: _ref11.orderID,
@@ -4440,9 +4515,12 @@ window.spb = function(modules) {
             }));
             var _ref9, sessionUID, config;
             nativeSocket.onError((function(err) {
+                var _getLogger$error$trac;
                 getLogger().error("native_socket_error", {
                     err: stringifyError(err)
-                });
+                }).track((_getLogger$error$trac = {}, _getLogger$error$trac.state_name = "smart_button", 
+                _getLogger$error$trac.transition_name = "native_app_switch_ack", _getLogger$error$trac.int_error_desc = "[Native Socket Error] " + stringifyError(err), 
+                _getLogger$error$trac)).flush();
             }));
             return nativeSocket;
         }));
@@ -4499,6 +4577,7 @@ window.spb = function(modules) {
             }
             console.warn(message);
         }
+        var VALIDATE_INTENTS = [ "capture", "authorize", "order" ];
         var menu_menu;
         function renderButtonSmartMenu(_ref) {
             var containerUID = _ref.containerUID;
@@ -4758,11 +4837,13 @@ window.spb = function(modules) {
                         })).then((function() {
                             var _getLogger$info$track2;
                             getLogger().info("native_response_setprops").track((_getLogger$info$track2 = {}, 
-                            _getLogger$info$track2.transition_name = "native_app_switch_ack", _getLogger$info$track2)).flush();
+                            _getLogger$info$track2.state_name = "smart_button", _getLogger$info$track2.transition_name = "native_app_switch_ack", 
+                            _getLogger$info$track2)).flush();
                         })).catch((function(err) {
                             var _getLogger$info$track3;
                             getLogger().info("native_response_setprops_error").track((_getLogger$info$track3 = {}, 
-                            _getLogger$info$track3.int_error_desc = stringifyError(err), _getLogger$info$track3)).flush();
+                            _getLogger$info$track3.state_name = "smart_button", _getLogger$info$track3.int_error_desc = stringifyError(err), 
+                            _getLogger$info$track3)).flush();
                         }));
                     }));
                     var closeNative = memoize((function() {
@@ -5019,12 +5100,12 @@ window.spb = function(modules) {
                             });
                         })).catch((function(err) {
                             return close().then((function() {
-                                var _getLogger$error$trac;
+                                var _getLogger$error$trac2;
                                 getLogger().error("native_error", {
                                     err: stringifyError(err)
-                                }).track((_getLogger$error$trac = {}, _getLogger$error$trac.transition_name = "native_app_switch_ack", 
-                                _getLogger$error$trac.ext_error_code = "native_error", _getLogger$error$trac.ext_error_desc = stringifyErrorMessage(err), 
-                                _getLogger$error$trac)).flush();
+                                }).track((_getLogger$error$trac2 = {}, _getLogger$error$trac2.transition_name = "native_app_switch_ack", 
+                                _getLogger$error$trac2.ext_error_code = "native_error", _getLogger$error$trac2.ext_error_desc = stringifyErrorMessage(err), 
+                                _getLogger$error$trac2)).flush();
                                 throw err;
                             }));
                         }));
@@ -5100,10 +5181,10 @@ window.spb = function(modules) {
         }
         try {
             if (!window.paypal) {
-                var script = [].slice.call(document.querySelectorAll("script")).find((function(el) {
+                var button_script = [].slice.call(document.querySelectorAll("script")).find((function(el) {
                     return el.getAttribute("data-namespace");
                 }));
-                script && (window.paypal = window[script.getAttribute("data-namespace")]);
+                button_script && (window.paypal = window[button_script.getAttribute("data-namespace")]);
             }
         } catch (err) {}
         function setupButton(opts) {
@@ -5176,7 +5257,7 @@ window.spb = function(modules) {
                                             config: config,
                                             components: components,
                                             serviceData: serviceData
-                                        }), name = _getPaymentFlow.name, inline = _getPaymentFlow.inline, spinner = _getPaymentFlow.spinner, updateClientConfig = _getPaymentFlow.updateClientConfig;
+                                        }), name = _getPaymentFlow.name, inline = _getPaymentFlow.inline, spinner = _getPaymentFlow.spinner, updateFlowClientConfig = _getPaymentFlow.updateFlowClientConfig;
                                         var _init = (0, _getPaymentFlow.init)({
                                             props: props,
                                             config: config,
@@ -5198,7 +5279,7 @@ window.spb = function(modules) {
                                             if (_ref4.valid) {
                                                 spinner && enableLoadingSpinner(button);
                                                 var updateClientConfigPromise = createOrder().then((function(orderID) {
-                                                    if (updateClientConfig) return updateClientConfig({
+                                                    if (updateFlowClientConfig) return updateFlowClientConfig({
                                                         orderID: orderID,
                                                         payment: payment
                                                     });
@@ -5206,13 +5287,13 @@ window.spb = function(modules) {
                                                         orderID: orderID,
                                                         fundingSource: fundingSource,
                                                         inline: inline
-                                                    });
-                                                })).catch((function(err) {
-                                                    return getLogger().error("update_client_config_error", {
-                                                        err: stringifyError(err)
-                                                    });
-                                                }));
-                                                var expectedIntent = props.intent, expectedCurrency = props.currency;
+                                                    }).catch((function(err) {
+                                                        getLogger().error("update_client_config_error", {
+                                                            err: stringifyError(err)
+                                                        });
+                                                    }));
+                                                })).catch(src_util_noop);
+                                                var intent = props.intent, currency = props.currency;
                                                 var startPromise = promise_ZalgoPromise.try((function() {
                                                     return updateClientConfigPromise;
                                                 })).then((function() {
@@ -5220,31 +5301,31 @@ window.spb = function(modules) {
                                                 }));
                                                 var validateOrderPromise = createOrder().then((function(orderID) {
                                                     return function(orderID, _ref3) {
-                                                        var env = _ref3.env, clientID = _ref3.clientID, merchantID = _ref3.merchantID, expectedCurrency = _ref3.expectedCurrency, expectedIntent = _ref3.expectedIntent, vault = _ref3.vault;
+                                                        var env = _ref3.env, clientID = _ref3.clientID, merchantID = _ref3.merchantID, currency = _ref3.currency, intent = _ref3.intent, vault = _ref3.vault;
                                                         var logger = getLogger();
                                                         return getSupplementalOrderInfo(orderID).then((function(order) {
                                                             var cart = order.checkoutSession.cart;
-                                                            var intent = "sale" === cart.intent.toLowerCase() ? "capture" : cart.intent.toLowerCase();
-                                                            var currency = cart.amounts && cart.amounts.total.currencyCode;
-                                                            var amount = cart.amounts && cart.amounts.total.currencyValue;
-                                                            var billingType = cart.billingType;
-                                                            intent !== expectedIntent && triggerIntegrationError({
+                                                            var cartIntent = "sale" === cart.intent.toLowerCase() ? "capture" : cart.intent.toLowerCase();
+                                                            var cartCurrency = cart.amounts && cart.amounts.total.currencyCode;
+                                                            var cartAmount = cart.amounts && cart.amounts.total.currencyValue;
+                                                            var cartBillingType = cart.billingType;
+                                                            cartIntent !== intent && -1 !== VALIDATE_INTENTS.indexOf(intent) && triggerIntegrationError({
                                                                 error: "smart_button_validation_error_incorrect_intent",
-                                                                message: "Expected intent from order api call to be " + expectedIntent + ", got " + intent + ". Please ensure you are passing intent=" + intent + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                                message: "Expected intent from order api call to be " + intent + ", got " + cartIntent + ". Please ensure you are passing intent=" + cartIntent + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
                                                                 loggerPayload: {
-                                                                    intent: intent,
-                                                                    expectedIntent: expectedIntent
+                                                                    cartIntent: cartIntent,
+                                                                    intent: intent
                                                                 },
                                                                 env: env,
                                                                 clientID: clientID,
                                                                 orderID: orderID
                                                             });
-                                                            currency && currency !== expectedCurrency && triggerIntegrationError({
+                                                            cartCurrency && cartCurrency !== currency && triggerIntegrationError({
                                                                 error: "smart_button_validation_error_incorrect_currency",
-                                                                message: "Expected currency from order api call to be " + expectedCurrency + ", got " + currency + ". Please ensure you are passing currency=" + currency + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                                message: "Expected currency from order api call to be " + currency + ", got " + cartCurrency + ". Please ensure you are passing currency=" + cartCurrency + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
                                                                 loggerPayload: {
-                                                                    currency: currency,
-                                                                    expectedCurrency: expectedCurrency
+                                                                    cartCurrency: cartCurrency,
+                                                                    currency: currency
                                                                 },
                                                                 env: env,
                                                                 clientID: clientID,
@@ -5257,19 +5338,19 @@ window.spb = function(modules) {
                                                                 clientID: clientID,
                                                                 orderID: orderID
                                                             });
-                                                            billingType && !vault && triggerIntegrationError({
-                                                                error: "smart_button_validation_error_billing_" + (amount ? "with" : "without") + "_purchase_no_vault",
+                                                            cartBillingType && !vault && triggerIntegrationError({
+                                                                error: "smart_button_validation_error_billing_" + (cartAmount ? "with" : "without") + "_purchase_no_vault",
                                                                 message: "Expected vault=" + VAULT.TRUE.toString() + " for a billing transaction",
                                                                 env: env,
                                                                 clientID: clientID,
                                                                 orderID: orderID,
                                                                 loggerPayload: {
-                                                                    billingType: billingType,
+                                                                    cartBillingType: cartBillingType,
                                                                     vault: vault
                                                                 },
                                                                 throwError: !1
                                                             });
-                                                            !vault || billingType || window.xprops.createBillingAgreement || window.xprops.createSubscription || window.xprops.clientAccessToken || window.xprops.userIDToken || triggerIntegrationError({
+                                                            !vault || cartBillingType || window.xprops.createBillingAgreement || window.xprops.createSubscription || window.xprops.clientAccessToken || window.xprops.userIDToken || triggerIntegrationError({
                                                                 error: "smart_button_validation_error_vault_passed_not_needed",
                                                                 message: "Expected vault=" + VAULT.FALSE.toString() + " for a non-billing, non-subscription transaction",
                                                                 env: env,
@@ -5277,7 +5358,7 @@ window.spb = function(modules) {
                                                                 orderID: orderID,
                                                                 loggerPayload: {
                                                                     vault: vault,
-                                                                    billingType: billingType
+                                                                    cartBillingType: cartBillingType
                                                                 },
                                                                 throwError: !1
                                                             });
@@ -5379,8 +5460,8 @@ window.spb = function(modules) {
                                                         env: env,
                                                         clientID: clientID,
                                                         merchantID: merchantID,
-                                                        expectedCurrency: expectedCurrency,
-                                                        expectedIntent: expectedIntent,
+                                                        intent: intent,
+                                                        currency: currency,
                                                         vault: vault
                                                     });
                                                 }));
@@ -5473,10 +5554,12 @@ window.spb = function(modules) {
                         payment: payment,
                         props: paymentProps
                     });
+                    var onError = paymentProps.onError;
                     payPromise.catch((function(err) {
-                        getLogger().info("click_initiate_payment_reject", {
+                        getLogger().error("click_initiate_payment_reject", {
                             err: stringifyError(err)
                         }).flush();
+                        onError(err);
                     }));
                     button.payPromise = payPromise;
                 }));
@@ -5615,6 +5698,9 @@ window.spb = function(modules) {
                         var win = prerenderDetails.win, paymentFundingSource = prerenderDetails.fundingSource, card = prerenderDetails.card;
                         var button = document.querySelector("[data-funding-source=" + paymentFundingSource + "]");
                         if (!button) throw new Error("Can not find button element");
+                        var paymentProps = getProps({
+                            facilitatorAccessToken: facilitatorAccessToken
+                        });
                         var payPromise = initiatePayment({
                             payment: {
                                 win: win,
@@ -5623,14 +5709,14 @@ window.spb = function(modules) {
                                 card: card,
                                 buyerIntent: "pay"
                             },
-                            props: getProps({
-                                facilitatorAccessToken: facilitatorAccessToken
-                            })
+                            props: paymentProps
                         });
+                        var onError = paymentProps.onError;
                         payPromise.catch((function(err) {
-                            getLogger().info("prerender_initiate_payment_reject", {
+                            getLogger().error("prerender_initiate_payment_reject", {
                                 err: stringifyError(err)
                             }).flush();
+                            onError(err);
                         }));
                         button.payPromise = payPromise;
                     }
@@ -5701,7 +5787,7 @@ window.spb = function(modules) {
                     var _ref2;
                     return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
                     _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                    _ref2.button_version = "2.0.312", _ref2.button_correlation_id = buttonCorrelationID, 
+                    _ref2.button_version = "2.0.318", _ref2.button_correlation_id = buttonCorrelationID, 
                     _ref2;
                 }));
                 (function() {
