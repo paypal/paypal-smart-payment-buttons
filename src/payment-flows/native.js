@@ -460,10 +460,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         };
     });
 
-    const detectAppSwitch = once(({ sessionUID, orderId } : {| sessionUID : string, orderId : string |}) => {
+    const detectAppSwitch = once(({ sessionUID } : {| sessionUID : string, orderId : string |}) => {
         getLogger().info(`native_detect_app_switch`).track({
-            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_DETECT_APP_SWITCH,
-            [FTPI_CUSTOM_KEY.INFO_MSG]: orderId
+            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_DETECT_APP_SWITCH
         }).flush();
 
         return connectNative({ sessionUID }).setProps();
@@ -585,8 +584,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
-                            [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
+                            [FTPI_CUSTOM_KEY.INFO_MSG]: nativeUrl
                         }).flush();
 
                     return { redirectUrl: nativeUrl };
