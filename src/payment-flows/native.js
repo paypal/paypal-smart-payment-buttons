@@ -612,10 +612,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const onApproveListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_APPROVE, (data) => {
             onApproveCallback(data);
+            popupWin.close();
         });
 
         const onCancelListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_CANCEL, () => {
             onCancelCallback();
+            popupWin.close();
         });
 
         const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
@@ -625,10 +627,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const onErrorListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_ERROR, (data) => {
             onErrorCallback(data);
-        });
-
-        const onShippingChangeListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_SHIPPING_CHANGE, (data) => {
-            onShippingChangeCallback(data);
+            popupWin.close();
         });
 
         const detectWebSwitchListener = listen(popupWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
