@@ -441,13 +441,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return getSDKProps();
         });
 
-        const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
         const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, onApproveCallback);
         const onCancelListener = socket.on(SOCKET_MESSAGE.ON_CANCEL, onCancelCallback);
         const onErrorListener = socket.on(SOCKET_MESSAGE.ON_ERROR, onErrorCallback);
 
         clean.register(getPropsListener.cancel);
-        clean.register(onShippingChangeListener.cancel);
         clean.register(onApproveListener.cancel);
         clean.register(onCancelListener.cancel);
         clean.register(onErrorListener.cancel);
@@ -641,7 +639,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         clean.register(onCancelListener.cancel);
         clean.register(onCompleteListener.cancel);
         clean.register(onErrorListener.cancel);
-        clean.register(onShippingChangeListener.cancel);
         clean.register(detectWebSwitchListener.cancel);
 
         return awaitRedirectListener.then(() => {
