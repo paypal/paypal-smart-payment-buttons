@@ -86,6 +86,13 @@ const slideUpButtons = () => {
 
     const recalculateMargin = () => {
         buttonsContainer.style.marginTop = `${ buttonsContainer.offsetTop - cardButtonsContainer.offsetTop }px`;
+
+        buttonsContainer.style.overflowY = 'hidden';
+
+        const partialContainerHeight = (cardButtonsContainer.offsetTop - buttonsContainer.offsetTop) + cardButtonsContainer.offsetHeight;
+        const bottomMargin = window.getComputedStyle(cardButtonsContainer.parentElement).getPropertyValue('margin-bottom');
+        const newContainerHeight = `calc(${ partialContainerHeight }px + ${ bottomMargin })`;
+        buttonsContainer.style.height = newContainerHeight;
     };
 
     resizeListener = debounce(() => {
@@ -103,6 +110,8 @@ const slideDownButtons = () => {
     unhighlightCards();
     window.removeEventListener('resize', resizeListener);
     buttonsContainer.style.removeProperty('transition-duration');
+    buttonsContainer.style.removeProperty('height');
+    buttonsContainer.style.removeProperty('overflow-y');
     buttonsContainer.style.removeProperty('margin-top');
 };
 
