@@ -334,7 +334,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
         return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl }
+            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl, sticky: String(isSticky()) }
         });
     });
 
@@ -353,7 +353,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 env,
                 stageHost:      stageHost || '',
                 apiStageHost:   apiStageHost || '',
-                forceEligible:  String(sdkProps ? sdkProps.forceEligible : 'false')
+                forceEligible:  String(sdkProps ? sdkProps.forceEligible : 'false'),
+                sticky:         String(isSticky())
             }
         });
     });
