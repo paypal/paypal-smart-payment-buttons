@@ -181,7 +181,7 @@ function isNativeEligible({ props, config, serviceData } : IsEligibleOptions) : 
         return false;
     }
 
-    if (isSticky() || isNativeOptedIn({ props })) {
+    if (isNativeOptedIn({ props })) {
         return true;
     }
 
@@ -212,7 +212,7 @@ function isNativePaymentEligible({ payment, props, serviceData } : IsPaymentElig
         return false;
     }
 
-    if (isSticky() || isNativeOptedIn({ props })) {
+    if (isNativeOptedIn({ props })) {
         return true;
     }
 
@@ -221,6 +221,10 @@ function isNativePaymentEligible({ payment, props, serviceData } : IsPaymentElig
     }
 
     if (nativeEligibility && nativeEligibility[fundingSource] && nativeEligibility[fundingSource].eligibility) {
+        return true;
+    }
+
+    if (isSticky()) {
         return true;
     }
 
