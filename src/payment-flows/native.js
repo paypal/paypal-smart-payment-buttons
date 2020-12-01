@@ -140,9 +140,9 @@ function setStickyUser() {
         if (window.localStorage) {
             window.localStorage.setItem(STICKY, true);
 
-            getLogger().info(`native_message_sticky_set`)
+            getLogger().info(`native_message_set_sticky`)
                 .track({
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_SET
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_STICKY
                 })
                 .flush();
         }
