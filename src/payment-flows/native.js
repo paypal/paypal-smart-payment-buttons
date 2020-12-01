@@ -399,13 +399,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         if (stickyIsSet()) {
             if (isSticky()) {
-                getLogger().info(`native_message_sticky_conversion`, { payerID, paymentID, billingToken })
+                getLogger().info(`native_message_sticky_conversion`)
                     .track({
                         [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_CONVERSION
                     })
                     .flush();
             } else {
-                getLogger().info(`native_message_not_sticky_conversion`, { payerID, paymentID, billingToken })
+                getLogger().info(`native_message_not_sticky_conversion`)
                     .track({
                         [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_NOT_STICKY_CONVERSION
                     })
