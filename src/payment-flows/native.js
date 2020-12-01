@@ -10,7 +10,7 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
+import { getLogger, promiseOne, promiseNoop, isTest } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
 
@@ -107,7 +107,7 @@ function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
     }
 
     try {
-        if (window.localStorage.getItem(OPTED_IN)) {
+        if (window.localStorage && window.localStorage.getItem(OPTED_IN)) {
             return true;
         }
     } catch (err) {
@@ -119,12 +119,7 @@ function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
 
 function isSticky() : boolean {
     try {
-        if (window.localStorage.getItem(STICKY)) {
-            getLogger().info(`native_message_is_sticky`)
-                .track({
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_IS_STICKY
-                });
-
+        if (window.localStorage && window.localStorage.getItem(STICKY)) {
             return true;
         }
     } catch (err) {
@@ -138,17 +133,19 @@ function isSticky() : boolean {
 function setStickyUser() {
     try {
         if (window.localStorage) {
-            window.localStorage.setItem(STICKY, true);
-
-            getLogger().info(`native_message_set_sticky`)
-                .track({
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_STICKY
-                })
-                .flush();
+            if (isTest()) {
+                window.localStorage.setItem(STICKY, true);
+            } else {
+                window.localStorage.setItem(STICKY, false);
+            }
         }
     } catch (err) {
         // pass
     }
+}
+
+function stickyIsSet() : boolean {
+    return window.localStorage && window.localStorage.getItem(STICKY) !== null;
 }
 
 let initialPageUrl;
@@ -400,9 +397,24 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             })
             .flush();
 
-        if (!isSticky()) {
+        if (stickyIsSet()) {
+            if (isSticky()) {
+                getLogger().info(`native_message_sticky_conversion`, { payerID, paymentID, billingToken })
+                    .track({
+                        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_CONVERSION
+                    })
+                    .flush();
+            } else {
+                getLogger().info(`native_message_not_sticky_conversion`, { payerID, paymentID, billingToken })
+                    .track({
+                        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_NOT_STICKY_CONVERSION
+                    })
+                    .flush();
+            }
+        } else {
             setStickyUser();
         }
+
 
         const data = { payerID, paymentID, billingToken, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
@@ -714,6 +726,19 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const click = () => {
         return ZalgoPromise.try(() => {
             const sessionUID = uniqueID();
+
+            if (stickyIsSet()) {
+                if (isSticky()) {
+                    getLogger().error(`native_message_sticky_test`).track({
+                        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_TEST
+                    }).flush();
+                } else {
+                    getLogger().error(`native_message_sticky_control`).track({
+                        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_CONTROL
+                    }).flush();
+                }
+            }
+
             return useDirectAppSwitch() ? initDirectAppSwitch({ sessionUID }) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {

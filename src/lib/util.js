@@ -115,3 +115,7 @@ export function createExperiment(name : string, sample : number) : Experiment {
         }
     });
 }
+
+export function isTest() : boolean {
+    return Math.random() >= 0.5 ? true : false;
+}

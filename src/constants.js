@@ -120,8 +120,10 @@ export const FPTI_TRANSITION = {
     NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
     NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
     NATIVE_POPUP_CLOSED:                ('process_popup_closed' : 'process_popup_closed'),
-    NATIVE_SET_STICKY:                  ('native_set_sticky' : 'native_set_sticky'),
-    NATIVE_IS_STICKY:                   ('native_is_sticky' : 'native_is_sticky'),
+    NATIVE_STICKY_CONTROL:              ('native_sticky_control' : 'native_sticky_control'),
+    NATIVE_STICKY_TEST:                 ('native_sticky_test' : 'native_sticky_test'),
+    NATIVE_STICKY_CONVERSION:           ('native_sticky_conversion' : 'native_sticky_conversion'),
+    NATIVE_NOT_STICKY_CONVERSION:       ('native_not_sticky_conversion' : 'native_not_sticky_conversion'),
 
     HONEY_IDENTIFY:                     ('honey_identify')
 };
