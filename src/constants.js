@@ -122,8 +122,8 @@ export const FPTI_TRANSITION = {
     NATIVE_POPUP_CLOSED:                ('process_popup_closed' : 'process_popup_closed'),
     NATIVE_STICKY_CONTROL:              ('native_sticky_control' : 'native_sticky_control'),
     NATIVE_STICKY_TEST:                 ('native_sticky_test' : 'native_sticky_test'),
-    NATIVE_STICKY_CONVERSION:           ('native_sticky_conversion' : 'native_sticky_conversion'),
-    NATIVE_NOT_STICKY_CONVERSION:       ('native_not_sticky_conversion' : 'native_not_sticky_conversion'),
+    NATIVE_STICKY_TEST_CONVERSION:      ('native_sticky_test_conversion' : 'native_sticky_test_conversion'),
+    NATIVE_STICKY_CONTROL_CONVERSION:   ('native_sticky_control_conversion' : 'native_sticky_control_conversion'),
 
     HONEY_IDENTIFY:                     ('honey_identify')
 };
