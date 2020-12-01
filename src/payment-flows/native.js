@@ -47,6 +47,9 @@ const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
 const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
 const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
 
+const OPTED_IN = '__native_checkout__';
+const STICKY   = '__native_checkout__sticky';
+
 let clean;
 
 type NativeSocketOptions = {|
@@ -104,7 +107,7 @@ function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
     }
 
     try {
-        if (window.localStorage.getItem('__native_checkout__')) {
+        if (window.localStorage.getItem(OPTED_IN)) {
             return true;
         }
     } catch (err) {
@@ -112,6 +115,40 @@ function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean {
     }
 
     return false;
+}
+
+function isSticky() : boolean {
+    try {
+        if (window.localStorage.getItem(STICKY)) {
+            getLogger().info(`native_message_is_sticky`)
+                .track({
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_IS_STICKY
+                });
+
+            return true;
+        }
+    } catch (err) {
+        // pass
+    }
+
+    return false;
+}
+
+
+function setStickyUser() {
+    try {
+        if (window.localStorage) {
+            window.localStorage.setItem(STICKY, true);
+
+            getLogger().info(`native_message_sticky_set`)
+                .track({
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_STICKY_SET
+                })
+                .flush();
+        }
+    } catch (err) {
+        // pass
+    }
 }
 
 let initialPageUrl;
@@ -147,7 +184,7 @@ function isNativeEligible({ props, config, serviceData } : IsEligibleOptions) : 
         return false;
     }
 
-    if (isNativeOptedIn({ props })) {
+    if (isSticky() || isNativeOptedIn({ props })) {
         return true;
     }
 
@@ -178,7 +215,7 @@ function isNativePaymentEligible({ payment, props, serviceData } : IsPaymentElig
         return false;
     }
 
-    if (isNativeOptedIn({ props })) {
+    if (isSticky() || isNativeOptedIn({ props })) {
         return true;
     }
 
@@ -361,6 +398,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
             })
             .flush();
+
+        if (!isSticky()) {
+            setStickyUser();
+        }
 
         const data = { payerID, paymentID, billingToken, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
