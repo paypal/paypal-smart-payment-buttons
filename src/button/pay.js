@@ -64,6 +64,7 @@ type InitiatePaymentOptions = {|
 
 export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentOptions) : ZalgoPromise<void> {
     const { button, fundingSource, instrumentType } = payment;
+    const buttonLabel = props.style?.label;
 
     return ZalgoPromise.try(() => {
         const { merchantID, personalization } = serviceData;
@@ -124,7 +125,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
             });
 
             const validateOrderPromise = createOrder().then(orderID => {
-                return validateOrder(orderID, { env, clientID, merchantID, intent, currency, vault });
+                return validateOrder(orderID, { env, clientID, merchantID, intent, currency, vault, buttonLabel });
             });
             
             const confirmOrder = ({ orderID, payload }) => getConfirmOrder({ orderID, payload, partnerAttributionID }, { facilitatorAccessToken: serviceData.facilitatorAccessToken });
