@@ -12,7 +12,7 @@ import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingA
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce, createExperiment } from '../lib';
+import { getNonce, createExperiment, getStorageID, isStorageStateFresh } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -49,7 +49,7 @@ export type ButtonXProps = {|
 
     sessionID : string,
     buttonSessionID : string,
-    clientID : ?string,
+    clientID : string,
     partnerAttributionID : ?string,
     correlationID : string,
     sdkCorrelationID? : string,
@@ -83,6 +83,7 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
+    storageID? : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -108,7 +109,7 @@ export type ButtonProps = {|
 
     sessionID : string,
     buttonSessionID : string,
-    clientID : ?string,
+    clientID : string,
     partnerAttributionID : ?string,
     clientMetadataID : ?string,
     sdkCorrelationID : string,
@@ -142,6 +143,7 @@ export type ButtonProps = {|
 
     amount : ?string,
     userIDToken : ?string,
+    stickinessID : string,
 
     onInit : OnInit,
     onError : OnError,
@@ -162,6 +164,7 @@ export type ButtonProps = {|
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
+    const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
     const {
         uid,
@@ -195,16 +198,15 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         connect,
         intent,
         merchantID,
-        upgradeLSAT = false,
+        upgradeLSAT = upgradeLSATExperiment.isEnabled(),
         amount,
         userIDToken,
         enableFunding,
         disableFunding,
         disableCard,
-        getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
+        getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
+        storageID
     } = xprops;
-
-    const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
@@ -255,16 +257,20 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         }
     }
 
+    const stickinessID = (storageID && isStorageStateFresh())
+        ? storageID
+        : getStorageID();
+
     const createBillingAgreement = getCreateBillingAgreement({ createBillingAgreement: xprops.createBillingAgreement });
     const createSubscription = getCreateSubscription({ createSubscription: xprops.createSubscription, partnerAttributionID, merchantID, clientID }, { facilitatorAccessToken });
 
     const createOrder = getCreateOrder({ createOrder: xprops.createOrder, currency, intent, merchantID, partnerAttributionID }, { facilitatorAccessToken, createBillingAgreement, createSubscription });
 
     const onError = getOnError({ onError: xprops.onError });
-    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault, isLSATExperiment: upgradeLSATExperiment.isEnabled() }, { facilitatorAccessToken, createOrder });
+    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault }, { facilitatorAccessToken, createOrder });
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
-    const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID }, { facilitatorAccessToken, createOrder });
-    const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, isLSATExperiment: upgradeLSATExperiment.isEnabled(), upgradeLSAT });
+    const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
+    const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
 
     return {
         uid,
@@ -321,7 +327,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         onShippingChange,
 
         onAuth,
-        standaloneFundingSource: fundingSource
+        standaloneFundingSource: fundingSource,
+        stickinessID
     };
 }
 
@@ -339,17 +346,17 @@ export function getComponents() : Components {
 }
 
 export type Config = {|
-    version : string,
+    sdkVersion : string,
     cspNonce : ?string,
     firebase : ?FirebaseConfig
 |};
 
 export function getConfig({ serverCSPNonce, firebaseConfig } : {| serverCSPNonce : ?string, firebaseConfig : ?FirebaseConfig |}) : Config {
     const cspNonce = serverCSPNonce || getNonce();
-    const { version } = paypal;
+    const { version: sdkVersion } = paypal;
 
     return {
-        version,
+        sdkVersion,
         cspNonce,
         firebase: firebaseConfig
     };

@@ -1,6 +1,6 @@
 {
   "name": "@paypal/smart-payment-buttons",
-  "version": "2.0.337",
+  "version": "2.0.344",
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
@@ -34,12 +34,14 @@
     "test": "if [ ! $SKIP_TEST ]; then npm run lint && npm run flow-typed && npm run flow check && npm run karma && npm run jest; fi;",
     "build": "npm run test && npm run webpack",
     "build-commit": "npm run build && git add dist && (git commit -m 'Dist' || echo 'Nothing to commit') && git push",
-    "release": "npm run build-commit && CDN='https://www.paypalobjects.com' grabthar-release",
+    "release": "npm run build-commit && grabthar-release",
+    "release:pre": "npm run build-commit && grabthar-release prerelease",
+    "deploy": "npm run cdnify",
     "activate": "CDN='https://www.paypalobjects.com' grabthar-activate",
     "clean": "rimraf dist coverage",
     "reinstall": "rimraf flow-typed && rimraf node_modules && npm install && flow-typed install",
     "debug": "cross-env NODE_ENV=debug",
-    "jest": "jest test/server --collectCoverage --collectCoverageFrom='server/' --env=node --no-cache --silent",
+    "jest": "jest test/server --collectCoverage --collectCoverageFrom='server/' --env=node --no-cache --runInBand",
     "cover": "echo no-cover",
     "prepublishOnly": "npm run babel",
     "postpublish": "git clean -f && git checkout .",
@@ -52,7 +54,7 @@
   "alias": {},
   "dependencies": {
     "@paypal/checkout-components": "^5.0.30",
-    "@paypal/common-components": "^1.0.10",
+    "@paypal/common-components": "^1.0.16",
     "@paypal/installments": "^1.0.0",
     "@paypal/sdk-client": "^4.0.123",
     "@paypal/sdk-constants": "^1.0.57",
@@ -73,13 +75,12 @@
   "devDependencies": {
     "babel-core": "^7.0.0-bridge.0",
     "express": "^4.16.3",
-    "flow-bin": "^0.135",
+    "flow-bin": "0.135.0",
     "grabthar-release": "^1.0.8",
     "grumbler-scripts": "^3.0.83",
     "post-robot": "^10.0.13",
     "sync-browser-mocks": "^2.0.8",
     "webpack-mem-compile": "^1.0.2"
   },
-  "license": "PayPal",
-  "author": "DL-PP-Hermes-Integration@paypal.com"
+  "license": "Apache-2.0"
 }

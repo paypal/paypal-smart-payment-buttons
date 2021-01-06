@@ -1,11 +1,11 @@
 /* @flow */
 
 import { isIEIntranet, getPageRenderTime, querySelectorAll } from 'belter/src';
-import { FPTI_KEY, ENV, FUNDING } from '@paypal/sdk-constants/src';
+import { FPTI_KEY, ENV, FUNDING, FPTI_USER_ACTION } from '@paypal/sdk-constants/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 
 import type { LocaleType } from '../types';
-import { getLogger, setupLogger } from '../lib';
+import { getLogger, setupLogger, isStorageStateFresh, isIOSSafari, isAndroidChrome } from '../lib';
 import { DATA_ATTRIBUTES, FPTI_TRANSITION, FPTI_BUTTON_TYPE, FPTI_BUTTON_KEY, FPTI_STATE, FPTI_CONTEXT_TYPE } from '../constants';
 import type { GetQueriedEligibleFunding } from '../props';
 
@@ -33,18 +33,19 @@ type ButtonLoggerOptions = {|
     buttonSessionID : string,
     merchantID : $ReadOnlyArray<string>,
     merchantDomain : string,
-    version : string,
+    sdkVersion : string,
     style : ButtonStyle,
     fundingSource : ?$Values<typeof FUNDING>,
-    getQueriedEligibleFunding : GetQueriedEligibleFunding
+    getQueriedEligibleFunding : GetQueriedEligibleFunding,
+    stickinessID : string
 |};
 
 export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, buttonCorrelationID, locale,
-    merchantID, merchantDomain, version, style, fundingSource, getQueriedEligibleFunding } : ButtonLoggerOptions) : ZalgoPromise<void> {
+    merchantID, merchantDomain, sdkVersion, style, fundingSource, getQueriedEligibleFunding, stickinessID } : ButtonLoggerOptions) : ZalgoPromise<void> {
 
     const logger = getLogger();
 
-    setupLogger({ env, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, locale, merchantID, merchantDomain, version });
+    setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale, sdkVersion });
 
     logger.addPayloadBuilder(() => {
         return {
@@ -61,7 +62,12 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
             [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
             [FPTI_KEY.BUTTON_SESSION_UID]:           buttonSessionID,
             [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__,
-            [FPTI_BUTTON_KEY.BUTTON_CORRELATION_ID]: buttonCorrelationID
+            [FPTI_BUTTON_KEY.BUTTON_CORRELATION_ID]: buttonCorrelationID,
+            [FPTI_KEY.STICKINESS_ID]:                stickinessID,
+            [FPTI_KEY.PARTNER_ATTRIBUTION_ID]:       partnerAttributionID,
+            [FPTI_KEY.USER_ACTION]:                  commit ? FPTI_USER_ACTION.COMMIT : FPTI_USER_ACTION.CONTINUE,
+            [FPTI_KEY.SELLER_ID]:                    merchantID[0],
+            [FPTI_KEY.MERCHANT_DOMAIN]:              merchantDomain
         };
     });
 
@@ -88,6 +94,13 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
 
         const { layout, color, shape, label, tagline = true } = style;
 
+        let native_device = 'non_native';
+        if (isIOSSafari()) {
+            native_device = 'ios_safari';
+        } else if (isAndroidChrome()) {
+            native_device = 'android_chrome';
+        }
+
         logger.info(`button_render`);
         logger.info(`button_render_template_version_${ getTemplateVersion() }`);
         logger.info(`button_render_client_version_${ getClientVersion() }`);
@@ -98,6 +111,7 @@ export function setupButtonLogger({ env, sessionID, buttonSessionID, clientID, p
         logger.info(`button_render_tagline_${ tagline.toString() }`);
         logger.info(`button_render_funding_count_${ fundingSources.length }`);
         logger.info(`button_render_wallet_instrument_count_${ walletInstruments.length }`);
+        logger.info(`button_render_${ native_device }_storage_state_${ isStorageStateFresh() ? 'fresh' : 'not_fresh' }`);
 
         for (const walletInstrument of walletInstruments) {
             logger.info(`button_render_wallet_instrument_${ walletInstrument }`);

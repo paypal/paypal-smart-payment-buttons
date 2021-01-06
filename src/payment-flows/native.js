@@ -1,8 +1,8 @@
 /* @flow */
 /* eslint max-lines: off */
 
-import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
-    isSafari, isChrome, stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
+import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError,
+    stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY } from '@paypal/sdk-constants/src';
 import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } from 'cross-domain-utils/src';
@@ -10,9 +10,10 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
+import { getLogger, promiseOne, promiseNoop, isIOSSafari, isAndroidChrome } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
+import type { NativePopupInputParams } from '../../server/components/native/params';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions } from './types';
 import { checkout } from './checkout';
@@ -40,12 +41,24 @@ const SOCKET_MESSAGE = {
     ON_ERROR:           'onError'
 };
 
-const NATIVE_DOMAIN = 'https://www.paypal.com';
-const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
+const NATIVE_DOMAIN = {
+    [ ENV.TEST ]:       'https://www.paypal.com',
+    [ ENV.LOCAL ]:      'https://www.paypal.com',
+    [ ENV.STAGE ]:      'https://www.paypal.com',
+    [ ENV.SANDBOX ]:    'https://www.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://www.paypal.com'
+};
 
 // Popup domain needs to be different than native domain for app switch to work on iOS
-const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
-const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
+const NATIVE_POPUP_DOMAIN = {
+    [ ENV.TEST ]:       'https://history.paypal.com',
+    [ ENV.LOCAL ]:      'https://history.paypal.com',
+    [ ENV.STAGE ]:      'https://history.paypal.com',
+    [ ENV.SANDBOX ]:    'https://www.sandbox.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://history.paypal.com'
+};
+
+let clean;
 
 type NativeSocketOptions = {|
     sessionUID : string,
@@ -88,14 +101,6 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
 
     return nativeSocket;
 });
-
-function isIOSSafari() : boolean {
-    return isIos() && isSafari();
-}
-
-function isAndroidChrome() : boolean {
-    return isAndroid() && isChrome();
-}
 
 function useDirectAppSwitch() : boolean {
     return isAndroidChrome();
@@ -249,17 +254,22 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
 }
 
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
-    const { createOrder, onApprove, onCancel, onError, commit,
+    const { createOrder, onApprove, onCancel, onError, commit, clientID, sessionID, sdkCorrelationID,
         buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange } = props;
     const { facilitatorAccessToken, sdkMeta } = serviceData;
     const { fundingSource } = payment;
-    const { version, firebase: firebaseConfig } = config;
+    const { sdkVersion, firebase: firebaseConfig } = config;
 
     if (!firebaseConfig) {
         throw new Error(`Can not run native flow without firebase config`);
     }
 
-    const clean = cleanup();
+    if (clean) {
+        clean.all();
+    }
+
+    clean = cleanup();
+
     let approved = false;
     let cancelled = false;
     let didFallback = false;
@@ -284,9 +294,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://www.sandbox.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_DOMAIN_SANDBOX
-            : NATIVE_DOMAIN;
+        return NATIVE_DOMAIN[env];
     });
 
     const getNativePopupDomain = memoize(() : string => {
@@ -294,9 +302,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://history.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_POPUP_DOMAIN_SANDBOX
-            : NATIVE_POPUP_DOMAIN;
+        return NATIVE_POPUP_DOMAIN[env];
     });
 
     const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
@@ -325,10 +331,17 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
-    const getNativePopupUrl = memoize(({ sessionUID }) : string => {
+    const getNativePopupParams = () : NativePopupInputParams => {
         const parentDomain = getDomain();
+        return {
+            sdkMeta, buttonSessionID, parentDomain, env, clientID, sessionID, sdkCorrelationID
+        };
+    };
+
+    const getNativePopupUrl = memoize(() : string => {
         return extendUrl(`${ getNativePopupDomain() }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID, parentDomain }
+            // $FlowFixMe
+            query: getNativePopupParams()
         });
     });
 
@@ -407,7 +420,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
             };
-            return onShippingChange(data, actions).then(() => {
+            return onShippingChange({ ...data, forceRestAPI: true }, actions).then(() => {
                 return {
                     resolved
                 };
@@ -417,7 +430,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const connectNative = memoize(({ sessionUID } : {| sessionUID : string |}) : NativeConnection => {
         const socket = getNativeSocket({
-            sessionUID, firebaseConfig, version
+            sessionUID, firebaseConfig, version: sdkVersion
         });
 
         const setNativeProps = () => {
@@ -507,6 +520,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrlForAndroid({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
+
+        const closePopup = () => {
+            nativeWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
+        
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
@@ -556,7 +575,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const popupWin = popup(getNativePopupUrl({ sessionUID }));
+        const popupWin = popup(getNativePopupUrl());
+        
+        const closePopup = () => {
+            popupWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
+
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
                 [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
