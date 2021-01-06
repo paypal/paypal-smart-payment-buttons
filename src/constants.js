@@ -118,6 +118,7 @@ export const FPTI_TRANSITION = {
     NATIVE_SET_PROPS_ATTEMPT:           ('process_set_props_attempt' : 'process_set_props_attempt'),
     NATIVE_ATTEMPT_APP_SWITCH:          ('app_switch_attempted' : 'app_switch_attempted'),
     NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
+    NATIVE_POPUP_HASHCHANGE:            ('popup_hashchange' : 'popup_hashchange'),
     NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
     NATIVE_ON_APPROVE:                  ('native_onapprove' : 'native_onapprove'),
     NATIVE_ON_CANCEL:                   ('native_oncancel' : 'native_oncancel'),
@@ -133,7 +134,7 @@ export const FPTI_BUTTON_TYPE = {
     IFRAME: ('iframe' : 'iframe')
 };
 
-export const FTPI_CUSTOM_KEY = {
+export const FPTI_CUSTOM_KEY = {
     ERR_DESC:              ('int_error_desc' : 'int_error_desc'),
     HONEY_DEVICE_ID:       ('honey_device_id' : 'honey_device_id'),
     HONEY_SESSION_ID:      ('honey_session_id' : 'honey_session_id'),
