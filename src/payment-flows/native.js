@@ -11,7 +11,7 @@ import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
 import { getLogger, promiseOne, promiseNoop, isIOSSafari, isAndroidChrome } from '../lib';
-import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
+import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FPTI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
 import type { NativePopupInputParams } from '../../server/components/native/params';
 
@@ -87,14 +87,14 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
                 .track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
-                    [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Info] ${ stringifiedError }`
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Info] ${ stringifiedError }`
                 }).flush();
         } else {
             getLogger().error('native_socket_error', { err: stringifiedError })
                 .track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
-                    [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifiedError }`
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifiedError }`
                 }).flush();
         }
     });
@@ -456,7 +456,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).catch(err => {
                 getLogger().info(`native_response_setprops_error`).track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }).flush();
             });
         };
@@ -579,7 +579,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     .track({
                         [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                         [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                        [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                        [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                     }).flush();
                 return connectNative({ sessionUID }).close().then(() => {
                     throw err;
@@ -639,7 +639,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                         .track({
                             [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
-                            [FTPI_CUSTOM_KEY.INFO_MSG]: nativeUrl
+                            [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
                         }).flush();
 
                     return { redirectUrl: nativeUrl };
@@ -648,7 +648,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                         .track({
                             [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                            [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                            [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                         }).flush();
 
                     return connectNative({ sessionUID }).close().then(() => {

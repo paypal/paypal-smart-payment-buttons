@@ -1,7 +1,7 @@
 /* @flow */
 
 import { isIEIntranet, getPageRenderTime } from 'belter/src';
-import { Logger } from 'beaver-logger/src';
+import { type LoggerType } from 'beaver-logger/src';
 import { FPTI_KEY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 
@@ -20,7 +20,7 @@ type NativeLoggerOptions = {|
     locale : LocaleType
 |};
 
-export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelationID, clientID, fundingSource, sdkVersion, locale } : NativeLoggerOptions) : Logger {
+export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelationID, clientID, fundingSource, sdkVersion, locale } : NativeLoggerOptions) : LoggerType {
     const logger = getLogger();
 
     setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale, sdkVersion });
