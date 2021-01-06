@@ -375,7 +375,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         approved = true;
         getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_APPROVE
             })
             .flush();
 
@@ -389,7 +389,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const onCancelCallback = () => {
         cancelled = true;
-        getLogger().info(`native_message_oncancel`).flush();
+        getLogger().info(`native_message_oncancel`)
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
+            })
+            .flush();
         return ZalgoPromise.all([
             onCancel(),
             close()
@@ -397,7 +401,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
-        getLogger().info(`native_message_onerror`, { err: message }).flush();
+        getLogger().info(`native_message_onerror`, { err: message })
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR
+            }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
             close()
@@ -405,7 +412,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
-        getLogger().info(`native_message_onshippingchange`).flush();
+        getLogger().info(`native_message_onshippingchange`)
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
+            }).flush();
         if (onShippingChange) {
             let resolved = true;
             const actions = {
@@ -543,6 +553,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         return validatePromise.then(valid => {
             if (!valid) {
+                getLogger().info(`native_onclick_invalid`).track({
+                    [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+                }).flush();
                 return delayPromise.then(() => {
                     if (didAppSwitch(nativeWin)) {
                         return connectNative({ sessionUID }).close();
@@ -609,6 +623,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             getLogger().info(`native_post_message_await_redirect`).flush();
             return validatePromise.then(valid => {
                 if (!valid) {
+                    getLogger().info(`native_onclick_invalid`).track({
+                        [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+                    }).flush();
                     return close().then(() => {
                         throw new Error(`Validation failed`);
                     });
@@ -656,7 +674,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
 
         const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
-            getLogger().info(`native_post_message_on_complete`).flush();
+            getLogger().info(`native_post_message_on_complete`)
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_COMPLETE
+                }).flush();
             popupWin.close();
         });
 
