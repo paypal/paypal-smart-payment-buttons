@@ -3,6 +3,7 @@
 export const MESSAGE = {
     AWAIT_REDIRECT:     'awaitRedirect',
     DETECT_APP_SWITCH:  'detectAppSwitch',
+    DETECT_WEB_SWITCH:  'detectWebSwitch',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
     ON_COMPLETE:        'onComplete',
@@ -15,6 +16,7 @@ export const EVENT = {
 
 export const HASH = {
     CLOSE:              'close',
+    FALLBACK:           'fallback',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
     ON_ERROR:           'onError',
