@@ -3,7 +3,6 @@
 export const MESSAGE = {
     AWAIT_REDIRECT:     'awaitRedirect',
     DETECT_APP_SWITCH:  'detectAppSwitch',
-    DETECT_WEB_SWITCH:  'detectWebSwitch',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
     ON_COMPLETE:        'onComplete',
