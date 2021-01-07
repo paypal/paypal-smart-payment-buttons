@@ -51,7 +51,7 @@ export function setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale
             [FPTI_KEY.SDK_VERSION]:            sdkVersion,
             [FPTI_KEY.USER_AGENT]:             window.navigator && window.navigator.userAgent,
             [FPTI_KEY.CONTEXT_CORRID]:         sdkCorrelationID,
-            t:                                 Date.now().toString()
+            [FPTI_KEY.TIMESTAMP]:              Date.now().toString()
         };
     });
 

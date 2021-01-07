@@ -636,7 +636,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                 return getSDKProps().then(sdkProps => {
                     const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
-                    const token = sdkProps.orderID;
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
