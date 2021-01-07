@@ -255,7 +255,7 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
 
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, onCancel, onError, commit, clientID, sessionID, sdkCorrelationID,
-        buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange } = props;
+        buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange, stickinessID } = props;
     const { facilitatorAccessToken, sdkMeta } = serviceData;
     const { fundingSource } = payment;
     const { sdkVersion, firebase: firebaseConfig } = config;
@@ -323,6 +323,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 webCheckoutUrl: sdkProps ? sdkProps.webCheckoutUrl : '',
                 userAgent:      sdkProps ? sdkProps.userAgent : '',
                 buttonSessionID,
+                stickinessID,
                 env,
                 stageHost:      stageHost || '',
                 apiStageHost:   apiStageHost || '',
