@@ -119,6 +119,7 @@ export const FPTI_TRANSITION = {
     NATIVE_ATTEMPT_APP_SWITCH:          ('app_switch_attempted' : 'app_switch_attempted'),
     NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
     NATIVE_POPUP_HASHCHANGE:            ('popup_hashchange' : 'popup_hashchange'),
+    NATIVE_POPUP_FALLBACK:              ('popup_fallback' : 'popup_fallback'),
     NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
     NATIVE_ON_APPROVE:                  ('native_onapprove' : 'native_onapprove'),
     NATIVE_ON_CANCEL:                   ('native_oncancel' : 'native_oncancel'),

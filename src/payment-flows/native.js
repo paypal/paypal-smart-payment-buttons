@@ -375,7 +375,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         approved = true;
         getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_APPROVE
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
             })
             .flush();
 
@@ -403,7 +404,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
         getLogger().info(`native_message_onerror`, { err: message })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
             }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
@@ -634,6 +636,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                 return getSDKProps().then(sdkProps => {
                     const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+                    const token = sdkProps.orderID;
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({

@@ -83,10 +83,6 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
             sendToParent(MESSAGE.ON_COMPLETE);
             break;
         }
-        case HASH.FALLBACK: {
-            sendToParent(MESSAGE.DETECT_WEB_SWITCH);
-            break;
-        }
         case HASH.TEST: {
             break;
         }
