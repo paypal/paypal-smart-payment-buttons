@@ -530,30 +530,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        connectNative({ sessionUID });
-        
-        const nativeUrl = getNativeUrlForAndroid({ sessionUID });
-        const nativeWin = popup(nativeUrl);
-
-        const closePopup = () => {
-            nativeWin.close();
-        };
-        window.addEventListener('pagehide', closePopup);
-        
-        getLogger()
-            .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
-            .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
-            .track({
-                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
-            })
-            .track({
-                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
-            }).flush();
-
         const validatePromise = validate();
-        const delayPromise = ZalgoPromise.delay(500);
 
         return validatePromise.then(valid => {
             if (!valid) {
@@ -561,14 +538,31 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
                 }).flush();
-                return delayPromise.then(() => {
-                    if (didAppSwitch(nativeWin)) {
-                        return connectNative({ sessionUID }).close();
-                    }
-                }).then(() => {
-                    return close();
-                });
+
+                return close();
             }
+
+            connectNative({ sessionUID });
+        
+            const nativeUrl = getNativeUrlForAndroid({ sessionUID });
+            const nativeWin = popup(nativeUrl);
+
+            const closePopup = () => {
+                nativeWin.close();
+            };
+            window.addEventListener('pagehide', closePopup);
+            
+            getLogger()
+                .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
+                .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+                .track({
+                    [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
+                })
+                .track({
+                    [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH
+                }).flush();
 
             return createOrder().then(() => {
                 if (didAppSwitch(nativeWin)) {
