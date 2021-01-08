@@ -587,8 +587,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const validatePromise = validate();
-        validatePromise.then(valid => {
+        return validate().then(valid => {
             if (!valid) {
                 getLogger().info(`native_onclick_invalid`).track({
                     [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
@@ -597,112 +596,113 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                 return close();
             }
-        });
 
-        const popupWin = popup(getNativePopupUrl());
-        
-        const closePopup = () => {
-            popupWin.close();
-        };
-        window.addEventListener('pagehide', closePopup);
-
-        getLogger().info(`native_attempt_appswitch_popup_shown`)
-            .track({
-                [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
-            }).flush();
-
-        const closeListener = onCloseWindow(popupWin, () => {
-            return ZalgoPromise.delay(1000).then(() => {
-                if (!approved && !cancelled && !didFallback) {
-                    return ZalgoPromise.all([
-                        onCancel(),
-                        close()
-                    ]);
-                }
-            }).then(noop);
-        }, 500);
-
-        clean.register(() => {
-            closeListener.cancel();
-        });
-
-        const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { pageUrl } }) => {
-            getLogger().info(`native_post_message_await_redirect`).flush();
+            const popupWin = popup(getNativePopupUrl());
             
-            return getSDKProps().then(sdkProps => {
-                const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+            const closePopup = () => {
+                popupWin.close();
+            };
+            window.addEventListener('pagehide', closePopup);
 
-                getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
-                    .track({
-                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
-                        [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
-                    }).flush();
+            getLogger().info(`native_attempt_appswitch_popup_shown`)
+                .track({
+                    [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_SHOWN
+                }).flush();
 
-                return { redirectUrl: nativeUrl };
-            }).catch(err => {
-                getLogger().info(`native_attempt_appswitch_url_popup_errored`)
-                    .track({
-                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                        [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
-                    }).flush();
+            const closeListener = onCloseWindow(popupWin, () => {
+                return ZalgoPromise.delay(1000).then(() => {
+                    if (!approved && !cancelled && !didFallback) {
+                        return ZalgoPromise.all([
+                            onCancel(),
+                            close()
+                        ]);
+                    }
+                }).then(noop);
+            }, 500);
 
-                return connectNative({ sessionUID }).close().then(() => {
-                    throw err;
+            clean.register(() => {
+                closeListener.cancel();
+            });
+
+            const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { pageUrl } }) => {
+                getLogger().info(`native_post_message_await_redirect`).flush();
+
+                return getSDKProps().then(sdkProps => {
+                    const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+
+                    getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+                        .track({
+                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
+                            [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
+                        }).flush();
+
+                    return { redirectUrl: nativeUrl };
+                }).catch(err => {
+                    getLogger().info(`native_attempt_appswitch_url_popup_errored`)
+                        .track({
+                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                            [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                        }).flush();
+
+                    return connectNative({ sessionUID }).close().then(() => {
+                        throw err;
+                    });
                 });
+            });
+
+            const detectAppSwitchListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.DETECT_APP_SWITCH, () => {
+                getLogger().info(`native_post_message_detect_app_switch`).flush();
+                return detectAppSwitch({ sessionUID });
+            });
+
+            const onApproveListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_APPROVE, (data) => {
+                onApproveCallback(data);
+                popupWin.close();
+            });
+
+            const onCancelListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_CANCEL, () => {
+                onCancelCallback();
+                popupWin.close();
+            });
+
+            const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
+                getLogger().info(`native_post_message_on_complete`)
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_COMPLETE
+                    }).flush();
+                popupWin.close();
+            });
+
+            const onErrorListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_ERROR, (data) => {
+                onErrorCallback(data);
+                popupWin.close();
+            });
+
+            const detectWebSwitchListener = listen(popupWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
+                getLogger().info(`native_post_message_detect_web_switch`).flush();
+                return detectWebSwitch(popupWin);
+            });
+
+            clean.register(awaitRedirectListener.cancel);
+            clean.register(detectAppSwitchListener.cancel);
+            clean.register(onApproveListener.cancel);
+            clean.register(onCancelListener.cancel);
+            clean.register(onCompleteListener.cancel);
+            clean.register(onErrorListener.cancel);
+            clean.register(detectWebSwitchListener.cancel);
+
+            return awaitRedirectListener.then(() => {
+                return promiseOne([
+                    detectAppSwitchListener,
+                    detectWebSwitchListener
+                ]);
             });
         });
 
-        const detectAppSwitchListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.DETECT_APP_SWITCH, () => {
-            getLogger().info(`native_post_message_detect_app_switch`).flush();
-            return detectAppSwitch({ sessionUID });
-        });
-
-        const onApproveListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_APPROVE, (data) => {
-            onApproveCallback(data);
-            popupWin.close();
-        });
-
-        const onCancelListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_CANCEL, () => {
-            onCancelCallback();
-            popupWin.close();
-        });
-
-        const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
-            getLogger().info(`native_post_message_on_complete`)
-                .track({
-                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_COMPLETE
-                }).flush();
-            popupWin.close();
-        });
-
-        const onErrorListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_ERROR, (data) => {
-            onErrorCallback(data);
-            popupWin.close();
-        });
-
-        const detectWebSwitchListener = listen(popupWin, getNativeDomain(), POST_MESSAGE.DETECT_WEB_SWITCH, () => {
-            getLogger().info(`native_post_message_detect_web_switch`).flush();
-            return detectWebSwitch(popupWin);
-        });
-
-        clean.register(awaitRedirectListener.cancel);
-        clean.register(detectAppSwitchListener.cancel);
-        clean.register(onApproveListener.cancel);
-        clean.register(onCancelListener.cancel);
-        clean.register(onCompleteListener.cancel);
-        clean.register(onErrorListener.cancel);
-        clean.register(detectWebSwitchListener.cancel);
-
-        return awaitRedirectListener.then(() => {
-            return promiseOne([
-                detectAppSwitchListener,
-                detectWebSwitchListener
-            ]);
-        });
     };
 
     const click = () => {
