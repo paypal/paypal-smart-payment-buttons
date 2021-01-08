@@ -530,8 +530,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
+        connectNative({ sessionUID });
+        
         const nativeUrl = getNativeUrlForAndroid({ sessionUID });
-
         const nativeWin = popup(nativeUrl);
 
         const closePopup = () => {
