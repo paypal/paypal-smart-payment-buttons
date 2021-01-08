@@ -587,6 +587,18 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
+        const validatePromise = validate();
+        validatePromise.then(valid => {
+            if (!valid) {
+                getLogger().info(`native_onclick_invalid`).track({
+                    [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+                }).flush();
+
+                return close();
+            }
+        });
+
         const popupWin = popup(getNativePopupUrl());
         
         const closePopup = () => {
@@ -615,43 +627,30 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             closeListener.cancel();
         });
 
-        const validatePromise = validate();
-
         const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { pageUrl } }) => {
             getLogger().info(`native_post_message_await_redirect`).flush();
-            return validatePromise.then(valid => {
-                if (!valid) {
-                    getLogger().info(`native_onclick_invalid`).track({
-                        [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
-                        [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+            
+            return getSDKProps().then(sdkProps => {
+                const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+
+                getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
+                        [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
                     }).flush();
-                    return close().then(() => {
-                        throw new Error(`Validation failed`);
-                    });
-                }
 
-                return getSDKProps().then(sdkProps => {
-                    const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+                return { redirectUrl: nativeUrl };
+            }).catch(err => {
+                getLogger().info(`native_attempt_appswitch_url_popup_errored`)
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                        [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    }).flush();
 
-                    getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
-                        .track({
-                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
-                            [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
-                        }).flush();
-
-                    return { redirectUrl: nativeUrl };
-                }).catch(err => {
-                    getLogger().info(`native_attempt_appswitch_url_popup_errored`)
-                        .track({
-                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                            [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
-                        }).flush();
-
-                    return connectNative({ sessionUID }).close().then(() => {
-                        throw err;
-                    });
+                return connectNative({ sessionUID }).close().then(() => {
+                    throw err;
                 });
             });
         });
