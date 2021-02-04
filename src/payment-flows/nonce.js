@@ -73,8 +73,9 @@ function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) :
         });
 }
 
-function initNonce({ props, payment }) : PaymentFlowInstance {
-    const { createOrder, clientID, wallet, branded } = props;
+function initNonce({ props, payment, serviceData }) : PaymentFlowInstance {
+    const { createOrder, clientID, branded } = props;
+    const { wallet } = serviceData;
     const { paymentMethodID } = payment;
 
     const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
