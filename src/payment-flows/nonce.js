@@ -78,6 +78,7 @@ function initNonce({ props, payment, serviceData }) : PaymentFlowInstance {
     const { wallet } = serviceData;
     const { paymentMethodID } = payment;
 
+    // $FlowFixMe
     const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
     // $FlowFixMe
     const paymentMethodNonce = instrument.tokenID;
