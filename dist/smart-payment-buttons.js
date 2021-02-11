@@ -4721,7 +4721,7 @@ window.spb = function(modules) {
                                         },
                                         headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
                                     }).then((function(data) {
-                                        logger_getLogger().info("pay_with_paymentMethodNonce_cart_id", data.cart.cartId);
+                                        logger_getLogger().info("pay_with_paymentMethodNonce", data);
                                     }));
                                 })({
                                     orderID: orderID,
