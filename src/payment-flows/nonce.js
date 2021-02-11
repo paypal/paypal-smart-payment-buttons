@@ -64,7 +64,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
     getLogger().info('nonce_payment_initiated');
 
-    payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
+    return payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
         .catch(error => {
             getLogger().info('nonce_payment_failed');
             // $FlowFixMe
