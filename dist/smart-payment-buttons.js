@@ -4693,26 +4693,37 @@ window.spb = function(modules) {
                 return !("card" !== fundingSource || !branded && !instrument.branded || !instrument.tokenID);
             },
             init: function(_ref4) {
-                var props = _ref4.props;
-                var createOrder = props.createOrder, clientID = props.clientID, branded = props.branded;
-                var paymentMethodID = _ref4.payment.paymentMethodID;
-                var paymentMethodNonce = _ref4.serviceData.wallet.card.instruments.find((function(_ref5) {
+                var props = _ref4.props, components = _ref4.components, payment = _ref4.payment, serviceData = _ref4.serviceData, config = _ref4.config;
+                var createOrder = props.createOrder, onApprove = props.onApprove, clientID = props.clientID, branded = props.branded;
+                var paymentMethodID = payment.paymentMethodID;
+                var paymentMethodNonce = serviceData.wallet.card.instruments.find((function(_ref5) {
                     return _ref5.tokenID === paymentMethodID;
                 })).tokenID;
+                var restart = function() {
+                    return function() {
+                        logger_getLogger().info("web_checkout_fallback").flush();
+                        return checkout.init({
+                            props: props,
+                            components: components,
+                            serviceData: serviceData,
+                            payment: payment,
+                            config: config
+                        });
+                    }().start();
+                };
                 return {
                     start: function() {
-                        logger_getLogger().info("start_payment_with_nonce " + paymentMethodNonce);
                         return createOrder().then((function(orderID) {
                             logger_getLogger().info("orderID_in_nonce " + orderID);
                             return function(orderID, paymentMethodNonce, clientID, branded) {
                                 logger_getLogger().info("nonce_payment_initiated");
-                                (function(_ref15) {
+                                return function(_ref15) {
                                     var _headers17;
                                     var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
                                     logger_getLogger().info("paymentMethodNonce input params", orderID, paymentMethodNonce, clientID, branded);
                                     return callGraphQL({
                                         name: "approvePaymentWithNonce",
-                                        query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: Boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
+                                        query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: Boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    buyer {\n                        userId\n                    }\n                }\n            }\n        ",
                                         variables: {
                                             orderID: orderID,
                                             clientID: clientID,
@@ -4720,10 +4731,14 @@ window.spb = function(modules) {
                                             branded: branded
                                         },
                                         headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
-                                    }).then((function(data) {
-                                        logger_getLogger().info("pay_with_paymentMethodNonce", data);
+                                    }).then((function(_ref16) {
+                                        var approvePaymentWithNonce = _ref16.approvePaymentWithNonce;
+                                        logger_getLogger().info("pay_with_paymentMethodNonce", approvePaymentWithNonce);
+                                        return {
+                                            payerID: approvePaymentWithNonce.buyer.userId
+                                        };
                                     }));
-                                })({
+                                }({
                                     orderID: orderID,
                                     paymentMethodNonce: paymentMethodNonce,
                                     clientID: clientID,
@@ -4733,7 +4748,13 @@ window.spb = function(modules) {
                                     error.code = "PAY_WITH_DIFFERENT_CARD";
                                     throw error;
                                 }));
-                            }(orderID, paymentMethodNonce, clientID, branded);
+                            }(orderID, paymentMethodNonce, clientID, branded).then((function(_ref6) {
+                                return onApprove({
+                                    payerID: _ref6.payerID
+                                }, {
+                                    restart: restart
+                                });
+                            }));
                         }));
                     },
                     close: promiseNoop
