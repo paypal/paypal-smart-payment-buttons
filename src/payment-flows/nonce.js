@@ -65,6 +65,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
     getLogger().info('nonce_payment_initiated');
 
+    // $FlowFixMe
     return payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
         .catch(error => {
             getLogger().info('nonce_payment_failed');
@@ -98,6 +99,7 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
     const start = () => {
         return createOrder().then(orderID => {
             getLogger().info(`orderID_in_nonce ${ orderID }`);
+            // $FlowFixMe
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded).then(({ payerID }) => {
                 return onApprove({ payerID }, { restart });
             });
