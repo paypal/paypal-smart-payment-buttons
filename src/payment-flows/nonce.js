@@ -6,6 +6,7 @@ import { payWithNonce } from '../api';
 import { getLogger, promiseNoop } from '../lib';
 
 import type { PaymentFlow, PaymentFlowInstance } from './types';
+import { checkout } from './checkout';
 
 function setupNonce() {
 // pass
@@ -73,8 +74,8 @@ function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) :
         });
 }
 
-function initNonce({ props, payment, serviceData }) : PaymentFlowInstance {
-    const { createOrder, clientID, branded } = props;
+function initNonce({ props, components, payment, serviceData, config }) : PaymentFlowInstance {
+    const { createOrder, onApprove, clientID, branded } = props;
     const { wallet } = serviceData;
     const { paymentMethodID } = payment;
 
@@ -83,12 +84,23 @@ function initNonce({ props, payment, serviceData }) : PaymentFlowInstance {
     // $FlowFixMe
     const paymentMethodNonce = instrument.tokenID;
 
+    const fallbackToWebCheckout = () => {
+        getLogger().info('web_checkout_fallback').flush();
+        return checkout.init({
+            props, components, serviceData, payment, config
+        });
+    };
+
+    const restart = () => {
+        return fallbackToWebCheckout().start();
+    };
+
     const start = () => {
-        // $FlowFixMe
-        getLogger().info(`start_payment_with_nonce ${ paymentMethodNonce }`);
         return createOrder().then(orderID => {
             getLogger().info(`orderID_in_nonce ${ orderID }`);
-            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
+            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded).then(({ payerID }) => {
+                return onApprove({ payerID }, { restart });
+            });
         });
     };
 

@@ -517,8 +517,8 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                     paymentMethodNonce: $paymentMethodNonce
                     branded: $branded
                 ) {
-                    cart {
-                        cartId
+                    buyer {
+                        userId
                     }
                 }
             }
@@ -532,7 +532,10 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
         headers: {
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
-    }).then(data => {
-        getLogger().info('pay_with_paymentMethodNonce', data);
+    }).then(({ approvePaymentWithNonce }) => {
+        getLogger().info('pay_with_paymentMethodNonce', approvePaymentWithNonce);
+        return {
+            payerID: approvePaymentWithNonce.buyer.userId
+        };
     });
 }
