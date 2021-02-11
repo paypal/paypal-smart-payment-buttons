@@ -533,6 +533,6 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(data => {
-        getLogger().info('pay_with_paymentMethodNonce_cart_id', data.cart.cartId);
+        getLogger().info('pay_with_paymentMethodNonce', data);
     });
 }
