@@ -252,7 +252,7 @@ function isNativePaymentEligible({ payment, props } : IsPaymentEligibleOptions) 
 function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
         const { getPageUrl, clientID, onShippingChange, currency, platform,
-            vault, buttonSessionID, enableFunding, env, stickinessID } = props;
+            vault, buttonSessionID, enableFunding, env, stickinessID, merchantDomain } = props;
         const { merchantID, buyerCountry, cookies } = serviceData;
 
         const finalStickinessID = (env !== ENV.PRODUCTION) ? stickinessID : buttonSessionID;
@@ -260,8 +260,11 @@ function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void>
         const shippingCallbackEnabled = Boolean(onShippingChange);
 
         return ZalgoPromise.all([
-            getNativeEligibility({ vault, platform, shippingCallbackEnabled, merchantID:   merchantID[0],
-                clientID, buyerCountry, currency, buttonSessionID, cookies, enableFunding, stickinessID: finalStickinessID
+            getNativeEligibility({
+                vault, platform, shippingCallbackEnabled, clientID, buyerCountry, currency, buttonSessionID, cookies, enableFunding,
+                merchantID:   merchantID[0],
+                stickinessID: finalStickinessID,
+                domain:       merchantDomain
             }).then(result => {
                 nativeEligibility = result;
             }),
@@ -883,7 +886,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             closeListener.cancel();
             popupWin.close();
         };
-        
+
         window.addEventListener('pagehide', closePopup);
         window.addEventListener('unload', closePopup);
 
@@ -912,8 +915,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }
 
             return createOrder().then(orderID => {
-                return getNativeEligibility({ vault, platform, shippingCallbackEnabled, merchantID:   merchantID[0],
-                    clientID, buyerCountry, currency, buttonSessionID, cookies, orderID, enableFunding, stickinessID: finalStickinessID
+                return getNativeEligibility({ vault, platform, shippingCallbackEnabled,
+                    clientID, buyerCountry, currency, buttonSessionID, cookies, orderID, enableFunding,
+                    merchantID:   merchantID[0],
+                    stickinessID: finalStickinessID,
+                    domain:       merchantDomain
                 }).then(eligibility => {
                     if (!eligibility || !eligibility[fundingSource] || !eligibility[fundingSource].eligibility) {
                         getLogger().info(`native_appswitch_ineligible`, { orderID })
