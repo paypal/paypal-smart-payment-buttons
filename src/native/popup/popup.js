@@ -84,7 +84,8 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
         buttonSessionID,
         href: base64encode(window.location.href)
     }).track({
-        [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_INIT
+        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_POPUP_INIT,
+        [FPTI_CUSTOM_KEY.INFO_MSG]: base64encode(window.location.href)
     }).flush();
 
     window.addEventListener('beforeunload', () => {
