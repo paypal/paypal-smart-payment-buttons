@@ -526,7 +526,8 @@ type PayWithNonceOptions = {|
     orderID : string,
     paymentMethodNonce : ?string,
     clientID : ?string,
-    branded : boolean
+    branded : boolean,
+    buttonSessionID : ?string
 |};
 
 export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true, buttonSessionID } : PayWithNonceOptions) : ZalgoPromise<mixed> {
