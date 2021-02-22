@@ -390,7 +390,7 @@ export function extendUrlWithPartialEncoding(url : string, options : {| query? :
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, onCancel, onError, commit, clientID, sessionID, sdkCorrelationID,
         buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange, vault, platform,
-        currency, stickinessID, enableFunding } = props;
+        currency, stickinessID, enableFunding, merchantDomain } = props;
     let { facilitatorAccessToken, sdkMeta, buyerCountry, merchantID, cookies } = serviceData;
     const { fundingSource } = payment;
     const { sdkVersion, firebase: firebaseConfig } = config;
@@ -473,9 +473,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const getDirectNativeUrl = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
         return conditionalExtendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
-                sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl,
+                sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID,
                 stickinessID:  finalStickinessID,
-                enableFunding: enableFunding.join(',')
+                enableFunding: enableFunding.join(','),
+                domain:        merchantDomain
             }
         });
     });
