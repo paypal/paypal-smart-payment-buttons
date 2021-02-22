@@ -1035,7 +1035,7 @@ window.spb = function(modules) {
             return Boolean(document.body) && "interactive" === document.readyState;
         }
         function urlEncode(str) {
-            return str.replace(/\?/g, "%3F").replace(/&/g, "%26").replace(/#/g, "%23").replace(/\+/g, "%2B").replace(/[=]/g, "%3D");
+            return encodeURIComponent(str);
         }
         var waitForDocumentReady = memoize((function() {
             return new promise_ZalgoPromise((function(resolve) {
@@ -1326,18 +1326,21 @@ window.spb = function(modules) {
         var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
         function httpTransport(_ref) {
             var url = _ref.url, method = _ref.method, headers = _ref.headers, json = _ref.json, _ref$enableSendBeacon = _ref.enableSendBeacon, enableSendBeacon = void 0 !== _ref$enableSendBeacon && _ref$enableSendBeacon;
-            var hasHeaders = headers && Object.keys(headers).length;
-            return window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob ? new promise_ZalgoPromise((function(resolve) {
-                var blob = new Blob([ JSON.stringify(json) ], {
-                    type: "application/json"
+            return promise_ZalgoPromise.try((function() {
+                var hasHeaders = headers && Object.keys(headers).length;
+                if (window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob) try {
+                    var blob = new Blob([ JSON.stringify(json) ], {
+                        type: "application/json"
+                    });
+                    return window.navigator.sendBeacon(url, blob);
+                } catch (e) {}
+                return request({
+                    url: url,
+                    method: method,
+                    headers: headers,
+                    json: json
                 });
-                resolve(window.navigator.sendBeacon(url, blob));
-            })) : request({
-                url: url,
-                method: method,
-                headers: headers,
-                json: json
-            }).then(src_util_noop);
+            })).then(src_util_noop);
         }
         function extendIfDefined(target, source) {
             for (var key in source) source.hasOwnProperty(key) && source[key] && !target[key] && (target[key] = source[key]);
@@ -1718,14 +1721,18 @@ window.spb = function(modules) {
             }));
         }
         function patchOrder(orderID, data, _ref5) {
-            var _headers8, _headers9;
-            var buyerAccessToken = _ref5.buyerAccessToken, _ref5$forceRestAPI = _ref5.forceRestAPI;
-            return void 0 !== _ref5$forceRestAPI && _ref5$forceRestAPI ? callRestAPI({
-                accessToken: _ref5.facilitatorAccessToken,
+            var _getLogger$info$track3, _headers8, _headers9;
+            var facilitatorAccessToken = _ref5.facilitatorAccessToken, buyerAccessToken = _ref5.buyerAccessToken, partnerAttributionID = _ref5.partnerAttributionID, _ref5$forceRestAPI = _ref5.forceRestAPI, forceRestAPI = void 0 !== _ref5$forceRestAPI && _ref5$forceRestAPI;
+            logger_getLogger().info("on_approve_patch").track((_getLogger$info$track3 = {}, 
+            _getLogger$info$track3.transition_name = "process_checkout_patch", _getLogger$info$track3.context_type = "EC-Token", 
+            _getLogger$info$track3.token = orderID, _getLogger$info$track3.context_id = orderID, 
+            _getLogger$info$track3.pmt_token = partnerAttributionID, _getLogger$info$track3)).flush();
+            return forceRestAPI ? callRestAPI({
+                accessToken: facilitatorAccessToken,
                 method: "patch",
                 url: ORDERS_API_URL + "/" + orderID,
                 data: data,
-                headers: (_headers8 = {}, _headers8["paypal-partner-attribution-id"] = _ref5.partnerAttributionID || "", 
+                headers: (_headers8 = {}, _headers8["paypal-partner-attribution-id"] = partnerAttributionID || "", 
                 _headers8.prefer = "return=representation", _headers8)
             }) : callSmartAPI({
                 accessToken: buyerAccessToken,
@@ -2175,13 +2182,17 @@ window.spb = function(modules) {
                                 var capture = memoize((function() {
                                     if ("capture" !== intent) throw new Error("Use intent=capture to use client-side capture");
                                     return function(orderID, _ref3) {
-                                        var _headers4, _headers5;
-                                        var buyerAccessToken = _ref3.buyerAccessToken, _ref3$forceRestAPI = _ref3.forceRestAPI;
-                                        return void 0 !== _ref3$forceRestAPI && _ref3$forceRestAPI ? callRestAPI({
-                                            accessToken: _ref3.facilitatorAccessToken,
+                                        var _getLogger$info$track, _headers4, _headers5;
+                                        var facilitatorAccessToken = _ref3.facilitatorAccessToken, buyerAccessToken = _ref3.buyerAccessToken, partnerAttributionID = _ref3.partnerAttributionID, _ref3$forceRestAPI = _ref3.forceRestAPI, forceRestAPI = void 0 !== _ref3$forceRestAPI && _ref3$forceRestAPI;
+                                        logger_getLogger().info("on_approve_capture").track((_getLogger$info$track = {}, 
+                                        _getLogger$info$track.transition_name = "process_checkout_capture", _getLogger$info$track.context_type = "EC-Token", 
+                                        _getLogger$info$track.token = orderID, _getLogger$info$track.context_id = orderID, 
+                                        _getLogger$info$track.pmt_token = partnerAttributionID, _getLogger$info$track)).flush();
+                                        return forceRestAPI ? callRestAPI({
+                                            accessToken: facilitatorAccessToken,
                                             method: "post",
                                             url: ORDERS_API_URL + "/" + orderID + "/capture",
-                                            headers: (_headers4 = {}, _headers4["paypal-partner-attribution-id"] = _ref3.partnerAttributionID || "", 
+                                            headers: (_headers4 = {}, _headers4["paypal-partner-attribution-id"] = partnerAttributionID || "", 
                                             _headers4.prefer = "return=representation", _headers4)
                                         }) : callSmartAPI({
                                             accessToken: buyerAccessToken,
@@ -2199,13 +2210,17 @@ window.spb = function(modules) {
                                 var authorize = memoize((function() {
                                     if ("authorize" !== intent) throw new Error("Use intent=authorize to use client-side authorize");
                                     return function(orderID, _ref4) {
-                                        var _headers6, _headers7;
-                                        var buyerAccessToken = _ref4.buyerAccessToken, _ref4$forceRestAPI = _ref4.forceRestAPI;
-                                        return void 0 !== _ref4$forceRestAPI && _ref4$forceRestAPI ? callRestAPI({
-                                            accessToken: _ref4.facilitatorAccessToken,
+                                        var _getLogger$info$track2, _headers6, _headers7;
+                                        var facilitatorAccessToken = _ref4.facilitatorAccessToken, buyerAccessToken = _ref4.buyerAccessToken, partnerAttributionID = _ref4.partnerAttributionID, _ref4$forceRestAPI = _ref4.forceRestAPI, forceRestAPI = void 0 !== _ref4$forceRestAPI && _ref4$forceRestAPI;
+                                        logger_getLogger().info("on_approve_authorize").track((_getLogger$info$track2 = {}, 
+                                        _getLogger$info$track2.transition_name = "process_checkout_authorize", _getLogger$info$track2.context_type = "EC-Token", 
+                                        _getLogger$info$track2.token = orderID, _getLogger$info$track2.context_id = orderID, 
+                                        _getLogger$info$track2.pmt_token = partnerAttributionID, _getLogger$info$track2)).flush();
+                                        return forceRestAPI ? callRestAPI({
+                                            accessToken: facilitatorAccessToken,
                                             method: "post",
                                             url: ORDERS_API_URL + "/" + orderID + "/authorize",
-                                            headers: (_headers6 = {}, _headers6["paypal-partner-attribution-id"] = _ref4.partnerAttributionID || "", 
+                                            headers: (_headers6 = {}, _headers6["paypal-partner-attribution-id"] = partnerAttributionID || "", 
                                             _headers6.prefer = "return=representation", _headers6)
                                         }) : callSmartAPI({
                                             accessToken: buyerAccessToken,
@@ -4694,7 +4709,7 @@ window.spb = function(modules) {
             },
             init: function(_ref4) {
                 var props = _ref4.props, components = _ref4.components, payment = _ref4.payment, serviceData = _ref4.serviceData, config = _ref4.config;
-                var createOrder = props.createOrder, onApprove = props.onApprove, clientID = props.clientID, branded = props.branded;
+                var createOrder = props.createOrder, onApprove = props.onApprove, clientID = props.clientID, branded = props.branded, buttonSessionID = props.buttonSessionID;
                 var paymentMethodID = payment.paymentMethodID;
                 var paymentMethodNonce = serviceData.wallet.card.instruments.find((function(_ref5) {
                     return _ref5.tokenID === paymentMethodID;
@@ -4715,20 +4730,21 @@ window.spb = function(modules) {
                     start: function() {
                         return createOrder().then((function(orderID) {
                             logger_getLogger().info("orderID_in_nonce " + orderID);
-                            return function(orderID, paymentMethodNonce, clientID, branded) {
+                            return function(orderID, paymentMethodNonce, clientID, branded, buttonSessionID) {
                                 logger_getLogger().info("nonce_payment_initiated");
                                 return function(_ref15) {
                                     var _headers17;
-                                    var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
-                                    logger_getLogger().info("paymentMethodNonce input params", orderID, paymentMethodNonce, clientID, branded);
+                                    var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded, buttonSessionID = _ref15.buttonSessionID;
+                                    logger_getLogger().info("paymentMethodNonce input params " + buttonSessionID, orderID, paymentMethodNonce, clientID, branded, buttonSessionID);
                                     return callGraphQL({
                                         name: "approvePaymentWithNonce",
-                                        query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: Boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    buyer {\n                        userId\n                    }\n                }\n            }\n        ",
+                                        query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: Boolean!\n                $buttonSessionID: String\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                    buttonSessionID: $buttonSessionID\n                ) {\n                    buyer {\n                        userId\n                    }\n                }\n            }\n        ",
                                         variables: {
                                             orderID: orderID,
                                             clientID: clientID,
                                             paymentMethodNonce: paymentMethodNonce,
-                                            branded: branded
+                                            branded: branded,
+                                            buttonSessionID: buttonSessionID
                                         },
                                         headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
                                     }).then((function(_ref16) {
@@ -4742,13 +4758,14 @@ window.spb = function(modules) {
                                     orderID: orderID,
                                     paymentMethodNonce: paymentMethodNonce,
                                     clientID: clientID,
-                                    branded: branded
+                                    branded: branded,
+                                    buttonSessionID: buttonSessionID
                                 }).catch((function(error) {
                                     logger_getLogger().info("nonce_payment_failed");
                                     error.code = "PAY_WITH_DIFFERENT_CARD";
                                     throw error;
                                 }));
-                            }(orderID, paymentMethodNonce, clientID, branded).then((function(_ref6) {
+                            }(orderID, paymentMethodNonce, clientID, branded, buttonSessionID).then((function(_ref6) {
                                 return onApprove({
                                     payerID: _ref6.payerID
                                 }, {
