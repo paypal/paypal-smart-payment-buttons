@@ -86,6 +86,16 @@ export function getOrder(orderID : string, { facilitatorAccessToken, buyerAccess
 }
 
 export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
+    getLogger()
+        .info('on_approve_capture')
+        .track({
+            [FPTI_KEY.TRANSITION]:   'process_checkout_capture',
+            [FPTI_KEY.CONTEXT_TYPE]: FPTI_CONTEXT_TYPE.ORDER_ID,
+            [FPTI_KEY.TOKEN]:        orderID,
+            [FPTI_KEY.CONTEXT_ID]:   orderID,
+            'pmt_token':             partnerAttributionID
+        }).flush();
+    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -107,6 +117,16 @@ export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAc
 }
 
 export function authorizeOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
+    getLogger()
+        .info('on_approve_authorize')
+        .track({
+            [FPTI_KEY.TRANSITION]:   'process_checkout_authorize',
+            [FPTI_KEY.CONTEXT_TYPE]: FPTI_CONTEXT_TYPE.ORDER_ID,
+            [FPTI_KEY.TOKEN]:        orderID,
+            [FPTI_KEY.CONTEXT_ID]:   orderID,
+            'pmt_token':             partnerAttributionID
+        }).flush();
+
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -132,6 +152,16 @@ type PatchData = {|
 |};
 
 export function patchOrder(orderID : string, data : PatchData, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
+    getLogger()
+        .info('on_approve_patch')
+        .track({
+            [FPTI_KEY.TRANSITION]:   'process_checkout_patch',
+            [FPTI_KEY.CONTEXT_TYPE]: FPTI_CONTEXT_TYPE.ORDER_ID,
+            [FPTI_KEY.TOKEN]:        orderID,
+            [FPTI_KEY.CONTEXT_ID]:   orderID,
+            'pmt_token':             partnerAttributionID
+        }).flush();
+    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -499,9 +529,9 @@ type PayWithNonceOptions = {|
     branded : boolean
 |};
 
-export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true } : PayWithNonceOptions) : ZalgoPromise<mixed> {
+export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true, buttonSessionID } : PayWithNonceOptions) : ZalgoPromise<mixed> {
     // $FlowFixMe
-    getLogger().info('paymentMethodNonce input params',  orderID, paymentMethodNonce, clientID, branded);
+    getLogger().info(`paymentMethodNonce input params ${ buttonSessionID }`, orderID, paymentMethodNonce, clientID, branded, buttonSessionID);
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `
@@ -510,12 +540,14 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 $clientID : String!
                 $paymentMethodNonce: String!
                 $branded: Boolean!
+                $buttonSessionID: String
             ) {
                 approvePaymentWithNonce(
                     token: $orderID
                     clientID: $clientID
                     paymentMethodNonce: $paymentMethodNonce
                     branded: $branded
+                    buttonSessionID: $buttonSessionID
                 ) {
                     buyer {
                         userId
@@ -527,7 +559,8 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
             orderID,
             clientID,
             paymentMethodNonce,
-            branded
+            branded,
+            buttonSessionID
         },
         headers: {
             [ HEADERS.CLIENT_CONTEXT ]: orderID
