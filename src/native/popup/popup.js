@@ -262,6 +262,9 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
             window.addEventListener('unload', markRedirect);
             clean.register(() => window.removeEventListener('unload', markRedirect));
 
+            window.addEventListener('pagehide', markRedirect);
+            clean.register(() => window.removeEventListener('pagehide', markRedirect));
+
             const timer = setTimeout(() => {
                 if (!didRedirect) {
                     sendToParent(MESSAGE.DETECT_APP_SWITCH);
