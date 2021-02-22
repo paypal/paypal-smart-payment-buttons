@@ -492,6 +492,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             orderID,
             facilitatorAccessToken,
             pageUrl,
+            clientID,
             commit:         String(commit),
             webCheckoutUrl: isIOSSafari() ? webCheckoutUrl : '',
             stickinessID:   finalStickinessID,
@@ -502,7 +503,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             apiStageHost:   apiStageHost || '',
             forceEligible,
             fundingSource,
-            enableFunding:  enableFunding.join(',')
+            enableFunding:  enableFunding.join(','),
+            domain:         merchantDomain
         };
     };
 
