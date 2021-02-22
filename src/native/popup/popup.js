@@ -140,7 +140,7 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
             href: base64encode(window.location.href)
         }).info(`native_popup_no_opener_hash_${ window.location.href.split('#')[1] || 'none' }`).track({
             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_POPUP_NO_OPENER,
-            [FPTI_CUSTOM_KEY.INFO_MSG]: `location: ${ window.location.href }`
+            [FPTI_CUSTOM_KEY.INFO_MSG]: `location: ${ base64encode(window.location.href) }`
         }).flush().then(() => {
             window.close();
         });
