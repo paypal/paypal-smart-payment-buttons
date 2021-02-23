@@ -77,6 +77,9 @@
                 return target;
             }).apply(this, arguments);
         }
+        function getUserAgent() {
+            return window.navigator.mockUserAgent || window.navigator.userAgent;
+        }
         function utils_isPromise(item) {
             try {
                 if (!item) return !1;
@@ -676,17 +679,18 @@
             fn.__name__ = fn.displayName = name;
             return fn;
         }
+        function base64encode(str) {
+            if ("function" == typeof btoa) return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (function(m, p1) {
+                return String.fromCharCode(parseInt(p1, 16));
+            })));
+            if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64");
+            throw new Error("Can not find window.btoa or Buffer");
+        }
         function uniqueID() {
             var chars = "0123456789abcdef";
             return "xxxxxxxxxx".replace(/./g, (function() {
                 return chars.charAt(Math.floor(Math.random() * chars.length));
-            })) + "_" + function(str) {
-                if ("function" == typeof btoa) return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (function(m, p1) {
-                    return String.fromCharCode(parseInt(p1, 16));
-                })));
-                if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64");
-                throw new Error("Can not find window.btoa or Buffer");
-            }((new Date).toISOString().slice(11, 19).replace("T", ".")).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+            })) + "_" + base64encode((new Date).toISOString().slice(11, 19).replace("T", ".")).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         }
         var objectIDs;
         function serializeArgs(args) {
@@ -778,6 +782,10 @@
                 return "Error while stringifying error: " + stringifyError(newErr, level + 1);
             }
         }
+        function stringifyErrorMessage(err) {
+            var defaultMessage = "<unknown error: " + {}.toString.call(err) + ">";
+            return err ? err instanceof Error ? err.message || defaultMessage : "string" == typeof err.message && err.message || defaultMessage : defaultMessage;
+        }
         memoize((function(obj) {
             if (Object.values) return Object.values(obj);
             var result = [];
@@ -868,65 +876,6 @@
             return uid;
         }));
         var http_headerBuilders = [];
-        function request(_ref) {
-            var url = _ref.url, _ref$method = _ref.method, method = void 0 === _ref$method ? "get" : _ref$method, _ref$headers = _ref.headers, headers = void 0 === _ref$headers ? {} : _ref$headers, json = _ref.json, data = _ref.data, body = _ref.body, _ref$win = _ref.win, win = void 0 === _ref$win ? window : _ref$win, _ref$timeout = _ref.timeout, timeout = void 0 === _ref$timeout ? 0 : _ref$timeout;
-            return new promise_ZalgoPromise((function(resolve, reject) {
-                if (json && data || json && body || data && json) throw new Error("Only options.json or options.data or options.body should be passed");
-                var normalizedHeaders = {};
-                for (var _i4 = 0, _Object$keys2 = Object.keys(headers); _i4 < _Object$keys2.length; _i4++) {
-                    var _key2 = _Object$keys2[_i4];
-                    normalizedHeaders[_key2.toLowerCase()] = headers[_key2];
-                }
-                json ? normalizedHeaders["content-type"] = normalizedHeaders["content-type"] || "application/json" : (data || body) && (normalizedHeaders["content-type"] = normalizedHeaders["content-type"] || "application/x-www-form-urlencoded; charset=utf-8");
-                normalizedHeaders.accept = normalizedHeaders.accept || "application/json";
-                for (var _i6 = 0; _i6 < http_headerBuilders.length; _i6++) {
-                    var builtHeaders = (0, http_headerBuilders[_i6])();
-                    for (var _i8 = 0, _Object$keys4 = Object.keys(builtHeaders); _i8 < _Object$keys4.length; _i8++) {
-                        var _key3 = _Object$keys4[_i8];
-                        normalizedHeaders[_key3.toLowerCase()] = builtHeaders[_key3];
-                    }
-                }
-                var xhr = new win.XMLHttpRequest;
-                xhr.addEventListener("load", (function() {
-                    var responseHeaders = function(rawHeaders) {
-                        void 0 === rawHeaders && (rawHeaders = "");
-                        var result = {};
-                        for (var _i2 = 0, _rawHeaders$trim$spli2 = rawHeaders.trim().split("\n"); _i2 < _rawHeaders$trim$spli2.length; _i2++) {
-                            var _line$split = _rawHeaders$trim$spli2[_i2].split(":"), _key = _line$split[0], values = _line$split.slice(1);
-                            result[_key.toLowerCase()] = values.join(":").trim();
-                        }
-                        return result;
-                    }(this.getAllResponseHeaders());
-                    if (!this.status) return reject(new Error("Request to " + method.toLowerCase() + " " + url + " failed: no response status code."));
-                    var contentType = responseHeaders["content-type"];
-                    var isJSON = contentType && (0 === contentType.indexOf("application/json") || 0 === contentType.indexOf("text/json"));
-                    var responseBody = this.responseText;
-                    try {
-                        responseBody = JSON.parse(responseBody);
-                    } catch (err) {
-                        if (isJSON) return reject(new Error("Invalid json: " + this.responseText + "."));
-                    }
-                    return resolve({
-                        status: this.status,
-                        headers: responseHeaders,
-                        body: responseBody
-                    });
-                }), !1);
-                xhr.addEventListener("error", (function(evt) {
-                    reject(new Error("Request to " + method.toLowerCase() + " " + url + " failed: " + evt.toString() + "."));
-                }), !1);
-                xhr.open(method, url, !0);
-                for (var _key4 in normalizedHeaders) normalizedHeaders.hasOwnProperty(_key4) && xhr.setRequestHeader(_key4, normalizedHeaders[_key4]);
-                json ? body = JSON.stringify(json) : data && (body = Object.keys(data).map((function(key) {
-                    return encodeURIComponent(key) + "=" + (data ? encodeURIComponent(data[key]) : "");
-                })).join("&"));
-                xhr.timeout = timeout;
-                xhr.ontimeout = function() {
-                    reject(new Error("Request to " + method.toLowerCase() + " " + url + " has timed out"));
-                };
-                xhr.send(body);
-            }));
-        }
         function getPayPal() {
             if (!window.paypal) throw new Error("paypal not found");
             return window.paypal;
@@ -935,27 +884,79 @@
         var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
         function httpTransport(_ref) {
             var url = _ref.url, method = _ref.method, headers = _ref.headers, json = _ref.json, _ref$enableSendBeacon = _ref.enableSendBeacon, enableSendBeacon = void 0 !== _ref$enableSendBeacon && _ref$enableSendBeacon;
-            var hasHeaders = headers && Object.keys(headers).length;
-            return window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob ? new promise_ZalgoPromise((function(resolve) {
-                var blob = new Blob([ JSON.stringify(json) ], {
-                    type: "application/json"
+            return promise_ZalgoPromise.try((function() {
+                var hasHeaders = headers && Object.keys(headers).length;
+                if (window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob) try {
+                    var blob = new Blob([ JSON.stringify(json) ], {
+                        type: "application/json"
+                    });
+                    return window.navigator.sendBeacon(url, blob);
+                } catch (e) {}
+                return function(_ref) {
+                    var url = _ref.url, _ref$method = _ref.method, method = void 0 === _ref$method ? "get" : _ref$method, _ref$headers = _ref.headers, headers = void 0 === _ref$headers ? {} : _ref$headers, json = _ref.json, data = _ref.data, body = _ref.body, _ref$win = _ref.win, win = void 0 === _ref$win ? window : _ref$win, _ref$timeout = _ref.timeout, timeout = void 0 === _ref$timeout ? 0 : _ref$timeout;
+                    return new promise_ZalgoPromise((function(resolve, reject) {
+                        if (json && data || json && body || data && json) throw new Error("Only options.json or options.data or options.body should be passed");
+                        var normalizedHeaders = {};
+                        for (var _i4 = 0, _Object$keys2 = Object.keys(headers); _i4 < _Object$keys2.length; _i4++) {
+                            var _key2 = _Object$keys2[_i4];
+                            normalizedHeaders[_key2.toLowerCase()] = headers[_key2];
+                        }
+                        json ? normalizedHeaders["content-type"] = normalizedHeaders["content-type"] || "application/json" : (data || body) && (normalizedHeaders["content-type"] = normalizedHeaders["content-type"] || "application/x-www-form-urlencoded; charset=utf-8");
+                        normalizedHeaders.accept = normalizedHeaders.accept || "application/json";
+                        for (var _i6 = 0; _i6 < http_headerBuilders.length; _i6++) {
+                            var builtHeaders = (0, http_headerBuilders[_i6])();
+                            for (var _i8 = 0, _Object$keys4 = Object.keys(builtHeaders); _i8 < _Object$keys4.length; _i8++) {
+                                var _key3 = _Object$keys4[_i8];
+                                normalizedHeaders[_key3.toLowerCase()] = builtHeaders[_key3];
+                            }
+                        }
+                        var xhr = new win.XMLHttpRequest;
+                        xhr.addEventListener("load", (function() {
+                            var responseHeaders = function(rawHeaders) {
+                                void 0 === rawHeaders && (rawHeaders = "");
+                                var result = {};
+                                for (var _i2 = 0, _rawHeaders$trim$spli2 = rawHeaders.trim().split("\n"); _i2 < _rawHeaders$trim$spli2.length; _i2++) {
+                                    var _line$split = _rawHeaders$trim$spli2[_i2].split(":"), _key = _line$split[0], values = _line$split.slice(1);
+                                    result[_key.toLowerCase()] = values.join(":").trim();
+                                }
+                                return result;
+                            }(this.getAllResponseHeaders());
+                            if (!this.status) return reject(new Error("Request to " + method.toLowerCase() + " " + url + " failed: no response status code."));
+                            var contentType = responseHeaders["content-type"];
+                            var isJSON = contentType && (0 === contentType.indexOf("application/json") || 0 === contentType.indexOf("text/json"));
+                            var responseBody = this.responseText;
+                            try {
+                                responseBody = JSON.parse(responseBody);
+                            } catch (err) {
+                                if (isJSON) return reject(new Error("Invalid json: " + this.responseText + "."));
+                            }
+                            return resolve({
+                                status: this.status,
+                                headers: responseHeaders,
+                                body: responseBody
+                            });
+                        }), !1);
+                        xhr.addEventListener("error", (function(evt) {
+                            reject(new Error("Request to " + method.toLowerCase() + " " + url + " failed: " + evt.toString() + "."));
+                        }), !1);
+                        xhr.open(method, url, !0);
+                        for (var _key4 in normalizedHeaders) normalizedHeaders.hasOwnProperty(_key4) && xhr.setRequestHeader(_key4, normalizedHeaders[_key4]);
+                        json ? body = JSON.stringify(json) : data && (body = Object.keys(data).map((function(key) {
+                            return encodeURIComponent(key) + "=" + (data ? encodeURIComponent(data[key]) : "");
+                        })).join("&"));
+                        xhr.timeout = timeout;
+                        xhr.ontimeout = function() {
+                            reject(new Error("Request to " + method.toLowerCase() + " " + url + " has timed out"));
+                        };
+                        xhr.send(body);
+                    }));
+                }({
+                    url: url,
+                    method: method,
+                    headers: headers,
+                    json: json
                 });
-                try {
-                    resolve(window.navigator.sendBeacon(url, blob));
-                } catch (e) {
-                    return request({
-                        url: url,
-                        method: method,
-                        headers: headers,
-                        json: json
-                    }).then(src_util_noop);
-                }
-            })) : request({
-                url: url,
-                method: method,
-                headers: headers,
-                json: json
-            }).then(src_util_noop);
+            })).then(src_util_noop);
         }
         function extendIfDefined(target, source) {
             for (var key in source) source.hasOwnProperty(key) && source[key] && !target[key] && (target[key] = source[key]);
@@ -1114,11 +1115,34 @@
                 });
             }));
         }
+        function isAndroidAppInstalled(appId) {
+            return window.navigator && window.navigator.getInstalledRelatedApps ? window.navigator.getInstalledRelatedApps().then((function(result) {
+                if (result && result.length) {
+                    var apps = result.filter((function(app) {
+                        return app.id === appId;
+                    }));
+                    return promise_ZalgoPromise.resolve(apps && apps.length ? {
+                        id: apps[0].id,
+                        installed: !0,
+                        version: apps[0].version
+                    } : {
+                        installed: !1
+                    });
+                }
+                return promise_ZalgoPromise.resolve({
+                    installed: !0
+                });
+            })) : promise_ZalgoPromise.resolve({
+                installed: !0
+            });
+        }
         function setupNativePopup(_ref) {
+            var _logger$info$track;
             var parentDomain = _ref.parentDomain, env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, locale = _ref.locale;
-            var logger;
-            var sdkVersion = getPayPal().version;
-            env && sessionID && buttonSessionID && sdkCorrelationID && locale && (logger = function(_ref) {
+            var appInstalledPromise = promise_ZalgoPromise.resolve({
+                installed: !0
+            });
+            var logger = function(_ref) {
                 var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, sdkVersion = _ref.sdkVersion, locale = _ref.locale;
                 var logger = getLogger();
                 !function(_ref) {
@@ -1144,10 +1168,8 @@
                     }));
                     promise_ZalgoPromise.onPossiblyUnhandledException((function(err) {
                         var _logger$track;
-                        logger.track(((_logger$track = {}).ext_error_code = "payments_sdk_error", _logger$track.ext_error_desc = function(err) {
-                            var defaultMessage = "<unknown error: " + {}.toString.call(err) + ">";
-                            return err ? err instanceof Error ? err.message || defaultMessage : "string" == typeof err.message && err.message || defaultMessage : defaultMessage;
-                        }(err), _logger$track));
+                        logger.track(((_logger$track = {}).ext_error_code = "payments_sdk_error", _logger$track.ext_error_desc = stringifyErrorMessage(err), 
+                        _logger$track));
                         logger.error("unhandled_error", {
                             err: stringifyError(err)
                         });
@@ -1170,7 +1192,7 @@
                     var _ref2;
                     return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
                     _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                    _ref2.button_version = "2.0.368", _ref2;
+                    _ref2.button_version = "2.0.377", _ref2;
                 }));
                 (function() {
                     if (window.document.documentMode) try {
@@ -1210,18 +1232,89 @@
                 sdkCorrelationID: sdkCorrelationID,
                 clientID: clientID,
                 fundingSource: fundingSource,
-                sdkVersion: sdkVersion,
+                sdkVersion: getPayPal().version,
                 locale: locale
+            });
+            logger.info("native_popup_init", {
+                buttonSessionID: buttonSessionID,
+                href: base64encode(window.location.href)
+            }).track((_logger$info$track = {}, _logger$info$track.transition_name = "native_popup_init", 
+            _logger$info$track.info_msg = base64encode(window.location.href), _logger$info$track)).flush();
+            window.addEventListener("beforeunload", (function() {
+                var _logger$info$track2;
+                logger.info("native_popup_beforeunload").track((_logger$info$track2 = {}, _logger$info$track2.transition_name = "native_popup_beforeunload", 
+                _logger$info$track2)).flush();
             }));
+            window.addEventListener("unload", (function() {
+                var _logger$info$track3;
+                logger.info("native_popup_unload").track((_logger$info$track3 = {}, _logger$info$track3.transition_name = "native_popup_unload", 
+                _logger$info$track3)).flush();
+            }));
+            window.addEventListener("pagehide", (function() {
+                var _logger$info$track4;
+                logger.info("native_popup_pagehide").track((_logger$info$track4 = {}, _logger$info$track4.transition_name = "native_popup_pagehide", 
+                _logger$info$track4)).flush();
+            }));
+            (function(ua) {
+                void 0 === ua && (ua = getUserAgent());
+                return /Android/.test(ua);
+            })() && function(ua) {
+                void 0 === ua && (ua = getUserAgent());
+                return /Chrome|Chromium|CriOS/.test(ua);
+            }() && ("paypal" === fundingSource ? appInstalledPromise = isAndroidAppInstalled("com.paypal.android.p2pmobile").then((function(app) {
+                return _extends({}, app);
+            })).catch((function(err) {
+                var _logger$info$track5;
+                logger.info("native_popup_android_paypal_app_installed_error").track((_logger$info$track5 = {}, 
+                _logger$info$track5.transition_name = "native_popup_android_paypal_app_installed_error", 
+                _logger$info$track5.int_error_desc = "Error: " + stringifyErrorMessage(err), _logger$info$track5)).flush();
+                return {
+                    installed: !0
+                };
+            })) : "venmo" === fundingSource && (appInstalledPromise = isAndroidAppInstalled("com.venmo").then((function(app) {
+                return _extends({}, app);
+            })).catch((function(err) {
+                var _logger$info$track6;
+                logger.info("native_popup_android_venmo_app_installed_error").track((_logger$info$track6 = {}, 
+                _logger$info$track6.transition_name = "native_popup_android_venmo_app_installed_error", 
+                _logger$info$track6.int_error_desc = "Error: " + stringifyErrorMessage(err), _logger$info$track6)).flush();
+                return {
+                    installed: !0
+                };
+            }))));
+            var closeWindow = function() {
+                window.close();
+                window.location.hash = "closed";
+            };
             var opener = window.opener;
             if (!opener) {
-                if (logger) {
-                    var _logger$info$track;
-                    logger.info("native_popup_no_opener").track((_logger$info$track = {}, _logger$info$track.transition_name = "popup_no_opener", 
-                    _logger$info$track.info_msg = "location: " + window.location.href, _logger$info$track)).flush();
-                }
+                var _logger$info$info$tra;
+                logger.info("native_popup_no_opener", {
+                    buttonSessionID: buttonSessionID,
+                    href: base64encode(window.location.href)
+                }).info("native_popup_no_opener_hash_" + (window.location.hash || "none").replace(/^#/, "").replace(/\?.+/, "")).track((_logger$info$info$tra = {}, 
+                _logger$info$info$tra.transition_name = "popup_no_opener", _logger$info$info$tra.info_msg = "location: " + base64encode(window.location.href), 
+                _logger$info$info$tra)).flush().then(closeWindow);
                 throw new Error("Expected window to have opener");
             }
+            !function(win, callback, delay, maxtime) {
+                void 0 === delay && (delay = 1e3);
+                void 0 === maxtime && (maxtime = 1 / 0);
+                var timeout;
+                !function check() {
+                    if (isWindowClosed(win)) {
+                        timeout && clearTimeout(timeout);
+                        logger.info("native_popup_opener_detect_close").track((_logger$info$track7 = {}, 
+                        _logger$info$track7.transition_name = "native_popup_opener_detect_close", _logger$info$track7)).flush().then(closeWindow);
+                    } else {
+                        var _logger$info$track7;
+                        if (maxtime <= 0) clearTimeout(timeout); else {
+                            maxtime -= delay;
+                            timeout = setTimeout(check, delay);
+                        }
+                    }
+                }();
+            }(window.opener, 0, 500);
             var clean = (tasks = [], cleaned = !1, {
                 set: function(name, item) {
                     if (!cleaned) {
@@ -1271,39 +1364,45 @@
                 }));
             };
             var handleHash = function() {
+                var _logger$info$track8;
                 if (window.location.hash && "#" !== window.location.hash) {
                     var _hashString$split = (window.location.hash && window.location.hash.slice(1)).split("?"), hash = _hashString$split[0], queryString = _hashString$split[1];
-                    if (logger) {
-                        var _logger$info$track2;
-                        logger.info("native_popup_hashchange", {
-                            hash: hash,
-                            queryString: queryString
-                        }).track((_logger$info$track2 = {}, _logger$info$track2.transition_name = "popup_hashchange", 
-                        _logger$info$track2.info_msg = "" + window.location.href, _logger$info$track2)).flush();
-                    }
+                    var _parseQuery = parseQuery(queryString), appVersion = _parseQuery.appVersion, bundleIdentifier = _parseQuery.bundleIdentifier;
+                    logger.info("native_popup_hashchange", {
+                        hash: hash,
+                        queryString: queryString
+                    }).track((_logger$info$track8 = {}, _logger$info$track8.transition_name = "popup_hashchange", 
+                    _logger$info$track8.mobile_app_version = appVersion, _logger$info$track8.mapv = bundleIdentifier, 
+                    _logger$info$track8.info_msg = "" + window.location.href, _logger$info$track8)).flush();
                     switch (hash) {
+                      case "init":
+                      case "appswitch":
+                      case "webswitch":
+                      case "closed":
+                        break;
+
                       case "onApprove":
-                        var _parseQuery = parseQuery(queryString);
+                        var _parseQuery2 = parseQuery(queryString);
                         sendToParent("onApprove", {
-                            payerID: _parseQuery.payerID,
-                            paymentID: _parseQuery.paymentID,
-                            billingToken: _parseQuery.billingToken
-                        });
+                            payerID: _parseQuery2.payerID,
+                            paymentID: _parseQuery2.paymentID,
+                            billingToken: _parseQuery2.billingToken
+                        }).finally(closeWindow);
                         break;
 
                       case "onCancel":
-                        sendToParent("onCancel");
+                        sendToParent("onCancel").finally(closeWindow);
                         break;
 
                       case "onError":
-                        var _parseQuery2 = parseQuery(queryString);
+                        var _parseQuery3 = parseQuery(queryString);
                         sendToParent("onError", {
-                            message: _parseQuery2.message
-                        });
+                            message: _parseQuery3.message
+                        }).finally(closeWindow);
                         break;
 
                       case "close":
-                        sendToParent("onComplete");
+                        sendToParent("onComplete").finally(closeWindow);
                         break;
 
                       case "test":
@@ -1312,7 +1411,7 @@
                       default:
                         sendToParent("onError", {
                             message: "Invalid event sent from native, " + hash + ", from URL, " + window.location.href
-                        });
+                        }).finally(closeWindow);
                     }
                 }
             };
@@ -1321,32 +1420,42 @@
                 return window.removeEventListener("hashchange", handleHash);
             }));
             handleHash();
-            var pageUrl = window.location.href + "#close";
-            sendToParent("awaitRedirect", {
-                pageUrl: pageUrl
-            }).then((function(_ref3) {
-                var _ref3$redirect = _ref3.redirect;
-                if (void 0 === _ref3$redirect || _ref3$redirect) {
-                    window.location = _ref3.redirectUrl;
-                    var didRedirect = !1;
-                    var markRedirect = function() {
-                        didRedirect = !0;
-                    };
-                    window.addEventListener("beforeunload", markRedirect);
-                    clean.register((function() {
-                        return window.removeEventListener("beforeunload", markRedirect);
-                    }));
-                    window.addEventListener("unload", markRedirect);
-                    clean.register((function() {
-                        return window.removeEventListener("unload", markRedirect);
-                    }));
-                    var timer = setTimeout((function() {
-                        didRedirect || sendToParent("detectAppSwitch");
-                    }), 500);
-                    clean.register((function() {
-                        return clearTimeout(timer);
-                    }));
-                }
+            var pageUrl = window.location.href.split("#")[0] + "#close";
+            appInstalledPromise.then((function(app) {
+                sendToParent("awaitRedirect", {
+                    app: app,
+                    pageUrl: pageUrl
+                }).then((function(_ref3) {
+                    var _ref3$redirect = _ref3.redirect, redirectUrl = _ref3.redirectUrl, _ref3$appSwitch = _ref3.appSwitch, appSwitch = void 0 === _ref3$appSwitch || _ref3$appSwitch;
+                    if (void 0 === _ref3$redirect || _ref3$redirect) {
+                        window.location.hash = appSwitch ? "appswitch" : "webswitch";
+                        window.location.replace(redirectUrl);
+                        var didRedirect = !1;
+                        var markRedirect = function() {
+                            didRedirect = !0;
+                        };
+                        window.addEventListener("beforeunload", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("beforeunload", markRedirect);
+                        }));
+                        window.addEventListener("unload", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("unload", markRedirect);
+                        }));
+                        window.addEventListener("pagehide", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("pagehide", markRedirect);
+                        }));
+                        if (appSwitch) {
+                            var timer = setTimeout((function() {
+                                didRedirect || sendToParent("detectAppSwitch");
+                            }), 500);
+                            clean.register((function() {
+                                return clearTimeout(timer);
+                            }));
+                        }
+                    }
+                }));
             }));
             return {
                 destroy: function() {
