@@ -15,6 +15,15 @@ export function mockReq(opts : Object = {}) : MockReq {
             'user-agent': 'xyz'
         },
         get:   () => undefined,
+        app: {
+            kraken: {
+                get: (config) => {
+                    if (config === 'ui:enablePersonalization') {
+                        return true;
+                    }
+                }
+            }
+        },
         ...opts
     };
 }
@@ -91,6 +100,23 @@ export async function getWallet() : Promise<Object> {
 
 export async function graphQL(req : ExpressRequest, payload : $ReadOnlyArray<{| query : string, variables : Object |}>) : Promise<Object> {
     return await Promise.resolve(payload.map(request => {
+        if (request.query.match(/checkoutCustomization/)) {
+            if (req.simulatePersonalizationError) {
+                return { error: 'Internal Error' };
+            }
+            return {
+                result: {
+                    checkoutCustomization: {
+                        buttonText: {
+                            text: 'foobar'
+                        },
+                        tagline: {
+                            text: 'foobar'
+                        }
+                    }
+                }
+            };
+        }
         if (request.query.match(/FundingEligibility/)) {
             return {
                 fundingEligibility: {
@@ -184,19 +210,6 @@ export async function graphQL(req : ExpressRequest, payload : $ReadOnlyArray<{| 
                     },
                     mercadopago: {
                         eligible: false
-                    }
-                }
-            };
-        }
-
-        if (request.query.match(/CheckoutCustomization/)) {
-            return {
-                checkoutCustomization: {
-                    buttonText: {
-                        text: 'foobar'
-                    },
-                    tagline: {
-                        text: 'foobar'
                     }
                 }
             };

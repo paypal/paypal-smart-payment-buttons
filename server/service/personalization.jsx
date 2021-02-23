@@ -130,6 +130,11 @@ function contentToJSX(content : string) : ComponentFunctionType<PersonalizationC
 }
 
 export async function resolvePersonalization(req : ExpressRequest, gqlBatch : GraphQLBatchCall, personalizationOptions : PersonalizationOptions) : Promise<Personalization> {
+    const personalizationEnabled = req.app && req.app.kraken && req.app.kraken.get('ui:enablePersonalization');
+    if (!personalizationEnabled) {
+        return getDefaultPersonalization();
+    }
+    
     let { logger, clientID, merchantID, locale, buyerCountry, buttonSessionID, currency,
         intent, commit, vault, label, period, tagline } = personalizationOptions;
 
