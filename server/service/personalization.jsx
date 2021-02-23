@@ -130,6 +130,7 @@ function contentToJSX(content : string) : ComponentFunctionType<PersonalizationC
 }
 
 export async function resolvePersonalization(req : ExpressRequest, gqlBatch : GraphQLBatchCall, personalizationOptions : PersonalizationOptions) : Promise<Personalization> {
+    // $FlowFixMe
     const personalizationEnabled = req.app && req.app.kraken && req.app.kraken.get('ui:enablePersonalization');
     if (!personalizationEnabled) {
         return getDefaultPersonalization();

@@ -12,7 +12,8 @@ function getRenderedFundingSources(template) : $ReadOnlyArray<string> {
 }
 
 function getSetupButtonParams(template) : Object {
-    return JSON.parse(template.match(/<script nonce="">spb.setupButton\((.*?)\)<\/script>/)[1]);
+    const setupButtonParamsString = template && template.match(/<script nonce="">spb.setupButton\((.*?)\)<\/script>/);
+    return  setupButtonParamsString && JSON.parse(setupButtonParamsString[1]);
 }
 
 jest.setTimeout(300000);
@@ -166,19 +167,19 @@ test('should render empty personalization when API errors', async () => {
 
     const req = mockReq({
         query: {
-            clientID: 'xyz'
+            clientID:                     'xyz',
+            simulatePersonalizationError: true
         }
     });
     const res = mockRes();
-
-    req.simulatePersonalizationError = true;
+    
     // $FlowFixMe
     await buttonMiddleware(req, res);
     const html = res.getBody();
 
     const setupButtonParams = getSetupButtonParams(html);
     
-    if (Object.keys(setupButtonParams.personalization) > 0) {
+    if (Object.keys(setupButtonParams.personalization).length > 0) {
         throw new Error(`Expected personalization to be empty, got: ${ JSON.stringify(setupButtonParams.personalization) }`);
     }
 });
@@ -188,7 +189,8 @@ test('should render empty personalization when config is disabled', async () => 
 
     const req = mockReq({
         query: {
-            clientID: 'xyz'
+            clientID:                     'xyz',
+            simulatePersonalizationError: true
         },
         app: {
             kraken: {
@@ -204,7 +206,7 @@ test('should render empty personalization when config is disabled', async () => 
 
     const setupButtonParams = getSetupButtonParams(html);
     
-    if (Object.keys(setupButtonParams.personalization) > 0) {
+    if (Object.keys(setupButtonParams.personalization).length > 0) {
         throw new Error(`Expected personalization to be empty, got: ${ JSON.stringify(setupButtonParams.personalization) }`);
     }
 });

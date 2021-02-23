@@ -101,7 +101,7 @@ export async function getWallet() : Promise<Object> {
 export async function graphQL(req : ExpressRequest, payload : $ReadOnlyArray<{| query : string, variables : Object |}>) : Promise<Object> {
     return await Promise.resolve(payload.map(request => {
         if (request.query.match(/checkoutCustomization/)) {
-            if (req.simulatePersonalizationError) {
+            if (req.query.simulatePersonalizationError) {
                 return { error: 'Internal Error' };
             }
             return {
