@@ -945,7 +945,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             });
         });
 
-        const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app, pageUrl } }) => {
+        const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app, auth, pageUrl } }) => {
             getLogger().info(`native_post_message_await_redirect`).flush();
 
             return ZalgoPromise.hash({
@@ -970,7 +970,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
 
-                if (!eligible || (app && !app.installed)) {
+                if (!eligible || (app && !app.installed) || auth) {
                     return createOrder().then(orderID => {
                         const fallbackUrl = getDelayedNativeFallbackUrl({ sessionUID, pageUrl, orderID });
                         return { redirect: true, appSwitch: false, redirectUrl: fallbackUrl };

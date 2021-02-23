@@ -15,6 +15,13 @@ import { MESSAGE, HASH, EVENT } from './constants';
 const ANDROID_PAYPAL_APP_ID = 'com.paypal.android.p2pmobile';
 const ANDROID_VENMO_APP_ID  = 'com.venmo';
 
+const AUTH_COOKIES = [
+    'session_token=',
+    'ulat=',
+    'access_token=',
+    'refresh_token='
+];
+
 export type NativePopupOptions = {|
     parentDomain : string,
     env : $Values<typeof ENV>,
@@ -35,6 +42,10 @@ type AndroidApp = {|
     installed : boolean,
     version? : string
 |};
+
+function isAlreadyAuthorizedUser() : boolean {
+    return AUTH_COOKIES.some(cookie => window.document.cookie.includes(cookie));
+}
 
 function isAndroidAppInstalled(appId : string) : ZalgoPromise<AndroidApp> {
     // assume true unless we can prove false
@@ -241,7 +252,8 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
     const pageUrl = `${ window.location.href.split('#')[0] }#${  HASH.CLOSE }`;
 
     appInstalledPromise.then(app => {
-        sendToParent(MESSAGE.AWAIT_REDIRECT, { app, pageUrl }).then(({ redirect = true, redirectUrl, appSwitch = true }) => {
+        const auth = isAlreadyAuthorizedUser();
+        sendToParent(MESSAGE.AWAIT_REDIRECT, { app, auth, pageUrl }).then(({ redirect = true, redirectUrl, appSwitch = true }) => {
             if (!redirect) {
                 return;
             }
