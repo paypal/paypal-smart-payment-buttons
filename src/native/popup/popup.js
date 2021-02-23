@@ -44,7 +44,7 @@ type AndroidApp = {|
 |};
 
 function isAlreadyAuthorizedUser() : boolean {
-    return window.document.cookie && window.document.cookie.length ? AUTH_COOKIES.some(cookie => window.document.cookie.includes(cookie)) : false;
+    return window.document.cookie && window.document.cookie.length ? AUTH_COOKIES.some(cookie => window.document.cookie.indexOf(cookie) !== -1) : false;
 }
 
 function isAndroidAppInstalled(appId : string) : ZalgoPromise<AndroidApp> {

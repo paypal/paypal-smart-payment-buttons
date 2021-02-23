@@ -125,6 +125,7 @@ export const FPTI_TRANSITION = {
     NATIVE_APP_SWITCH_INELIGIBLE:           ('app_switch_ineligible' : 'app_switch_ineligible'),
     NATIVE_ATTEMPT_APP_SWITCH:              ('app_switch_attempted' : 'app_switch_attempted'),
     NATIVE_ATTEMPT_APP_SWITCH_ERRORED:      ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
+    NATIVE_AUTH:                            ('native_auth' : 'native_auth'),
     NATIVE_CLOSING_POPUP:                   ('native_closing_popup' : 'native_closing_popup'),
     NATIVE_POPUP_CLOSED:                    ('popup_closed' : 'popup_closed'),
     NATIVE_POPUP_HASHCHANGE:                ('popup_hashchange' : 'popup_hashchange'),

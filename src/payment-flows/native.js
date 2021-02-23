@@ -964,6 +964,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
 
+                getLogger().info(`native_${ auth ? 'auth' : 'not_auth' }`)
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_AUTH,
+                        [FPTI_CUSTOM_KEY.INFO_MSG]: auth ? 'true' : 'false'
+                    })
+                    .flush();
+
                 if (!valid) {
                     return close().then(() => {
                         return { redirect: false };
