@@ -15,15 +15,6 @@ export function mockReq(opts : Object = {}) : MockReq {
             'user-agent': 'xyz'
         },
         get:   () => undefined,
-        app: {
-            kraken: {
-                get: (config) => {
-                    if (config === 'ui:enablePersonalization') {
-                        return true;
-                    }
-                }
-            }
-        },
         ...opts
     };
 }
@@ -237,6 +228,10 @@ export function getMerchantID() : Promise<string> {
 
 export function transportRiskData() : Promise<void> {
     return Promise.resolve();
+}
+
+export function getPersonalizationEnabled() : boolean {
+    return true;
 }
 
 export const mockContent = {

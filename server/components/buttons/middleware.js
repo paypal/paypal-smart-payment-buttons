@@ -41,12 +41,14 @@ type ButtonMiddlewareOptions = {|
         }
     },
     tracking : (ExpressRequest) => void,
+    getPersonalizationEnabled : (ExpressRequest) => boolean,
     cdn? : boolean
 |};
 
 export function getButtonMiddleware({
     logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
-    getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking
+    getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking,
+    getPersonalizationEnabled
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
@@ -91,9 +93,10 @@ export function getButtonMiddleware({
                 disableFunding, disableCard, clientAccessToken, buyerCountry, userIDToken
             }).catch(noop);
 
+            const personalizationEnabled = getPersonalizationEnabled(req);
             const personalizationPromise = resolvePersonalization(req, gqlBatch, {
                 logger, clientID, merchantID: sdkMerchantID, buyerCountry, locale, buttonSessionID,
-                currency, intent, commit, vault, label, period, tagline
+                currency, intent, commit, vault, label, period, tagline, personalizationEnabled
             });
 
             gqlBatch.flush();

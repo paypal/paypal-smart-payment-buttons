@@ -5,7 +5,7 @@ import { FUNDING } from '@paypal/sdk-constants';
 
 import { getButtonMiddleware, cancelWatchers } from '../../server';
 
-import { mockReq, mockRes, graphQL, getAccessToken, getMerchantID, mockContent, tracking } from './mock';
+import { mockReq, mockRes, graphQL, getAccessToken, getMerchantID, mockContent, tracking, getPersonalizationEnabled } from './mock';
 
 function getRenderedFundingSources(template) : $ReadOnlyArray<string> {
     return regexMap(template, / data-funding-source="([^"]+)"/g, (result, group1) => group1);
@@ -34,7 +34,7 @@ const logger = {
 };
 
 test('should do a basic button render and succeed', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled });
 
     const req = mockReq({
         query: {
@@ -111,7 +111,8 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
         content: mockContent,
         cache,
         logger,
-        tracking
+        tracking,
+        getPersonalizationEnabled
     });
     // $FlowFixMe
     await errButtonMiddleware(req, res);
@@ -147,7 +148,7 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
 });
 
 test('should give a 400 error with no clientID passed', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled });
 
     const req = mockReq();
     const res = mockRes();
@@ -163,7 +164,7 @@ test('should give a 400 error with no clientID passed', async () => {
 });
 
 test('should render empty personalization when API errors', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled });
 
     const req = mockReq({
         query: {
@@ -185,17 +186,20 @@ test('should render empty personalization when API errors', async () => {
 });
 
 test('should render empty personalization when config is disabled', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking });
+    const buttonMiddleware = getButtonMiddleware({
+        graphQL,
+        getAccessToken,
+        getMerchantID,
+        content:                   mockContent,
+        cache,
+        logger,
+        tracking,
+        getPersonalizationEnabled: () => false
+    });
 
     const req = mockReq({
         query: {
-            clientID:                     'xyz',
-            simulatePersonalizationError: true
-        },
-        app: {
-            kraken: {
-                get: () => false
-            }
+            clientID:                     'xyz'
         }
     });
     const res = mockRes();

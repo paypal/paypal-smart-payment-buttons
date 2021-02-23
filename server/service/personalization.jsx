@@ -99,7 +99,8 @@ export type PersonalizationOptions = {|
     vault : $Values<typeof VAULT>,
     label : string,
     period : ?number,
-    tagline? : boolean | string
+    tagline? : boolean | string,
+    personalizationEnabled : boolean
 |};
 
 function getDefaultPersonalization() : Personalization {
@@ -130,14 +131,12 @@ function contentToJSX(content : string) : ComponentFunctionType<PersonalizationC
 }
 
 export async function resolvePersonalization(req : ExpressRequest, gqlBatch : GraphQLBatchCall, personalizationOptions : PersonalizationOptions) : Promise<Personalization> {
-    // $FlowFixMe
-    const personalizationEnabled = req.app && req.app.kraken && req.app.kraken.get('ui:enablePersonalization');
+    let { logger, clientID, merchantID, locale, buyerCountry, buttonSessionID, currency,
+        intent, commit, vault, label, period, tagline, personalizationEnabled } = personalizationOptions;
+    
     if (!personalizationEnabled) {
         return getDefaultPersonalization();
     }
-    
-    let { logger, clientID, merchantID, locale, buyerCountry, buttonSessionID, currency,
-        intent, commit, vault, label, period, tagline } = personalizationOptions;
 
     const ip = req.ip;
     const cookies = req.get('cookie') || '';
