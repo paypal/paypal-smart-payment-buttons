@@ -6,6 +6,7 @@ import type { ComponentFunctionType } from 'jsx-pragmatic/src';
 import { node } from 'jsx-pragmatic';
 import { LOGO_COLOR, PPLogo, PayPalLogo } from '@paypal/sdk-logos';
 
+import { PERSONALIZATION_TIMEOUT } from '../config';
 import { placeholderToJSX, type GraphQLBatchCall } from '../lib';
 import type { ExpressRequest, LocaleType, LoggerType } from '../types';
 
@@ -152,7 +153,8 @@ export async function resolvePersonalization(req : ExpressRequest, gqlBatch : Gr
             variables: {
                 clientID, merchantID, locale, buyerCountry, currency, intent, commit, vault, ip, cookies, userAgent,
                 buttonSessionID, label, period, taglineEnabled
-            }
+            },
+            timeout: PERSONALIZATION_TIMEOUT
         });
 
         const personalization = result.checkoutCustomization;
