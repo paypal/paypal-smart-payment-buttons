@@ -928,10 +928,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }
 
             return createOrder().then(orderID => {
-                return getNativeEligibility({ vault, platform, shippingCallbackEnabled,
+                const shippingCallback = shippingCallbackEnabled || window.xprops.onShippingChange;
+
+                return getNativeEligibility({ vault, platform,
                     clientID, buyerCountry, currency, buttonSessionID, cookies, orderID, enableFunding, stickinessID,
-                    merchantID:   merchantID[0],
-                    domain:       merchantDomain
+                    merchantID:              merchantID[0],
+                    domain:                  merchantDomain,
+                    shippingCallbackEnabled: shippingCallback
                 }).then(eligibility => {
                     if (!eligibility || !eligibility[fundingSource] || !eligibility[fundingSource].eligibility) {
                         getLogger().info(`native_appswitch_ineligible`, { orderID })
