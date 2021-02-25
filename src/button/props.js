@@ -216,8 +216,11 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         paymentMethodNonce,
         branded,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
-        storageID
+        storageID,
+        userExperienceFlow
     } = xprops;
+
+    console.log({ xprops });
 
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
@@ -345,7 +348,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         standaloneFundingSource: fundingSource,
         paymentMethodNonce,
         branded,
-        stickinessID
+        stickinessID,
+        userExperienceFlow
     };
 }
 

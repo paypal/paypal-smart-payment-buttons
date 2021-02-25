@@ -60,7 +60,10 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
 
     return ZalgoPromise.try(() => {
         const { merchantID } = serviceData;
-        const { clientID, onClick, createOrder, env, vault } = props;
+        const { clientID, onClick, createOrder, env, vault, userExperienceFlow } = props;
+
+        console.log('userExperienceFlow', userExperienceFlow);
+        console.log({ props });
 
         const { name, init, inline, spinner, updateFlowClientConfig } = getPaymentFlow({ props, payment, config, components, serviceData });
         const { click = promiseNoop, start, close } = init({ props, config, serviceData, components, payment });
@@ -97,8 +100,9 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                         return updateFlowClientConfig({ orderID, payment });
                     }
 
+                    console.log('calling updateButtonClientConfig', userExperienceFlow);
                     // Do not block by default
-                    updateButtonClientConfig({ orderID, fundingSource, inline }).catch(err => {
+                    updateButtonClientConfig({ orderID, clientID, fundingSource, inline, userExperienceFlow }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
                     // eslint-disable-next-line no-console
