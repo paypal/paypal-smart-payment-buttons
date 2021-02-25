@@ -197,7 +197,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         connect,
         intent,
         merchantID,
-        upgradeLSAT,
+        upgradeLSAT = false,
         amount,
         userIDToken,
         enableFunding,
