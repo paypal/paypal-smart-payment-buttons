@@ -12,6 +12,7 @@ import { ENABLE_PAYMENT_API } from '../config';
 
 import type { CreateOrder } from './createOrder';
 import type { XOnError } from './onError';
+import { upgradeLSATExperiment } from '../experiments';
 
 export type XOnApproveDataType = {|
     orderID : string,
@@ -246,6 +247,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
+    upgradeLSAT = upgradeLSAT || upgradeLSATExperiment.isEnabled();
 
     return memoize(({ payerID, paymentID, billingToken, subscriptionID, buyerAccessToken, authCode, forceRestAPI = upgradeLSAT } : OnApproveData, { restart } : OnApproveActions) => {
         return ZalgoPromise.try(() => {
