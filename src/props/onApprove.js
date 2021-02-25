@@ -9,10 +9,10 @@ import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, autho
 import { ORDER_API_ERROR, FPTI_TRANSITION, FPTI_CONTEXT_TYPE } from '../constants';
 import { unresolvedPromise, getLogger } from '../lib';
 import { ENABLE_PAYMENT_API } from '../config';
+import { upgradeLSATExperiment } from '../experiments';
 
 import type { CreateOrder } from './createOrder';
 import type { XOnError } from './onError';
-import { upgradeLSATExperiment } from '../experiments';
 
 export type XOnApproveDataType = {|
     orderID : string,

@@ -5,9 +5,9 @@ import { stringifyError } from 'belter/src';
 
 import { upgradeFacilitatorAccessToken } from '../api';
 import { getLogger } from '../lib';
+import { upgradeLSATExperiment } from '../experiments';
 
 import type { CreateOrder } from './createOrder';
-import { upgradeLSATExperiment } from '../experiments';
 
 export type XOnAuthDataType = {|
     accessToken : ?string
