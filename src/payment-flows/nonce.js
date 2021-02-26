@@ -84,6 +84,7 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
 
     // $FlowFixMe
     const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
+    // $FlowFixMe
     const paymentMethodNonce = instrument.tokenID;
 
     const fallbackToWebCheckout = () => {
