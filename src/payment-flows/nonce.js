@@ -66,8 +66,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
 function startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded }) : void {
     getLogger().info('nonce_payment_initiated');
-    // TODO: Shruti: Test these params.
-    
+
     // $FlowFixMe
     return payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
         .catch(error => {

@@ -394,10 +394,16 @@ window.spb = function(modules) {
     function hooks_module_w(n, t) {
         return "function" == typeof t ? t(n) : t;
     }
+    function _setPrototypeOf(o, p) {
+        return (_setPrototypeOf = Object.setPrototypeOf || function(o, p) {
+            o.__proto__ = p;
+            return o;
+        })(o, p);
+    }
     function _inheritsLoose(subClass, superClass) {
         subClass.prototype = Object.create(superClass.prototype);
         subClass.prototype.constructor = subClass;
-        subClass.__proto__ = superClass;
+        _setPrototypeOf(subClass, superClass);
     }
     function _extends() {
         return (_extends = Object.assign || function(target) {
@@ -1001,12 +1007,6 @@ window.spb = function(modules) {
         return (_getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function(o) {
             return o.__proto__ || Object.getPrototypeOf(o);
         })(o);
-    }
-    function _setPrototypeOf(o, p) {
-        return (_setPrototypeOf = Object.setPrototypeOf || function(o, p) {
-            o.__proto__ = p;
-            return o;
-        })(o, p);
     }
     function _isNativeReflectConstruct() {
         if ("undefined" == typeof Reflect || !Reflect.construct) return !1;

@@ -647,6 +647,7 @@ type NativeMockWebSocket = {|
     onCancel : () => void,
     onError : () => void,
     onShippingChange : () => void,
+    onFallback : () => void,
     fallback : ({| buyerAccessToken : string |}) => void
 |};
 
@@ -807,8 +808,26 @@ export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : ()
         }));
     };
 
+    const onFallback = () => {
+        onShippingChangeRequestID = uniqueID();
+
+        send(JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        onShippingChangeRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onShippingChange',
+            message_data:       {
+
+            }
+        }));
+    };
+
     return {
-        expect, onApprove, onCancel, onError, onShippingChange, fallback: noop
+        expect, onApprove, onCancel, onError, onShippingChange, onFallback, fallback: noop
     };
 }
 
@@ -1294,6 +1313,27 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
         waitingForResponse.push(onErrorRequestID);
     };
 
+    const onFallback = () => {
+        onApproveRequestID = `${ uniqueID()  }_onApprove`;
+
+        send(`users/${ getSessionUID() }/messages/${ uniqueID() }`, JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        onApproveRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onApprove',
+            message_data:       {
+                orderID: props.orderID,
+                payerID: 'XXYYZZ123456'
+            }
+        }));
+
+        waitingForResponse.push(onApproveRequestID);
+    };
+
     const expect = () => {
         const { done: firebaseDone } = expectFirebase();
 
@@ -1313,7 +1353,7 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
     };
 
     return {
-        expect, onApprove, onCancel, onError, onShippingChange, fallback
+        expect, onApprove, onCancel, onError, onShippingChange, fallback, onFallback
     };
 }
 

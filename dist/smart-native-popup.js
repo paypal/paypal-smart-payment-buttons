@@ -77,6 +77,9 @@
                 return target;
             }).apply(this, arguments);
         }
+        function getUserAgent() {
+            return window.navigator.mockUserAgent || window.navigator.userAgent;
+        }
         function utils_isPromise(item) {
             try {
                 if (!item) return !1;
@@ -676,17 +679,18 @@
             fn.__name__ = fn.displayName = name;
             return fn;
         }
+        function base64encode(str) {
+            if ("function" == typeof btoa) return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (function(m, p1) {
+                return String.fromCharCode(parseInt(p1, 16));
+            })));
+            if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64");
+            throw new Error("Can not find window.btoa or Buffer");
+        }
         function uniqueID() {
             var chars = "0123456789abcdef";
             return "xxxxxxxxxx".replace(/./g, (function() {
                 return chars.charAt(Math.floor(Math.random() * chars.length));
-            })) + "_" + function(str) {
-                if ("function" == typeof btoa) return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (function(m, p1) {
-                    return String.fromCharCode(parseInt(p1, 16));
-                })));
-                if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64");
-                throw new Error("Can not find window.btoa or Buffer");
-            }((new Date).toISOString().slice(11, 19).replace("T", ".")).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+            })) + "_" + base64encode((new Date).toISOString().slice(11, 19).replace("T", ".")).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         }
         var objectIDs;
         function serializeArgs(args) {
@@ -777,6 +781,10 @@
             } catch (newErr) {
                 return "Error while stringifying error: " + stringifyError(newErr, level + 1);
             }
+        }
+        function stringifyErrorMessage(err) {
+            var defaultMessage = "<unknown error: " + {}.toString.call(err) + ">";
+            return err ? err instanceof Error ? err.message || defaultMessage : "string" == typeof err.message && err.message || defaultMessage : defaultMessage;
         }
         memoize((function(obj) {
             if (Object.values) return Object.values(obj);
@@ -1107,11 +1115,34 @@
                 });
             }));
         }
+        function isAndroidAppInstalled(appId) {
+            return window.navigator && window.navigator.getInstalledRelatedApps ? window.navigator.getInstalledRelatedApps().then((function(result) {
+                if (result && result.length) {
+                    var apps = result.filter((function(app) {
+                        return app.id === appId;
+                    }));
+                    return promise_ZalgoPromise.resolve(apps && apps.length ? {
+                        id: apps[0].id,
+                        installed: !0,
+                        version: apps[0].version
+                    } : {
+                        installed: !1
+                    });
+                }
+                return promise_ZalgoPromise.resolve({
+                    installed: !0
+                });
+            })) : promise_ZalgoPromise.resolve({
+                installed: !0
+            });
+        }
         function setupNativePopup(_ref) {
+            var _logger$info$track;
             var parentDomain = _ref.parentDomain, env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, locale = _ref.locale;
-            var logger;
-            var sdkVersion = getPayPal().version;
-            env && sessionID && buttonSessionID && sdkCorrelationID && locale && (logger = function(_ref) {
+            var appInstalledPromise = promise_ZalgoPromise.resolve({
+                installed: !0
+            });
+            var logger = function(_ref) {
                 var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, sdkVersion = _ref.sdkVersion, locale = _ref.locale;
                 var logger = getLogger();
                 !function(_ref) {
@@ -1137,10 +1168,8 @@
                     }));
                     promise_ZalgoPromise.onPossiblyUnhandledException((function(err) {
                         var _logger$track;
-                        logger.track(((_logger$track = {}).ext_error_code = "payments_sdk_error", _logger$track.ext_error_desc = function(err) {
-                            var defaultMessage = "<unknown error: " + {}.toString.call(err) + ">";
-                            return err ? err instanceof Error ? err.message || defaultMessage : "string" == typeof err.message && err.message || defaultMessage : defaultMessage;
-                        }(err), _logger$track));
+                        logger.track(((_logger$track = {}).ext_error_code = "payments_sdk_error", _logger$track.ext_error_desc = stringifyErrorMessage(err), 
+                        _logger$track));
                         logger.error("unhandled_error", {
                             err: stringifyError(err)
                         });
@@ -1154,16 +1183,22 @@
                     locale: locale,
                     sdkVersion: sdkVersion
                 });
-                logger.addPayloadBuilder((function() {
+                logger.addMetaBuilder((function() {
                     return {
-                        buttonSessionID: buttonSessionID
+                        amplitude: !0
                     };
                 }));
-                logger.addTrackingBuilder((function() {
+                logger.addPayloadBuilder((function() {
                     var _ref2;
-                    return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
-                    _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                    _ref2.button_version = "2.0.364", _ref2;
+                    return (_ref2 = {
+                        buttonSessionID: buttonSessionID
+                    }).user_id = buttonSessionID, _ref2;
+                }));
+                logger.addTrackingBuilder((function() {
+                    var _ref3;
+                    return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
+                    _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
+                    _ref3.button_version = "2.0.382", _ref3.user_id = buttonSessionID, _ref3;
                 }));
                 (function() {
                     if (window.document.documentMode) try {
@@ -1187,9 +1222,9 @@
                             return timing.connectEnd && timing.domInteractive ? timing.domInteractive - timing.connectEnd : void 0;
                         }
                     }))
-                }).then((function(_ref3) {
+                }).then((function(_ref4) {
                     var _logger$track;
-                    var pageRenderTime = _ref3.pageRenderTime;
+                    var pageRenderTime = _ref4.pageRenderTime;
                     logger.track(((_logger$track = {}).transition_name = "process_button_load", _logger$track.merchant_selected_funding_source = fundingSource, 
                     _logger$track.page_load_time = pageRenderTime ? pageRenderTime.toString() : "", 
                     _logger$track));
@@ -1203,18 +1238,89 @@
                 sdkCorrelationID: sdkCorrelationID,
                 clientID: clientID,
                 fundingSource: fundingSource,
-                sdkVersion: sdkVersion,
+                sdkVersion: getPayPal().version,
                 locale: locale
+            });
+            logger.info("native_popup_init", {
+                buttonSessionID: buttonSessionID,
+                href: base64encode(window.location.href)
+            }).track((_logger$info$track = {}, _logger$info$track.transition_name = "native_popup_init", 
+            _logger$info$track.info_msg = base64encode(window.location.href), _logger$info$track)).flush();
+            window.addEventListener("beforeunload", (function() {
+                var _logger$info$track2;
+                logger.info("native_popup_beforeunload").track((_logger$info$track2 = {}, _logger$info$track2.transition_name = "native_popup_beforeunload", 
+                _logger$info$track2)).flush();
             }));
+            window.addEventListener("unload", (function() {
+                var _logger$info$track3;
+                logger.info("native_popup_unload").track((_logger$info$track3 = {}, _logger$info$track3.transition_name = "native_popup_unload", 
+                _logger$info$track3)).flush();
+            }));
+            window.addEventListener("pagehide", (function() {
+                var _logger$info$track4;
+                logger.info("native_popup_pagehide").track((_logger$info$track4 = {}, _logger$info$track4.transition_name = "native_popup_pagehide", 
+                _logger$info$track4)).flush();
+            }));
+            (function(ua) {
+                void 0 === ua && (ua = getUserAgent());
+                return /Android/.test(ua);
+            })() && function(ua) {
+                void 0 === ua && (ua = getUserAgent());
+                return /Chrome|Chromium|CriOS/.test(ua);
+            }() && ("paypal" === fundingSource ? appInstalledPromise = isAndroidAppInstalled("com.paypal.android.p2pmobile").then((function(app) {
+                return _extends({}, app);
+            })).catch((function(err) {
+                var _logger$info$track5;
+                logger.info("native_popup_android_paypal_app_installed_error").track((_logger$info$track5 = {}, 
+                _logger$info$track5.transition_name = "native_popup_android_paypal_app_installed_error", 
+                _logger$info$track5.int_error_desc = "Error: " + stringifyErrorMessage(err), _logger$info$track5)).flush();
+                return {
+                    installed: !0
+                };
+            })) : "venmo" === fundingSource && (appInstalledPromise = isAndroidAppInstalled("com.venmo").then((function(app) {
+                return _extends({}, app);
+            })).catch((function(err) {
+                var _logger$info$track6;
+                logger.info("native_popup_android_venmo_app_installed_error").track((_logger$info$track6 = {}, 
+                _logger$info$track6.transition_name = "native_popup_android_venmo_app_installed_error", 
+                _logger$info$track6.int_error_desc = "Error: " + stringifyErrorMessage(err), _logger$info$track6)).flush();
+                return {
+                    installed: !0
+                };
+            }))));
+            var closeWindow = function() {
+                window.close();
+                window.location.hash = "closed";
+            };
             var opener = window.opener;
             if (!opener) {
-                if (logger) {
-                    var _logger$info$track;
-                    logger.info("native_popup_no_opener").track((_logger$info$track = {}, _logger$info$track.transition_name = "popup_no_opener", 
-                    _logger$info$track.info_msg = "location: " + window.location.href, _logger$info$track)).flush();
-                }
+                var _logger$info$info$tra;
+                logger.info("native_popup_no_opener", {
+                    buttonSessionID: buttonSessionID,
+                    href: base64encode(window.location.href)
+                }).info("native_popup_no_opener_hash_" + (window.location.hash || "none").replace(/^#/, "").replace(/\?.+/, "")).track((_logger$info$info$tra = {}, 
+                _logger$info$info$tra.transition_name = "popup_no_opener", _logger$info$info$tra.info_msg = "location: " + base64encode(window.location.href), 
+                _logger$info$info$tra)).flush().then(closeWindow);
                 throw new Error("Expected window to have opener");
             }
+            !function(win, callback, delay, maxtime) {
+                void 0 === delay && (delay = 1e3);
+                void 0 === maxtime && (maxtime = 1 / 0);
+                var timeout;
+                !function check() {
+                    if (isWindowClosed(win)) {
+                        timeout && clearTimeout(timeout);
+                        logger.info("native_popup_opener_detect_close").track((_logger$info$track7 = {}, 
+                        _logger$info$track7.transition_name = "native_popup_opener_detect_close", _logger$info$track7)).flush().then(closeWindow);
+                    } else {
+                        var _logger$info$track7;
+                        if (maxtime <= 0) clearTimeout(timeout); else {
+                            maxtime -= delay;
+                            timeout = setTimeout(check, delay);
+                        }
+                    }
+                }();
+            }(window.opener, 0, 500);
             var clean = (tasks = [], cleaned = !1, {
                 set: function(name, item) {
                     if (!cleaned) {
@@ -1264,39 +1370,46 @@
                 }));
             };
             var handleHash = function() {
+                var _logger$info$track8;
                 if (window.location.hash && "#" !== window.location.hash) {
                     var _hashString$split = (window.location.hash && window.location.hash.slice(1)).split("?"), hash = _hashString$split[0], queryString = _hashString$split[1];
-                    if (logger) {
-                        var _logger$info$track2;
-                        logger.info("native_popup_hashchange", {
-                            hash: hash,
-                            queryString: queryString
-                        }).track((_logger$info$track2 = {}, _logger$info$track2.transition_name = "popup_hashchange", 
-                        _logger$info$track2.info_msg = "" + window.location.href, _logger$info$track2)).flush();
-                    }
+                    var _parseQuery = parseQuery(queryString), appVersion = _parseQuery.appVersion, bundleIdentifier = _parseQuery.bundleIdentifier;
+                    logger.info("native_popup_hashchange", {
+                        hash: hash,
+                        queryString: queryString
+                    }).track((_logger$info$track8 = {}, _logger$info$track8.transition_name = "popup_hashchange", 
+                    _logger$info$track8.mobile_app_version = appVersion, _logger$info$track8.mapv = bundleIdentifier, 
+                    _logger$info$track8.info_msg = "" + window.location.href, _logger$info$track8)).flush();
                     switch (hash) {
+                      case "init":
+                      case "loaded":
+                      case "appswitch":
+                      case "webswitch":
+                      case "closed":
+                        break;
+
                       case "onApprove":
-                        var _parseQuery = parseQuery(queryString);
+                        var _parseQuery2 = parseQuery(queryString);
                         sendToParent("onApprove", {
-                            payerID: _parseQuery.payerID,
-                            paymentID: _parseQuery.paymentID,
-                            billingToken: _parseQuery.billingToken
-                        });
+                            payerID: _parseQuery2.payerID,
+                            paymentID: _parseQuery2.paymentID,
+                            billingToken: _parseQuery2.billingToken
+                        }).finally(closeWindow);
                         break;
 
                       case "onCancel":
-                        sendToParent("onCancel");
+                        sendToParent("onCancel").finally(closeWindow);
                         break;
 
                       case "onError":
-                        var _parseQuery2 = parseQuery(queryString);
+                        var _parseQuery3 = parseQuery(queryString);
                         sendToParent("onError", {
-                            message: _parseQuery2.message
-                        });
+                            message: _parseQuery3.message
+                        }).finally(closeWindow);
                         break;
 
                       case "close":
-                        sendToParent("onComplete");
+                        sendToParent("onComplete").finally(closeWindow);
                         break;
 
                       case "test":
@@ -1305,7 +1418,7 @@
                       default:
                         sendToParent("onError", {
                             message: "Invalid event sent from native, " + hash + ", from URL, " + window.location.href
-                        });
+                        }).finally(closeWindow);
                     }
                 }
             };
@@ -1313,33 +1426,44 @@
             clean.register((function() {
                 return window.removeEventListener("hashchange", handleHash);
             }));
+            window.location.hash = "loaded";
             handleHash();
-            var pageUrl = window.location.href + "#close";
-            sendToParent("awaitRedirect", {
-                pageUrl: pageUrl
-            }).then((function(_ref3) {
-                var _ref3$redirect = _ref3.redirect;
-                if (void 0 === _ref3$redirect || _ref3$redirect) {
-                    window.location = _ref3.redirectUrl;
-                    var didRedirect = !1;
-                    var markRedirect = function() {
-                        didRedirect = !0;
-                    };
-                    window.addEventListener("beforeunload", markRedirect);
-                    clean.register((function() {
-                        return window.removeEventListener("beforeunload", markRedirect);
-                    }));
-                    window.addEventListener("unload", markRedirect);
-                    clean.register((function() {
-                        return window.removeEventListener("unload", markRedirect);
-                    }));
-                    var timer = setTimeout((function() {
-                        didRedirect || sendToParent("detectAppSwitch");
-                    }), 500);
-                    clean.register((function() {
-                        return clearTimeout(timer);
-                    }));
-                }
+            var pageUrl = window.location.href.split("#")[0] + "#close";
+            appInstalledPromise.then((function(app) {
+                sendToParent("awaitRedirect", {
+                    app: app,
+                    pageUrl: pageUrl
+                }).then((function(_ref3) {
+                    var _ref3$redirect = _ref3.redirect, redirectUrl = _ref3.redirectUrl, _ref3$appSwitch = _ref3.appSwitch, appSwitch = void 0 === _ref3$appSwitch || _ref3$appSwitch;
+                    if (void 0 === _ref3$redirect || _ref3$redirect) {
+                        window.location.hash = appSwitch ? "appswitch" : "webswitch";
+                        window.location.replace(redirectUrl);
+                        var didRedirect = !1;
+                        var markRedirect = function() {
+                            didRedirect = !0;
+                        };
+                        window.addEventListener("beforeunload", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("beforeunload", markRedirect);
+                        }));
+                        window.addEventListener("unload", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("unload", markRedirect);
+                        }));
+                        window.addEventListener("pagehide", markRedirect);
+                        clean.register((function() {
+                            return window.removeEventListener("pagehide", markRedirect);
+                        }));
+                        if (appSwitch) {
+                            var timer = setTimeout((function() {
+                                didRedirect || sendToParent("detectAppSwitch");
+                            }), 500);
+                            clean.register((function() {
+                                return clearTimeout(timer);
+                            }));
+                        }
+                    }
+                }));
             }));
             return {
                 destroy: function() {

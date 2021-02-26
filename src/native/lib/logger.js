@@ -7,7 +7,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 
 import type { LocaleType } from '../../types';
 import { getLogger, setupLogger } from '../../lib';
-import { FPTI_TRANSITION, FPTI_STATE, FPTI_CONTEXT_TYPE } from '../../constants';
+import { FPTI_TRANSITION, FPTI_STATE, FPTI_CONTEXT_TYPE, AMPLITUDE_KEY } from '../../constants';
 
 type NativeLoggerOptions = {|
     env : $Values<typeof ENV>,
@@ -25,9 +25,16 @@ export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelat
 
     setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale, sdkVersion });
 
+    logger.addMetaBuilder(() => {
+        return {
+            amplitude: true
+        };
+    });
+
     logger.addPayloadBuilder(() => {
         return {
-            buttonSessionID
+            buttonSessionID,
+            [AMPLITUDE_KEY.USER_ID]: buttonSessionID
         };
     });
 
@@ -38,7 +45,8 @@ export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelat
             [FPTI_KEY.CONTEXT_ID]:                   buttonSessionID,
             [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
             [FPTI_KEY.BUTTON_SESSION_UID]:           buttonSessionID,
-            [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__
+            [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__,
+            [AMPLITUDE_KEY.USER_ID]:                 buttonSessionID
         };
     });
 

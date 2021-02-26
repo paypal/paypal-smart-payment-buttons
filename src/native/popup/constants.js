@@ -14,7 +14,12 @@ export const EVENT = {
 };
 
 export const HASH = {
+    INIT:               'init',
+    LOADED:             'loaded',
+    APPSWITCH:          'appswitch',
+    WEBSWITCH:          'webswitch',
     CLOSE:              'close',
+    CLOSED:             'closed',
     FALLBACK:           'fallback',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
