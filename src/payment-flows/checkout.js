@@ -261,7 +261,6 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
                     } else if (clientID && userIDToken && fundingSkipLogin) {
                         const clientMetadataID = cmid || sessionID;
 
-                        // $FlowFixMe
                         return getSmartWallet({ clientID, merchantID, currency, amount, clientMetadataID, userIDToken, env, cspNonce }).then(wallet => {
                             // $FlowFixMe
                             const walletInstruments = wallet[fundingSkipLogin] && wallet[fundingSkipLogin].instruments;

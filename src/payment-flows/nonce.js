@@ -14,13 +14,11 @@ function setupNonce() {
 
 function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
-    // eslint-disable-next-line no-console
-    console.log('nonce eligibility check', paymentMethodNonce);
-
     const { wallet } = serviceData;
 
-    // eslint-disable-next-line no-console
-    console.log('wallet', wallet);
+    if (!paymentMethodNonce) {
+        return false;
+    }
 
     if (!wallet) {
         return false;
@@ -47,11 +45,15 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
     // $FlowFixMe
     const { tokenID } = instrument;
 
+    if (!instrument) {
+        return false;
+    }
+
     if (fundingSource !== FUNDING.CARD) {
         return false;
     }
     // $FlowFixMe
-    if (!branded && !instrument.branded) {
+    if (!branded || !instrument.branded) {
         return false;
     }
 
@@ -62,9 +64,10 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
     return true;
 }
 
-function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
+function startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded }) : void {
     getLogger().info('nonce_payment_initiated');
-
+    // TODO: Shruti: Test these params.
+    
     // $FlowFixMe
     return payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
         .catch(error => {
@@ -82,7 +85,6 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
 
     // $FlowFixMe
     const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
-    // $FlowFixMe
     const paymentMethodNonce = instrument.tokenID;
 
     const fallbackToWebCheckout = () => {
@@ -100,7 +102,7 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
         return createOrder().then(orderID => {
             getLogger().info(`orderID_in_nonce ${ orderID }`);
             // $FlowFixMe
-            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded).then(({ payerID }) => {
+            return startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded }).then(({ payerID }) => {
                 return onApprove({ payerID }, { restart });
             });
         });

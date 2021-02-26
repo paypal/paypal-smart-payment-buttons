@@ -490,12 +490,10 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
     });
 }
 
-// eslint-disable-next-line no-warning-comments
-// TODO: check if paymentMethodNonce needs to be a type of wallet, or directly taken from wallet
 type PayWithNonceOptions = {|
     orderID : string,
-    paymentMethodNonce : ?string,
-    clientID : ?string,
+    paymentMethodNonce : string,
+    clientID : string,
     branded : boolean
 |};
 

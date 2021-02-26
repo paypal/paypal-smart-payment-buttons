@@ -37,8 +37,6 @@ export function setupPaymentFlows({ props, config, serviceData, components } : {
 export function getPaymentFlow({ props, payment, config, serviceData } : {| props : ButtonProps, payment : Payment, config : Config, components : Components, serviceData : ServiceData |}) : PaymentFlow {
     for (const flow of PAYMENT_FLOWS) {
         if (flow.isEligible({ props, config, serviceData }) && flow.isPaymentEligible({ props, payment, config, serviceData })) {
-            // eslint-disable-next-line no-console
-            console.log('Flow accepted:', flow);
             return flow;
         }
     }
@@ -101,8 +99,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     updateButtonClientConfig({ orderID, fundingSource, inline }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
-                    // eslint-disable-next-line no-console
-                }).catch(err => console.log('ERR', err));
+                }).catch(noop);
 
             const { intent, currency } = props;
 
