@@ -78,7 +78,7 @@ type ButtonParams = {|
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
     cookies : string,
-    paymentMethodNonce : string,
+    paymentMethodNonce : ?string,
     branded : ?boolean
 |};
 
