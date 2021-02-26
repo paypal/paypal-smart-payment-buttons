@@ -20,7 +20,6 @@ export function getSmartFieldsByFundingSource(fundingSource : string) : ?SmartFi
             }
         }
     } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log('err', err);
+        // pass
     }
 }
