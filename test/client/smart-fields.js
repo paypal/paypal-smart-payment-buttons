@@ -51,7 +51,7 @@ describe('smart-fields', () => {
             });
         });
 
-        it.only('should call confirm for ideal if valid', async () => {
+        it('should call confirm for ideal if valid', async () => {
             return await wrapPromise(async ({ expect }) => {
     
                 const fundingSource = FUNDING.IDEAL;
