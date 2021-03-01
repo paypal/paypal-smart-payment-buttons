@@ -312,6 +312,7 @@ function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void>
 
 type NativeSDKProps = {|
     orderID : string,
+    buyerLanguage : string,
     facilitatorAccessToken : string,
     pageUrl : string,
     commit : boolean,
@@ -502,6 +503,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const getDirectNativeUrl = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
         return conditionalExtendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
+                buyerLanguage,
                 sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID, stickinessID:   defaultStickinessID,
                 enableFunding:  enableFunding.join(','),
                 domain:         merchantDomain,
@@ -516,6 +518,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const forceEligible = isNativeOptedIn({ props });
 
         return {
+            buyerLanguage,
             sdkMeta,
             sessionUID,
             orderID,
@@ -574,7 +577,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             const pageUrl = '';
 
             return {
-                orderID, facilitatorAccessToken, pageUrl, commit, webCheckoutUrl,
+                buyerLanguage, orderID, facilitatorAccessToken, pageUrl, commit, webCheckoutUrl,
                 userAgent, buttonSessionID, env, stageHost, apiStageHost, forceEligible
             };
         });
