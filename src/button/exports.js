@@ -20,51 +20,49 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
     }).filter(Boolean);
-
-    onApprove.
     
-        window.exports = {
-            name:           'smart-payment-buttons',
-            paymentSession: () => {
-                return {
-                    getAvailableFundingSources: () => fundingSources,
-                    createOrder:                () => {
+    window.exports = {
+        name:           'smart-payment-buttons',
+        paymentSession: () => {
+            return {
+                getAvailableFundingSources: () => fundingSources,
+                createOrder:                () => {
 
-                        if (!isEnabled()) {
-                            throw new Error('Error occurred. Button not enabled.');
-                        }
+                    if (!isEnabled()) {
+                        throw new Error('Error occurred. Button not enabled.');
+                    }
 
-                        return ZalgoPromise.hash({
+                    return ZalgoPromise.hash({
                         // $FlowFixMe
-                            valid: onClick ? onClick({ fundingSource }) : true
-                        }).then(({ valid }) => {
-                            if (!valid) {
-                                throw new Error('Error occurred during async validation');
-                            } else {
-                                return createOrder();
-                            }
-                        });
+                        valid: onClick ? onClick({ fundingSource }) : true
+                    }).then(({ valid }) => {
+                        if (!valid) {
+                            throw new Error('Error occurred during async validation');
+                        } else {
+                            return createOrder();
+                        }
+                    });
 
 
-                    },
-                    onApprove: (data) => {
-                        const merchantData = {
-                            orderID: data.orderID
-                        };
+                },
+                onApprove: (merchantData) => {
+                    const data = {
+                        payerID: merchantData.payerID
+                    };
 
-                        const actions = {
-                            restart: () => {
-                                throw new Error('Action unimplemented');
-                            }
-                        };
+                    const actions = {
+                        restart: () => {
+                            throw new Error('Action unimplemented');
+                        }
+                    };
 
-                        return onApprove(merchantData, actions);
-                    },
-                    onCancel,
-                    onError
-                };
-            }
-        };
+                    return onApprove(data, actions);
+                },
+                onCancel,
+                onError
+            };
+        }
+    };
     
 }
 
