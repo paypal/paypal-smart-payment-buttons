@@ -21,36 +21,50 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
     }).filter(Boolean);
 
-    window.exports = {
-        name:           'smart-payment-buttons',
-        paymentSession: () => {
-            return {
-                getAvailableFundingSources: () => fundingSources,
-                createOrder:                () => {
+    onApprove.
+    
+        window.exports = {
+            name:           'smart-payment-buttons',
+            paymentSession: () => {
+                return {
+                    getAvailableFundingSources: () => fundingSources,
+                    createOrder:                () => {
 
-                    if (!isEnabled()) {
-                        throw new Error('Error occurred. Button not enabled.');
-                    }
-
-                    return ZalgoPromise.hash({
-                        // $FlowFixMe
-                        valid: onClick ? onClick({ fundingSource }) : true
-                    }).then(({ valid }) => {
-                        if (!valid) {
-                            throw new Error('Error occurred during async validation');
-                        } else {
-                            return createOrder();
+                        if (!isEnabled()) {
+                            throw new Error('Error occurred. Button not enabled.');
                         }
-                    });
+
+                        return ZalgoPromise.hash({
+                        // $FlowFixMe
+                            valid: onClick ? onClick({ fundingSource }) : true
+                        }).then(({ valid }) => {
+                            if (!valid) {
+                                throw new Error('Error occurred during async validation');
+                            } else {
+                                return createOrder();
+                            }
+                        });
 
 
-                },
-                onApprove,
-                onCancel,
-                onError
-            };
-        }
-    };
+                    },
+                    onApprove: (data) => {
+                        const merchantData = {
+                            orderID: data.orderID
+                        };
+
+                        const actions = {
+                            restart: () => {
+                                throw new Error('Action unimplemented');
+                            }
+                        };
+
+                        return onApprove(merchantData, actions);
+                    },
+                    onCancel,
+                    onError
+                };
+            }
+        };
     
 }
 
