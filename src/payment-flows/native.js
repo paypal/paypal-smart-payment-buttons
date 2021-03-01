@@ -255,15 +255,16 @@ function isNativePaymentEligible({ payment, props } : IsPaymentEligibleOptions) 
 
 function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
-        const { getPageUrl, clientID, onShippingChange, currency, platform,
+        const { getPageUrl, clientID, onShippingChange, currency, platform, locale,
             vault, buttonSessionID, enableFunding, stickinessID, merchantDomain } = props;
         const { merchantID, buyerCountry, cookies } = serviceData;
 
+        const buyerLanguage = locale && locale.lang;
         const shippingCallbackEnabled = Boolean(onShippingChange);
 
         return ZalgoPromise.all([
             getNativeEligibility({
-                vault, platform, shippingCallbackEnabled, clientID, buyerCountry, currency, buttonSessionID, cookies, enableFunding, stickinessID,
+                vault, platform, shippingCallbackEnabled, clientID, buyerCountry, buyerLanguage, currency, buttonSessionID, cookies, enableFunding, stickinessID,
                 merchantID:   merchantID[0],
                 domain:       merchantDomain
             }).then(result => {
@@ -399,12 +400,14 @@ export function extendUrlWithPartialEncoding(url : string, options : {| query? :
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
     const { createOrder, onApprove, onCancel, onError, commit, clientID, sessionID, sdkCorrelationID,
         buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange, vault, platform,
-        currency, stickinessID, enableFunding, merchantDomain } = props;
+        currency, stickinessID, enableFunding, merchantDomain, locale } = props;
     let { facilitatorAccessToken, sdkMeta, buyerCountry, merchantID, cookies } = serviceData;
     const { fundingSource } = payment;
     const { sdkVersion, firebase: firebaseConfig } = config;
 
     const shippingCallbackEnabled = Boolean(onShippingChange);
+    const buyerLanguage = locale && locale.lang;
+    
     sdkMeta = sdkMeta.replace(/[=]+$/, '');
 
     if (!firebaseConfig) {
@@ -924,7 +927,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }
 
             return createOrder().then(orderID => {
-                return getNativeEligibility({ vault, platform, shippingCallbackEnabled,
+                return getNativeEligibility({ vault, platform, shippingCallbackEnabled, buyerLanguage,
                     clientID, buyerCountry, currency, buttonSessionID, cookies, orderID, enableFunding, stickinessID,
                     merchantID:   merchantID[0],
                     domain:       merchantDomain
