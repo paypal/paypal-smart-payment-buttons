@@ -33,8 +33,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     }
 
                     return ZalgoPromise.hash({
-                        // $FlowFixMe
-                        valid: onClick ? onClick({ fundingSource }) : true
+                        valid: onClick && fundingSource ? onClick({ fundingSource }) : true
                     }).then(({ valid }) => {
                         if (!valid) {
                             throw new Error('Error occurred during async validation');
