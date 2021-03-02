@@ -1,3 +1,4 @@
+
 /* @flow */
 /* eslint import/no-default-export: off */
 
@@ -9,17 +10,7 @@ export default function configKarma(karma : Object) {
 
     const karmaConfig = getKarmaConfig(karma, {
         basePath: __dirname,
-        webpack:  WEBPACK_CONFIG_TEST,
-        client:   {
-            captureConsole: true,
-            mocha:          {
-                bail:            true,
-                timeout: 10000
-            },
-            jasmine: {
-                timeout:   10000
-            }
-        }
+        webpack:  WEBPACK_CONFIG_TEST
     });
 
     karma.set(karmaConfig);

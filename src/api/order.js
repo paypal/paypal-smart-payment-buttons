@@ -522,8 +522,8 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
 
 type PayWithNonceOptions = {|
     orderID : string,
-    paymentMethodNonce : ?string,
-    clientID : ?string,
+    paymentMethodNonce : string,
+    clientID : string,
     branded : boolean,
     buttonSessionID : ?string
 |};
