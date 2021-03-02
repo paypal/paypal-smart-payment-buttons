@@ -174,7 +174,6 @@ function buildSmartWalletQuery() : string {
             tokenID:            types.string,
             vendor:             types.string,
             oneClick:           types.boolean,
-            paymentMethodNonce: types.string,
             branded:            types.boolean
         };
     };
