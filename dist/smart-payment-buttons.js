@@ -4749,33 +4749,28 @@ window.spb = function(modules) {
             name: "nonce",
             setup: function() {},
             isEligible: function(_ref) {
-                var _wallet$card;
-                var paymentMethodNonce = _ref.props.paymentMethodNonce;
                 var wallet = _ref.serviceData.wallet;
-                var instrument = null == wallet || null == (_wallet$card = wallet.card) ? void 0 : _wallet$card.instruments.find((function(_ref2) {
-                    return _ref2.tokenID === paymentMethodNonce;
-                }));
-                return !!(paymentMethodNonce && wallet && instrument && 0 !== wallet.card.instruments.length && wallet.card.instruments.some((function(item) {
+                return !!_ref.props.paymentMethodNonce && !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments.some((function(item) {
                     return item.tokenID && item.branded;
                 })));
             },
-            isPaymentEligible: function(_ref3) {
-                var payment = _ref3.payment;
-                var branded = _ref3.props.branded;
-                var wallet = _ref3.serviceData.wallet;
+            isPaymentEligible: function(_ref2) {
+                var payment = _ref2.payment;
+                var branded = _ref2.props.branded;
+                var wallet = _ref2.serviceData.wallet;
                 var fundingSource = payment.fundingSource, paymentMethodID = payment.paymentMethodID;
-                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref4) {
-                    return _ref4.tokenID === paymentMethodID;
+                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref3) {
+                    return _ref3.tokenID === paymentMethodID;
                 }));
                 return !!instrument && "card" === fundingSource && !(!branded || !instrument.branded) && !(null == instrument || !instrument.tokenID);
             },
-            init: function(_ref6) {
-                var props = _ref6.props, components = _ref6.components, payment = _ref6.payment, serviceData = _ref6.serviceData, config = _ref6.config;
+            init: function(_ref5) {
+                var props = _ref5.props, components = _ref5.components, payment = _ref5.payment, serviceData = _ref5.serviceData, config = _ref5.config;
                 var createOrder = props.createOrder, onApprove = props.onApprove, clientID = props.clientID, branded = props.branded, buttonSessionID = props.buttonSessionID;
                 var wallet = serviceData.wallet;
                 var paymentMethodID = payment.paymentMethodID;
-                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref7) {
-                    return _ref7.tokenID === paymentMethodID;
+                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref6) {
+                    return _ref6.tokenID === paymentMethodID;
                 }));
                 var paymentMethodNonce = null == instrument ? void 0 : instrument.tokenID;
                 if (!paymentMethodNonce) {
@@ -4800,8 +4795,8 @@ window.spb = function(modules) {
                             logger_getLogger().info("orderid_in_nonce", {
                                 orderID: orderID
                             });
-                            return function(_ref5) {
-                                var orderID = _ref5.orderID, paymentMethodNonce = _ref5.paymentMethodNonce, clientID = _ref5.clientID, branded = _ref5.branded, buttonSessionID = _ref5.buttonSessionID;
+                            return function(_ref4) {
+                                var orderID = _ref4.orderID, paymentMethodNonce = _ref4.paymentMethodNonce, clientID = _ref4.clientID, branded = _ref4.branded, buttonSessionID = _ref4.buttonSessionID;
                                 logger_getLogger().info("nonce_payment_initiated");
                                 return function(_ref15) {
                                     var _headers17;
@@ -4848,9 +4843,9 @@ window.spb = function(modules) {
                                 clientID: clientID,
                                 branded: branded,
                                 buttonSessionID: buttonSessionID
-                            }).then((function(_ref8) {
+                            }).then((function(_ref7) {
                                 return onApprove({
-                                    payerID: _ref8.payerID
+                                    payerID: _ref7.payerID
                                 }, {
                                     restart: restart
                                 });
