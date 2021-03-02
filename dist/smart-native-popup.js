@@ -1285,7 +1285,7 @@
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
                     _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "2.0.383", _ref3.user_id = buttonSessionID, _ref3;
+                    _ref3.button_version = "2.0.384", _ref3.user_id = buttonSessionID, _ref3;
                 }));
                 (function() {
                     if (window.document.documentMode) try {
@@ -1379,14 +1379,18 @@
                 window.close();
                 window.location.hash = "closed";
             };
+            var getRawHash = function() {
+                return (window.location.hash || "none").replace(/^#/, "").replace(/\?.+/, "");
+            };
             var opener = window.opener;
             if (!opener) {
                 var _logger$info$info$tra;
                 logger.info("native_popup_no_opener", {
                     buttonSessionID: buttonSessionID,
                     href: base64encode(window.location.href)
-                }).info("native_popup_no_opener_hash_" + (window.location.hash || "none").replace(/^#/, "").replace(/\?.+/, "")).track((_logger$info$info$tra = {}, 
-                _logger$info$info$tra.transition_name = "popup_no_opener", _logger$info$info$tra.info_msg = "location: " + base64encode(window.location.href), 
+                }).info("native_popup_no_opener_hash_" + getRawHash()).track((_logger$info$info$tra = {}, 
+                _logger$info$info$tra.transition_name = "popup_no_opener_hash_" + getRawHash(), 
+                _logger$info$info$tra.info_msg = "location: " + base64encode(window.location.href), 
                 _logger$info$info$tra)).flush().then(closeWindow);
                 throw new Error("Expected window to have opener");
             }

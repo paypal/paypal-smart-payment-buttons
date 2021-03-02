@@ -1781,7 +1781,7 @@ window.spb = function(modules) {
             logger_getLogger().info("rest_api_create_order_token");
             var headers = ((_headers10 = {}).authorization = "Bearer " + accessToken, _headers10["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers10["paypal-client-metadata-id"] = clientMetadataID, _headers10["x-app-name"] = "smart-payment-buttons", 
-            _headers10["x-app-version"] = "2.0.383", _headers10);
+            _headers10["x-app-version"] = "2.0.384", _headers10);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -4749,28 +4749,33 @@ window.spb = function(modules) {
             name: "nonce",
             setup: function() {},
             isEligible: function(_ref) {
+                var _wallet$card;
+                var paymentMethodNonce = _ref.props.paymentMethodNonce;
                 var wallet = _ref.serviceData.wallet;
-                return !!_ref.props.paymentMethodNonce && !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments.some((function(instrument) {
-                    return instrument.tokenID && instrument.branded;
+                var instrument = null == wallet || null == (_wallet$card = wallet.card) ? void 0 : _wallet$card.instruments.find((function(_ref2) {
+                    return _ref2.tokenID === paymentMethodNonce;
+                }));
+                return !!(paymentMethodNonce && wallet && instrument && 0 !== wallet.card.instruments.length && wallet.card.instruments.some((function(item) {
+                    return item.tokenID && item.branded;
                 })));
             },
-            isPaymentEligible: function(_ref2) {
-                var payment = _ref2.payment;
-                var branded = _ref2.props.branded;
-                var wallet = _ref2.serviceData.wallet;
+            isPaymentEligible: function(_ref3) {
+                var payment = _ref3.payment;
+                var branded = _ref3.props.branded;
+                var wallet = _ref3.serviceData.wallet;
                 var fundingSource = payment.fundingSource, paymentMethodID = payment.paymentMethodID;
-                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref3) {
-                    return _ref3.tokenID === paymentMethodID;
+                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref4) {
+                    return _ref4.tokenID === paymentMethodID;
                 }));
                 return !!instrument && "card" === fundingSource && !(!branded || !instrument.branded) && !(null == instrument || !instrument.tokenID);
             },
-            init: function(_ref5) {
-                var props = _ref5.props, components = _ref5.components, payment = _ref5.payment, serviceData = _ref5.serviceData, config = _ref5.config;
+            init: function(_ref6) {
+                var props = _ref6.props, components = _ref6.components, payment = _ref6.payment, serviceData = _ref6.serviceData, config = _ref6.config;
                 var createOrder = props.createOrder, onApprove = props.onApprove, clientID = props.clientID, branded = props.branded, buttonSessionID = props.buttonSessionID;
                 var wallet = serviceData.wallet;
                 var paymentMethodID = payment.paymentMethodID;
-                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref6) {
-                    return _ref6.tokenID === paymentMethodID;
+                var instrument = null == wallet ? void 0 : wallet.card.instruments.find((function(_ref7) {
+                    return _ref7.tokenID === paymentMethodID;
                 }));
                 var paymentMethodNonce = null == instrument ? void 0 : instrument.tokenID;
                 if (!paymentMethodNonce) {
@@ -4795,8 +4800,8 @@ window.spb = function(modules) {
                             logger_getLogger().info("orderid_in_nonce", {
                                 orderID: orderID
                             });
-                            return function(_ref4) {
-                                var orderID = _ref4.orderID, paymentMethodNonce = _ref4.paymentMethodNonce, clientID = _ref4.clientID, branded = _ref4.branded, buttonSessionID = _ref4.buttonSessionID;
+                            return function(_ref5) {
+                                var orderID = _ref5.orderID, paymentMethodNonce = _ref5.paymentMethodNonce, clientID = _ref5.clientID, branded = _ref5.branded, buttonSessionID = _ref5.buttonSessionID;
                                 logger_getLogger().info("nonce_payment_initiated");
                                 return function(_ref15) {
                                     var _headers17;
@@ -4843,9 +4848,9 @@ window.spb = function(modules) {
                                 clientID: clientID,
                                 branded: branded,
                                 buttonSessionID: buttonSessionID
-                            }).then((function(_ref7) {
+                            }).then((function(_ref8) {
                                 return onApprove({
-                                    payerID: _ref7.payerID
+                                    payerID: _ref8.payerID
                                 }, {
                                     restart: restart
                                 });
@@ -5379,10 +5384,10 @@ window.spb = function(modules) {
                                     sessionUID: sessionUID
                                 });
                                 var nativeWin = popup(nativeUrl);
-                                window.addEventListener("pagehide", (function() {
+                                window.addEventListener("pagehide", (function(event) {
                                     var _getLogger$info$track12;
-                                    logger_getLogger().info("native_closing_popup").track((_getLogger$info$track12 = {}, 
-                                    _getLogger$info$track12.state_name = "smart_button", _getLogger$info$track12.transition_name = "native_closing_popup", 
+                                    logger_getLogger().info("native_closing_popup_" + event).track((_getLogger$info$track12 = {}, 
+                                    _getLogger$info$track12.state_name = "smart_button", _getLogger$info$track12.transition_name = event ? " native_closing_popup_" + event : "native_closing_popup", 
                                     _getLogger$info$track12)).flush();
                                     nativeWin.close();
                                 }));
@@ -5452,10 +5457,10 @@ window.spb = function(modules) {
                                         if (!(approved || cancelled || didFallback || isAndroidChrome())) return promise_ZalgoPromise.all([ onCancel(), close() ]);
                                     })).then(src_util_noop);
                                 }), 500);
-                                var closePopup = function() {
+                                var closePopup = function(event) {
                                     var _getLogger$info$track17;
-                                    logger_getLogger().info("native_closing_popup").track((_getLogger$info$track17 = {}, 
-                                    _getLogger$info$track17.state_name = "smart_button", _getLogger$info$track17.transition_name = "native_closing_popup", 
+                                    logger_getLogger().info("native_closing_popup_" + event).track((_getLogger$info$track17 = {}, 
+                                    _getLogger$info$track17.state_name = "smart_button", _getLogger$info$track17.transition_name = event ? "native_closing_popup_" + event : "native_closing_popup", 
                                     _getLogger$info$track17)).flush();
                                     closeListener.cancel();
                                     popupWin.close();
@@ -5599,22 +5604,22 @@ window.spb = function(modules) {
                                 }));
                                 var onApproveListener = listen(popupWin, getNativePopupDomain(), "onApprove", (function(data) {
                                     onApproveCallback(data);
-                                    closePopup();
+                                    closePopup("onApprove");
                                 }));
                                 var onCancelListener = listen(popupWin, getNativePopupDomain(), "onCancel", (function() {
                                     onCancelCallback();
-                                    closePopup();
+                                    closePopup("onCancel");
                                 }));
                                 var onCompleteListener = listen(popupWin, getNativePopupDomain(), "onComplete", (function() {
                                     var _getLogger$info$track23;
                                     logger_getLogger().info("native_post_message_on_complete").track((_getLogger$info$track23 = {}, 
                                     _getLogger$info$track23.state_name = "smart_button", _getLogger$info$track23.transition_name = "native_oncomplete", 
                                     _getLogger$info$track23)).flush();
-                                    closePopup();
+                                    closePopup("onComplete");
                                 }));
                                 var onErrorListener = listen(popupWin, getNativePopupDomain(), "onError", (function(data) {
                                     onErrorCallback(data);
-                                    closePopup();
+                                    closePopup("onError");
                                 }));
                                 var detectWebSwitchListener = listen(popupWin, getNativeDomain(), "detectWebSwitch", (function() {
                                     logger_getLogger().info("native_post_message_detect_web_switch").flush();
@@ -6290,7 +6295,7 @@ window.spb = function(modules) {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
                     _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "2.0.383", _ref3.button_correlation_id = buttonCorrelationID, 
+                    _ref3.button_version = "2.0.384", _ref3.button_correlation_id = buttonCorrelationID, 
                     _ref3.stickiness_id = stickinessID, _ref3.bn_code = partnerAttributionID, _ref3.user_action = commit ? "commit" : "continue", 
                     _ref3.seller_id = merchantID[0], _ref3.merchant_domain = merchantDomain, _ref3.t = Date.now().toString(), 
                     _ref3.user_id = buttonSessionID, _ref3;
@@ -6410,7 +6415,7 @@ window.spb = function(modules) {
                             createOrder: function() {
                                 if (!isEnabled()) throw new Error("Error occurred. Button not enabled.");
                                 return promise_ZalgoPromise.hash({
-                                    valid: !onClick || onClick({
+                                    valid: !onClick || !fundingSource || onClick({
                                         fundingSource: fundingSource
                                     })
                                 }).then((function(_ref2) {
