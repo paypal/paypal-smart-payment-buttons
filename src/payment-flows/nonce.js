@@ -17,7 +17,7 @@ function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
     const { wallet } = serviceData;
 
-    const instrument  = wallet?.card?.instruments.find(({ tokenID })  => (tokenID === paymentMethodNonce));
+    // const instrument  = wallet?.card?.instruments.find(({ tokenID })  => (tokenID === paymentMethodNonce));
 
     if (!paymentMethodNonce) {
         return false;
@@ -27,9 +27,9 @@ function isNonceEligible({ props, serviceData }) : boolean {
         return false;
     }
 
-    if (!instrument) {
-        return false;
-    }
+    // if (!instrument) {
+    //     return false;
+    // }
 
     // Ensure wallet instruments are branded and have a valid tokenID.
     if (wallet.card.instruments.length === 0 ||
