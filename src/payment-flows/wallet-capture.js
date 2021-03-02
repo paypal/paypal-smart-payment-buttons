@@ -38,7 +38,6 @@ function setupWalletCapture({ props, config, serviceData } : SetupOptions) {
     const clientMetadataID = cmid || sessionID;
 
     if (clientID && userIDToken) {
-
         smartWalletPromise = getSmartWallet({ clientID, merchantID, currency, amount, clientMetadataID, userIDToken, env, cspNonce }).catch(err => {
             getLogger().warn('load_smart_wallet_error', { err: stringifyError(err) });
             smartWalletErrored = true;
