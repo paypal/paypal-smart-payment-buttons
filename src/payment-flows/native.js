@@ -598,7 +598,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             androidPopupExperiment.logComplete();
         }
 
-        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken, orderID, buttonSessionID })
+        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
                 [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
@@ -614,7 +614,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return ZalgoPromise.all([
             onApprove(data, actions)
                 .catch(err => {
-                    getLogger().info(`native_message_onapprove_error`, { payerID, paymentID, billingToken, orderID, buttonSessionID })
+                    getLogger().info(`native_message_onapprove_error`, { payerID, paymentID, billingToken })
                         .track({
                             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE_ERROR,
                             [FPTI_CUSTOM_KEY.INFO_MSG]: `Error: ${ stringifyError(err) }`
