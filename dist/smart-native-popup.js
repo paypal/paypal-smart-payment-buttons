@@ -1552,7 +1552,7 @@
                         if (appSwitch) {
                             var timer = setTimeout((function() {
                                 didRedirect || sendToParent("detectAppSwitch");
-                            }), 500);
+                            }), 1500);
                             clean.register((function() {
                                 return clearTimeout(timer);
                             }));

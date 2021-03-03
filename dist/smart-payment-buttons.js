@@ -4618,7 +4618,7 @@ window.spb = function(modules) {
             var _ref9, sessionUID, config;
             nativeSocket.onError((function(err) {
                 var stringifiedError = stringifyError(err);
-                if (-1 === stringifiedError.indexOf("permission_denied")) {
+                if (stringifiedError && -1 === stringifiedError.toLowerCase().indexOf("permission_denied")) {
                     var _getLogger$error$trac;
                     logger_getLogger().error("native_socket_error", {
                         err: stringifiedError
