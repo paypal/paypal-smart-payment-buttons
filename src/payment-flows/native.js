@@ -334,14 +334,14 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
     }).flush();
 }
 
-function instrumentFirebaseMessaging(info: string, payload: ?{}, propsPromise: ZalgoPromise<NativeSDKProps>) {
+function instrumentFirebaseMessaging(info : string, payload : ?{}, propsPromise : ZalgoPromise<NativeSDKProps>) {
     propsPromise.then(sdkProps => {
         const sanitizedProps = {
             ...sdkProps,
             facilitatorAccessToken: sdkProps.facilitatorAccessToken ? '********************' : ''
         };
 
-        if (payload != null) {
+        if (payload !== null) {
             getLogger().info(info, sanitizedProps).track(payload).flush();
         } else {
             getLogger().info(info, sanitizedProps).flush();
