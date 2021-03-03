@@ -591,8 +591,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
-    const { orderID } = getSDKProps()
-
     const onApproveCallback = ({ data: { payerID, paymentID, billingToken } }) => {
         approved = true;
 
