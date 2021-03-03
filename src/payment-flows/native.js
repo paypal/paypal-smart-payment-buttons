@@ -334,7 +334,7 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
     }).flush();
 }
 
-function instrumentFirebaseMessaging(info : string, payload : ?{}, propsPromise : ZalgoPromise<NativeSDKProps>) {
+function instrumentFirebaseMessaging(info : string, payload : ?{||}, propsPromise : ZalgoPromise<NativeSDKProps>) {
     propsPromise.then(sdkProps => {
         const sanitizedProps = {
             ...sdkProps,
@@ -346,7 +346,7 @@ function instrumentFirebaseMessaging(info : string, payload : ?{}, propsPromise 
         } else {
             getLogger().info(info, sanitizedProps).flush();
         }
-    })
+    });
 }
 
 type Query = {
@@ -696,12 +696,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
                 instrumentFirebaseMessaging(`native_response_setprops`, {
-                    [FPTI_KEY.STATE]:   FPTI_STATE.BUTTON,
+                    [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
                 }, getSDKProps());
             }).catch(err => {
                 instrumentFirebaseMessaging(`native_response_setprops_error`, {
-                    [FPTI_KEY.STATE]:   FPTI_STATE.BUTTON,
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }, getSDKProps());
             });
@@ -716,7 +716,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
 
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
-            const sdkProps = getSDKProps()
+            const sdkProps = getSDKProps();
             instrumentFirebaseMessaging(`native_message_getprops`, null, sdkProps);
             return sdkProps;
         });
