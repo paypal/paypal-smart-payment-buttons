@@ -329,9 +329,24 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
         facilitatorAccessToken: props.facilitatorAccessToken ? '********************' : ''
     };
 
-    getLogger().info('native_setprops_request', sanitizedProps).track({
+    getLogger().info(`native_message_setprops`, sanitizedProps).track({
         [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_SET_PROPS_ATTEMPT
     }).flush();
+}
+
+function instrumentFirebaseMessaging(info: string, payload: ?{}, propsPromise: ZalgoPromise<NativeSDKProps>) {
+    propsPromise.then(sdkProps => {
+        const sanitizedProps = {
+            ...sdkProps,
+            facilitatorAccessToken: sdkProps.facilitatorAccessToken ? '********************' : ''
+        };
+
+        if (payload != null) {
+            getLogger().info(info, sanitizedProps).track(payload).flush();
+        } else {
+            getLogger().info(info, sanitizedProps).flush();
+        }
+    })
 }
 
 type Query = {
@@ -576,6 +591,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
+    const { orderID } = getSDKProps()
+
     const onApproveCallback = ({ data: { payerID, paymentID, billingToken } }) => {
         approved = true;
 
@@ -583,13 +600,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             androidPopupExperiment.logComplete();
         }
 
-        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
+        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken, orderID, buttonSessionID })
             .track({
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
                 [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
             })
             .flush();
-
         getLogger()
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_width_${ window.outerWidth }`)
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
@@ -600,7 +616,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return ZalgoPromise.all([
             onApprove(data, actions)
                 .catch(err => {
-                    getLogger().info(`native_message_onapprove_error`, { payerID, paymentID, billingToken })
+                    getLogger().info(`native_message_onapprove_error`, { payerID, paymentID, billingToken, orderID, buttonSessionID })
                         .track({
                             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE_ERROR,
                             [FPTI_CUSTOM_KEY.INFO_MSG]: `Error: ${ stringifyError(err) }`
@@ -614,11 +630,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const onCancelCallback = () => {
         cancelled = true;
-        getLogger().info(`native_message_oncancel`)
-            .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
-            })
-            .flush();
+        instrumentFirebaseMessaging(`native_message_oncancel`, {
+            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
+        }, getSDKProps(), true)
         return ZalgoPromise.all([
             onCancel(),
             close()
@@ -626,11 +640,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
-        getLogger().info(`native_message_onerror`, { err: message })
-            .track({
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
-                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
-            }).flush();
+        instrumentFirebaseMessaging(`native_message_onerror`, {
+            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
+            [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
+        }, getSDKProps())
+
         return ZalgoPromise.all([
             onError(new Error(message)),
             close()
@@ -638,10 +652,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
-        getLogger().info(`native_message_onshippingchange`)
-            .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
-            }).flush();
+        instrumentFirebaseMessaging(`native_message_onshippingchange`, {
+            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
+        }, getSDKProps())
+
         if (onShippingChange) {
             let resolved = true;
             const actions = {
@@ -665,10 +679,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onFallbackCallback = () => {
-        getLogger().info(`native_message_onfallback`)
-            .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
-            }).flush();
+        instrumentFirebaseMessaging(`native_message_onfallback`, {
+            [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
+        }, getSDKProps())
         fallbackToWebCheckout();
     };
 
@@ -681,32 +694,33 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const setNativeProps = () => {
             return getSDKProps().then(sdkProps => {
                 getLogger().info(`native_message_setprops`).flush();
-                instrumentNativeSDKProps(sdkProps);
+                instrumentNativeSDKProps(`native_message_setprops`, sdkProps);
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
-                getLogger().info(`native_response_setprops`).track({
-                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                instrumentFirebaseMessaging(`native_response_setprops`, {
+                    [FPTI_KEY.STATE]: FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
-                }).flush();
+                }, getSDKProps())
             }).catch(err => {
-                getLogger().info(`native_response_setprops_error`).track({
+                instrumentFirebaseMessaging(`native_response_setprops_error`, {
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
-                }).flush();
+                }, getSDKProps())
             });
         };
 
         const closeNative = memoize(() => {
-            getLogger().info(`native_message_close`).flush();
+            instrumentFirebaseMessaging(`native_message_close`, null, getSDKProps())
             return socket.send(SOCKET_MESSAGE.CLOSE).then(() => {
-                getLogger().info(`native_response_close`).flush();
+                instrumentFirebaseMessaging(`native_response_close`, null, getSDKProps())
                 return close();
             });
         });
 
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
-            getLogger().info(`native_message_getprops`).flush();
-            return getSDKProps();
+            const sdkProps = getSDKProps()
+            instrumentFirebaseMessaging(`native_message_getprops`, null, sdkProps)
+            return sdkProps;
         });
 
         const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
@@ -969,7 +983,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                         domain:       merchantDomain
                     }).then(eligibility => {
                         if (!eligibility || !eligibility[fundingSource] || !eligibility[fundingSource].eligibility) {
-                            getLogger().info(`native_appswitch_ineligible`, { orderID })
+                            getLogger().info(`native_appswitch_ineligible`, { orderID, buttonSessionID })
                                 .track({
                                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                                     [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_INELIGIBLE
