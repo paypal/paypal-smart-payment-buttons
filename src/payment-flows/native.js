@@ -83,7 +83,6 @@ const PARTIAL_ENCODING_CLIENT = [
 let clean;
 let initialPageUrl;
 let nativeEligibility : NativeEligibility;
-let orderId;
 
 type NativeSocketOptions = {|
     sessionUID : string,
@@ -565,7 +564,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const getSDKProps = memoize(() : ZalgoPromise<NativeSDKProps> => {
         return createOrder().then(orderID => {
-            orderId = orderID
             const userAgent = getUserAgent();
             const webCheckoutUrl = getWebCheckoutUrl({ orderID });
             const forceEligible = isNativeOptedIn({ props });
@@ -700,9 +698,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const closeNative = memoize(() => {
             getLogger().info(`native_message_close`).flush();
-            return socket.send(SOCKET_MESSAGE.CLOSE, {orderId, buttonSessionID}).then(() => {
-                getLogger().info(`native_response_close`).flush();
-                return close();
+            return getSDKProps().then(sdkProps => {
+                return socket.send(SOCKET_MESSAGE.CLOSE, sdkProps).then(() => {
+                    getLogger().info(`native_response_close`).flush();
+                    return close();
+                });
             });
         });
 
