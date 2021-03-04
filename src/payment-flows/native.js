@@ -693,7 +693,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const setNativeProps = () => {
             return getSDKProps().then(sdkProps => {
                 getLogger().info(`native_message_setprops`).flush();
-                instrumentNativeSDKProps(`native_message_setprops`, sdkProps);
+                instrumentNativeSDKProps(sdkProps);
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
                 instrumentFirebaseMessaging(`native_response_setprops`, getSDKProps(), {
