@@ -132,7 +132,7 @@ export type ContentType = {|
 |};
 
 export type PostRobot = {|
-    
+
 |};
 
 export type PayPal = {|
@@ -182,4 +182,21 @@ export type ExportCallbacks = {|
     onApprove : () => ZalgoPromise<void> | void,
     onCancel : () => ZalgoPromise<void> | void,
     onError : (mixed) => ZalgoPromise<void> | void
+|};
+
+export type PersonalizationType = {|
+    buttonText? : {|
+        text : string,
+        tracking : {|
+            impression : string,
+            click : string
+        |}
+    |},
+    tagline? : {|
+        text : string,
+        tracking : {|
+            impression : string,
+            click : string
+        |}
+    |}
 |};
