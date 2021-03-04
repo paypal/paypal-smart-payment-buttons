@@ -14,7 +14,8 @@ import { SPB_QUERY_KEYS } from './constants';
 
 type StyleType = {|
     label? : string,
-    period? : ?number
+    period? : ?number,
+    tagline? : boolean | string
 |};
 
 type ButtonInputParams = {|
@@ -40,12 +41,15 @@ type ButtonInputParams = {|
     amount? : number | string,
     clientMetadataID? : string,
     riskData? : string,
-    platform : ?$Values<typeof PLATFORM>
+    platform : ?$Values<typeof PLATFORM>,
+    paymentMethodNonce? : ?string,
+    branded? : boolean
 |};
 
 type Style = {|
     label : string,
-    period : ?number
+    period : ?number,
+    tagline? : boolean | string
 |};
 
 type ButtonParams = {|
@@ -75,7 +79,9 @@ type ButtonParams = {|
     riskData : ?RiskData,
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
-    cookies : string
+    cookies : string,
+    paymentMethodNonce : ?string,
+    branded : ?boolean
 |};
 
 function getCookieString(req : ExpressRequest) : string {
@@ -111,7 +117,7 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
             throw new makeError(ERROR_CODE.VALIDATION_ERROR, `Invalid funding eligibility: ${ encodedFundingEligibility }`, err);
         }
         const fundingEligibility = getDefaultFundingEligibility();
-        
+
         for (const fundingSource of values(FUNDING)) {
             const fundingSourceEligibilityInput = fundingEligibilityInput[fundingSource] || {};
             const fundingSourceEligibility = fundingEligibility[fundingSource] = {};
@@ -180,12 +186,34 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 
         return fundingEligibility;
     }
-    
+
     return {
         [ FUNDING.PAYPAL ]: {
             eligible: true
         }
     };
+}
+
+
+function getPaymentMethodNonce(req : ExpressRequest) : ?string {
+    const paymentMethodNonce = req.query && req.query.paymentMethodNonce;
+
+    if (!paymentMethodNonce || typeof paymentMethodNonce !== 'string') {
+        return;
+    }
+
+    return paymentMethodNonce;
+}
+
+
+function getBranded(params : ButtonInputParams) : ?boolean {
+    const branded = params.branded;
+
+    if (typeof branded !== 'boolean') {
+        return;
+    }
+
+    return branded;
 }
 
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
@@ -245,10 +273,11 @@ export function getAmount(amount : ?(string | number)) : ?string {
 function getStyle(params : ButtonInputParams) : Style {
     const {
         label = 'paypal',
-        period
+        period,
+        tagline
     } = params.style || {};
 
-    return { label, period };
+    return { label, period, tagline };
 }
 
 export function getButtonParams(params : ButtonInputParams, req : ExpressRequest, res : ExpressResponse) : ButtonParams {
@@ -280,6 +309,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const buyerCountry = getBuyerCountry(req, params);
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
+    const paymentMethodNonce = getPaymentMethodNonce(req);
+
+    const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
@@ -312,7 +344,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         clientMetadataID,
         correlationID,
         platform,
-        cookies
+        cookies,
+        paymentMethodNonce,
+        branded
     };
 }
 

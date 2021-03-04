@@ -293,7 +293,7 @@ function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void>
             }).then(result => {
                 nativeEligibility = result;
 
-                if (isTestGroup(FUNDING.PAYPAL) || isControlGroup(FUNDING.PAYPAL) || isTestGroup(FUNDING.VENMO) || isControlGroup(FUNDING.VENMO)) {
+                if (isTestGroup(FUNDING.PAYPAL) || isTestGroup(FUNDING.VENMO)) {
                     getLogger().addMetaBuilder(() => {
                         return {
                             amplitude: true
@@ -948,8 +948,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return unresolvedPromise();
         });
 
+        const redirectListenerTimeout = setTimeout(() => {
+            getLogger().info(`native_popup_load_timeout`).flush();
+        }, 5 * 1000);
+
         const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app, pageUrl, stickinessID: popupStickinessID } }) => {
             getLogger().info(`native_post_message_await_redirect`).flush();
+            clearTimeout(redirectListenerTimeout);
 
             const stickinessID = deferABSplitToPopup()
                 ? popupStickinessID

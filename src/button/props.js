@@ -6,7 +6,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import type { InstallmentsFlowType } from '@paypal/installments/src/types';
 
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
-    ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions } from '../types';
+    ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions, PersonalizationType } from '../types';
 import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
@@ -59,6 +59,7 @@ export type ButtonXProps = {|
     commit : boolean,
     intent : $Values<typeof INTENT>,
     currency : $Values<typeof CURRENCY>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
     buyerCountry : $Values<typeof COUNTRY>,
@@ -83,7 +84,6 @@ export type ButtonXProps = {|
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
     storageID? : string,
-
     stageHost : ?string,
     apiStageHost : ?string,
     upgradeLSAT? : boolean,
@@ -91,13 +91,16 @@ export type ButtonXProps = {|
 
     amount : ?string,
     userIDToken : ?string,
-    
+
     onInit : XOnInit,
     onApprove : ?XOnApprove,
     onCancel : XOnCancel,
     onClick : XOnClick,
     onError : XOnError,
-    onShippingChange : ?XOnShippingChange
+    onShippingChange : ?XOnShippingChange,
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
 export type ButtonProps = {|
@@ -118,6 +121,7 @@ export type ButtonProps = {|
     commit : boolean,
     currency : $Values<typeof CURRENCY>,
     intent : $Values<typeof INTENT>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
 
@@ -157,7 +161,10 @@ export type ButtonProps = {|
 
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
-    onAuth : OnAuth
+    onAuth : OnAuth,
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
 // eslint-disable-next-line complexity
@@ -203,6 +210,9 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         enableFunding,
         disableFunding,
         disableCard,
+        wallet,
+        paymentMethodNonce,
+        branded,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
         storageID
     } = xprops;
@@ -295,6 +305,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         platform,
         currency,
         intent,
+        wallet,
 
         getPopupBridge,
         getPrerenderDetails,
@@ -330,6 +341,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
+        paymentMethodNonce,
+        branded,
         stickinessID
     };
 }
@@ -376,7 +389,8 @@ export type ServiceData = {|
     eligibility : {|
         cardFields : boolean
     |},
-    cookies : string
+    cookies : string,
+    personalization : PersonalizationType
 |};
 
 type ServiceDataOptions = {|
@@ -391,11 +405,12 @@ type ServiceDataOptions = {|
     eligibility : {|
         cardFields : boolean
     |},
-    cookies : string
+    cookies : string,
+    personalization : PersonalizationType
 |};
 
 export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyerGeoCountry,
-    fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility, cookies } : ServiceDataOptions) : ServiceData {
+    fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility, cookies, personalization } : ServiceDataOptions) : ServiceData {
 
     return {
         merchantID:   serverMerchantID,
@@ -407,6 +422,8 @@ export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyer
         buyerAccessToken,
         facilitatorAccessToken,
         eligibility,
-        cookies
+        cookies,
+        personalization
     };
 }
+
