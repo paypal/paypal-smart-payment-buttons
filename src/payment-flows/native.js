@@ -341,7 +341,7 @@ function instrumentFirebaseMessaging(info : string, propsPromise : ZalgoPromise<
             facilitatorAccessToken: sdkProps.facilitatorAccessToken ? '********************' : ''
         };
 
-        const isEmpty = Object.keys(payload).length === 0
+        const isEmpty = Object.keys(payload).length === 0;
         if (!isEmpty) {
             getLogger().info(info, sanitizedProps).track(payload).flush();
         } else {
