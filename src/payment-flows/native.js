@@ -86,8 +86,6 @@ let nativeEligibility : NativeEligibility;
 
 type NativeSocketOptions = {|
     sessionUID : string,
-    buttonSessionID: string,
-    contextID: String,
     firebaseConfig : FirebaseConfig,
     version : string
 |};
