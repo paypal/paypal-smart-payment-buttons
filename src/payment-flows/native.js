@@ -86,6 +86,8 @@ let nativeEligibility : NativeEligibility;
 
 type NativeSocketOptions = {|
     sessionUID : string,
+    buttonSessionID: string,
+    contextID: String,
     firebaseConfig : FirebaseConfig,
     version : string
 |};
@@ -698,10 +700,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const closeNative = memoize(() => {
             getLogger().info(`native_message_close`).flush();
-            return socket.send(SOCKET_MESSAGE.CLOSE).then(() => {
-                getLogger().info(`native_response_close`).flush();
-                return close();
-            });
+            return getSDKProps().then(sdkProps => {
+                socket.send(SOCKET_MESSAGE.CLOSE, sdkProps).then(() => {
+                    getLogger().info(`native_response_close`).flush();
+                    return close();
+                });
+            })
         });
 
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
