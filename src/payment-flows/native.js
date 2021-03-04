@@ -334,14 +334,15 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
     }).flush();
 }
 
-function instrumentFirebaseMessaging(info : string, payload : ?{||}, propsPromise : ZalgoPromise<NativeSDKProps>) {
+function instrumentFirebaseMessaging(info : string, propsPromise : ZalgoPromise<NativeSDKProps>, payload = {}) {
     propsPromise.then(sdkProps => {
         const sanitizedProps = {
             ...sdkProps,
             facilitatorAccessToken: sdkProps.facilitatorAccessToken ? '********************' : ''
         };
 
-        if (payload !== null) {
+        const isEmpty = Object.keys(payload).length === 0
+        if (!isEmpty) {
             getLogger().info(info, sanitizedProps).track(payload).flush();
         } else {
             getLogger().info(info, sanitizedProps).flush();
@@ -628,9 +629,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const onCancelCallback = () => {
         cancelled = true;
-        instrumentFirebaseMessaging(`native_message_oncancel`, {
+        instrumentFirebaseMessaging(`native_message_oncancel`, getSDKProps(), {
             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
-        }, getSDKProps(), true);
+        });
         return ZalgoPromise.all([
             onCancel(),
             close()
@@ -638,10 +639,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
-        instrumentFirebaseMessaging(`native_message_onerror`, {
+        instrumentFirebaseMessaging(`native_message_onerror`, getSDKProps(), {
             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
             [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
-        }, getSDKProps());
+        });
 
         return ZalgoPromise.all([
             onError(new Error(message)),
@@ -650,9 +651,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
-        instrumentFirebaseMessaging(`native_message_onshippingchange`, {
+        instrumentFirebaseMessaging(`native_message_onshippingchange`, getSDKProps(), {
             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
-        }, getSDKProps());
+        });
 
         if (onShippingChange) {
             let resolved = true;
@@ -677,9 +678,9 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onFallbackCallback = () => {
-        instrumentFirebaseMessaging(`native_message_onfallback`, {
+        instrumentFirebaseMessaging(`native_message_onfallback`, getSDKProps(), {
             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
-        }, getSDKProps());
+        });
         fallbackToWebCheckout();
     };
 
@@ -695,29 +696,29 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 instrumentNativeSDKProps(`native_message_setprops`, sdkProps);
                 return socket.send(SOCKET_MESSAGE.SET_PROPS, sdkProps);
             }).then(() => {
-                instrumentFirebaseMessaging(`native_response_setprops`, {
+                instrumentFirebaseMessaging(`native_response_setprops`, getSDKProps(), {
                     [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
                     [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
-                }, getSDKProps());
+                });
             }).catch(err => {
-                instrumentFirebaseMessaging(`native_response_setprops_error`, {
+                instrumentFirebaseMessaging(`native_response_setprops_error`, getSDKProps(), {
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                     [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
-                }, getSDKProps());
+                });
             });
         };
 
         const closeNative = memoize(() => {
-            instrumentFirebaseMessaging(`native_message_close`, null, getSDKProps());
+            instrumentFirebaseMessaging(`native_message_close`, getSDKProps());
             return socket.send(SOCKET_MESSAGE.CLOSE).then(() => {
-                instrumentFirebaseMessaging(`native_response_close`, null, getSDKProps());
+                instrumentFirebaseMessaging(`native_response_close`, getSDKProps());
                 return close();
             });
         });
 
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
             const sdkProps = getSDKProps();
-            instrumentFirebaseMessaging(`native_message_getprops`, null, sdkProps);
+            instrumentFirebaseMessaging(`native_message_getprops`, sdkProps);
             return sdkProps;
         });
 
