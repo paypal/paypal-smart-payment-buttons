@@ -703,7 +703,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     getLogger().info(`native_response_close`).flush();
                     return close();
                 });
-            })
+            });
         });
 
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
