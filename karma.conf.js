@@ -1,4 +1,3 @@
-
 /* @flow */
 /* eslint import/no-default-export: off */
 
