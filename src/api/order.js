@@ -86,16 +86,6 @@ export function getOrder(orderID : string, { facilitatorAccessToken, buyerAccess
 }
 
 export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_capture')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_capture',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -117,16 +107,6 @@ export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAc
 }
 
 export function authorizeOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_authorize')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_authorize',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -152,16 +132,6 @@ type PatchData = {|
 |};
 
 export function patchOrder(orderID : string, data : PatchData, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_patch')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_patch',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
