@@ -1,15 +1,15 @@
 {
     "_id": "@paypal/smart-payment-buttons",
-    "_rev": "621-b85f7dca99ae9449835c15c0feb0a0dd",
+    "_rev": "644-6ad3a528e9cce70220b5c5e198d5a44d",
     "name": "@paypal/smart-payment-buttons",
     "dist-tags": {
-        "latest": "2.0.384",
+        "latest": "5.0.6",
         "noop": "2.0.290",
-        "active-test": "2.0.384",
-        "active-local": "2.0.384",
-        "active-stage": "2.0.384",
-        "active-sandbox": "2.0.384",
-        "active-production": "2.0.384"
+        "active-test": "5.0.6",
+        "active-local": "5.0.6",
+        "active-stage": "5.0.6",
+        "active-sandbox": "5.0.6",
+        "active-production": "5.0.6"
     },
     "versions": {
         "2.0.290": {
@@ -193,9 +193,9 @@
             },
             "_hasShrinkwrap": false
         },
-        "2.0.384": {
+        "5.0.6": {
             "name": "@paypal/smart-payment-buttons",
-            "version": "2.0.384",
+            "version": "5.0.6",
             "publishConfig": {
                 "registry": "https://registry.npmjs.org"
             },
@@ -270,25 +270,25 @@
                 "webpack-mem-compile": "^1.0.2"
             },
             "license": "Apache-2.0",
-            "gitHead": "a23d5836a301d04447cce1db443ecd4520e2528e",
+            "gitHead": "996cbf2e6b7e16715aa19b155062df1f893af6c6",
             "bugs": {
                 "url": "https://github.com/paypal/paypal-smart-payment-buttons/issues"
             },
             "homepage": "https://github.com/paypal/paypal-smart-payment-buttons#readme",
-            "_id": "@paypal/smart-payment-buttons@2.0.384",
-            "_nodeVersion": "12.18.2",
+            "_id": "@paypal/smart-payment-buttons@5.0.6",
+            "_nodeVersion": "12.18.3",
             "_npmVersion": "6.14.11",
             "dist": {
-                "integrity": "sha512-S5NdX0tR2zQeji/KzP4skB9OBw3qkvVPchoV80o2AYv8OmnASRiHG98n3YE17vk4vNUlQz1JHhwWf/vljnF5rA==",
-                "shasum": "c22b6f5f08460360f69569eea5ba7cb2b8d1f990",
-                "tarball": "https://www.paypalobjects.com/smart-payment-buttons/paypal/smart-payment-buttons/tarballs/2.0.384.tgz",
-                "fileCount": 131,
-                "unpackedSize": 2903918,
-                "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.13\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJgPqQKCRA9TVsSAnZWagAAROsQAIwnc+RYeP7o6OtYItMT\n9M8aWBm51EePw/sQbeQR5DgDTLmYGGeEMHLDOVfqKCD8QmxsforpXZyNTvdJ\nLFFpnrHUUeXhZm4hphdNRniw5I47APWcDu3u6zimNFGgRgoGl4WyQtbh2ZDD\na/kJt3DmsfqImI5M+xHq/txFP579j+SIae1cXKjYxNjs5nF6dtdarMU/offR\nk9POoAuOOyQBNstGUEuGU7eVeBXN1BmgcNXwDSuqLmmlqEnEALqaMJ2UpFSW\n1FBGC3zCwpbLFxJCe9N+NebWdCYFk4P1SqBuX7W1NGhbhqxjQfRELUX4G/kH\nNstIZiB6kAIt+bdZjpEIy9k8BmNJHIfbhblRt1DXJHmaAfwSE1/znXCzK+9z\nmHnUm7p1WiPAVyE3VrX4OQ0lye6GwOEcbct1ZfAocv1T2VBFxuKifHKpYqfz\n2sMbdpfk43CEPD01DBsfI8fvHdIqoKDqDRdufwbuYo8gMqYCOBzYdS5478xC\n1R1Rl723+mjWYTRzf3fAa3WYMeFwsk3dg8kuYqxXvCdE4YgRAvo8jKsYvEc5\nwfwEml/4y9Sqa7s8NYJrh7XQYH98kTXT2LtM8DOsJSRuQehyxShICuj7UDhx\nEKoMk7E4bv5vZKdxbidyefS32A6t9fK5IeSHJSeju6SizDC5Wp5132VkAYNw\n1qcJ\r\n=53Ha\r\n-----END PGP SIGNATURE-----\r\n"
+                "integrity": "sha512-nMFSqQ9e3pEvEZzGIePiinrK+k6hTpFulvi341pIT7PG1hyuSQhR/FJAplXkJ1qQG3iyY4GJOqgi7ygmvME02A==",
+                "shasum": "77c6cdc61f144f7c9bead020083375f0bddf69d3",
+                "tarball": "https://www.paypalobjects.com/smart-payment-buttons/paypal/smart-payment-buttons/tarballs/5.0.6.tgz",
+                "fileCount": 132,
+                "unpackedSize": 2953533,
+                "npm-signature": "-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.13\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJgQp+3CRA9TVsSAnZWagAAPnYP/05Ng34saeGBF/rWqROG\nbIcI90KdfFBAMLKzT5FnPE3ds93PuuQwuhsa+5dGVUNxe9sxgBk2SCvOoJFf\nM9O/4GR91gn4lzxvK1eYMUsKgdJTjfWqFocmCpX9Re/QxdA4d+fDJIsr4uSO\n+IvBtRqC2eQ7thAWEBQR3EQG9npLgG6VZ4+mnXcNwK5VhGfM+Lg8gNWw0KUr\ni5XzAqIqNs/LRcyL985U/kwjmd3iBjI74/fkhcTd5XxK7shduSSd19kdgjcf\nBeJkcrcWxra+PAZqlDHgTW4PJt2S9ylke6uKigXICfSSqTuk4bktEobh6TM9\nlE+0piywLCUDVRkUvuSdzFUW73ZC81u4QpVPnUHGtem06ZatDzCKt3NSdAmU\nlZR8fr5bPODQTbwGA0JZQDU+G6R9xAFiUemP39axH6ioP9vYin7Vy13c7rqd\nGYo95NAOndaqZ6Ydl3TDQK9hoj2zoxXdHJZF81fVGRco+kyMoSP8y8TlYT37\nFsrencejO36RrPalnBqkW9Mi/TYPqJapOkoeEO+ECZ9ys0uPrmr1RCptIvHW\ngJnt9V+U7i9mzncHtA9Gk3C84ttHQB/VmMzx3qxhskmJbotSY7iIWl+IolZw\nYprCMG4ceYTqbGk/Mut65CoYHq7pvu/9LEJDwHX1bOkHWacIsc8y4WGctEwk\nu6kY\r\n=08kd\r\n-----END PGP SIGNATURE-----\r\n"
             },
             "_npmUser": {
-                "name": "bluepnume",
-                "email": "daniel@bluesuncorp.co.uk"
+                "name": "mnicpt",
+                "email": "mnicpt@gmail.com"
             },
             "directories": {},
             "maintainers": [
@@ -415,7 +415,7 @@
             ],
             "_npmOperationalInternal": {
                 "host": "s3://npm-registry-packages",
-                "tmp": "tmp/smart-payment-buttons_2.0.384_1614717961416_0.4459372720197152"
+                "tmp": "tmp/smart-payment-buttons_5.0.6_1614978998398_0.7204703274520587"
             },
             "_hasShrinkwrap": false
         }
@@ -423,7 +423,7 @@
     "time": {
         "created": "2018-12-12T01:25:35.138Z",
         "2.0.35": "2018-12-12T01:25:35.467Z",
-        "modified": "2021-03-02T21:36:18.831Z",
+        "modified": "2021-03-05T21:31:32.492Z",
         "2.0.36": "2018-12-12T01:51:00.125Z",
         "2.0.37": "2018-12-12T23:37:39.357Z",
         "2.0.38": "2018-12-13T21:50:46.463Z",
@@ -770,7 +770,15 @@
         "2.0.383": "2021-03-01T22:06:36.828Z",
         "2.0.383-0": "2021-03-01T23:00:08.195Z",
         "2.0.384-0": "2021-03-02T19:28:43.237Z",
-        "2.0.384": "2021-03-02T20:46:01.655Z"
+        "2.0.384": "2021-03-02T20:46:01.655Z",
+        "2.0.384-1": "2021-03-02T22:50:12.724Z",
+        "2.0.385": "2021-03-04T07:03:59.368Z",
+        "5.0.1": "2021-03-04T19:34:43.152Z",
+        "5.0.2": "2021-03-04T19:53:08.698Z",
+        "5.0.3": "2021-03-04T20:02:00.952Z",
+        "5.0.4": "2021-03-05T16:03:40.947Z",
+        "5.0.5": "2021-03-05T20:45:30.471Z",
+        "5.0.6": "2021-03-05T21:16:38.727Z"
     },
     "maintainers": [
         {
