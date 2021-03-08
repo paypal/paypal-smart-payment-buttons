@@ -24,6 +24,7 @@ export const HASH = {
     FALLBACK:           'fallback',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
+    ON_FALLBACK:        'fallback',
     ON_ERROR:           'onError',
     TEST:               'test'
 };
