@@ -431,13 +431,19 @@ describe('Native popup cases', () => {
                                 }
 
                                 return ZalgoPromise.delay(1500).then(expect('appSwitchDetector', () => {
-                                    if (!fallbackCalled) {
-                                        throw new Error(`Expected fallback to be called`);
+                                    if (!detectedAppSwitch) {
+                                        throw new Error(`Expected app switch to be detected`);
                                     }
 
                                     window.location.hash = `fallback`;
 
-                                    return nativePopup.destroy();
+                                    return ZalgoPromise.delay(50).then(expect('detectOnApprove', () => {
+                                        if (!fallbackCalled) {
+                                            throw new Error(`Expected fallback to be called`);
+                                        }
+
+                                        return nativePopup.destroy();
+                                    }));
                                 }));
                             }));
 
