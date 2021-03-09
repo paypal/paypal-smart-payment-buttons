@@ -430,12 +430,12 @@ describe('Native popup cases', () => {
                                     throw new Error(`Expected native popup to be available`);
                                 }
 
+                                window.location.hash = 'fallback';
+
                                 return ZalgoPromise.delay(1500).then(expect('appSwitchDetector', () => {
                                     if (!detectedAppSwitch) {
                                         throw new Error(`Expected app switch to be detected`);
                                     }
-
-                                    window.location.hash = `fallback`;
 
                                     return ZalgoPromise.delay(50).then(expect('detectOnApprove', () => {
                                         if (!fallbackCalled) {
@@ -465,7 +465,7 @@ describe('Native popup cases', () => {
                             });
                         }
 
-                        if (event === 'fallback') {
+                        if (event === 'onFallback') {
                             fallbackCalled = true;
                             return ZalgoPromise.resolve({
                                 source: window,
