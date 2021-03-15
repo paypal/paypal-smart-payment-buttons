@@ -102,7 +102,9 @@ export type ButtonXProps = {|
     onShippingChange : ?XOnShippingChange,
 
     paymentMethodNonce : string,
-    branded : boolean
+    branded : boolean,
+    userExperienceFlow : string
+
 |};
 
 export type ButtonProps = {|
