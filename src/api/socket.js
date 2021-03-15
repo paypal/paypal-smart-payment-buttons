@@ -69,6 +69,7 @@ export type MessageSocketOptions = {|
 export type MessageSocket = {|
     on : <T, R>( // eslint-disable-line no-undef
         name : string,
+        messageData: T,
         handler : ({| data : T |}) => ZalgoPromise<R> | R, // eslint-disable-line no-undef
         opts? : {|
             requireSessionUID? : boolean
@@ -286,7 +287,7 @@ export function messageSocket({ sessionUID, driver, sourceApp, sourceAppVersion,
 
     init();
 
-    const on = (name, data, handler, { requireSessionUID = true, timeout = 0 } = {}) => {
+    const on = (name, messageData, handler, { requireSessionUID = true, timeout = 0 } = {}) => {
         if (requestListeners[name]) {
             throw new Error(`Listener already registered for name: ${ name }`);
         }
