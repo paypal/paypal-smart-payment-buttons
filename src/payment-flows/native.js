@@ -705,16 +705,16 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             });
         });
 
-        const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
+        const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, { buttonSessionID }, () : ZalgoPromise<NativeSDKProps> => {
             getLogger().info(`native_message_getprops`).flush();
             return getSDKProps();
         });
 
-        const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
-        const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, onApproveCallback);
-        const onCancelListener = socket.on(SOCKET_MESSAGE.ON_CANCEL, onCancelCallback);
-        const onErrorListener = socket.on(SOCKET_MESSAGE.ON_ERROR, onErrorCallback);
-        const onFallbackListener = socket.on(SOCKET_MESSAGE.ON_FALLBACK, onFallbackCallback);
+        const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, { buttonSessionID }, onShippingChangeCallback);
+        const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, { buttonSessionID }, onApproveCallback);
+        const onCancelListener = socket.on(SOCKET_MESSAGE.ON_CANCEL, { buttonSessionID }, onCancelCallback);
+        const onErrorListener = socket.on(SOCKET_MESSAGE.ON_ERROR, { buttonSessionID }, onErrorCallback);
+        const onFallbackListener = socket.on(SOCKET_MESSAGE.ON_FALLBACK, { buttonSessionID }, onFallbackCallback);
 
         clean.register(getPropsListener.cancel);
         clean.register(onShippingChangeListener.cancel);
@@ -992,7 +992,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                             return false;
                         }
-
                         return true;
                     });
                 });
