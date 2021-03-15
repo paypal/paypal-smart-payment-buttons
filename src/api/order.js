@@ -537,13 +537,14 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
     });
 });
 
-export function updateButtonClientConfig({ orderID, fundingSource, inline = false } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void |}) : ZalgoPromise<void> {
+export function updateButtonClientConfig({ orderID, fundingSource, inline = false, userExperienceFlow } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void, userExperienceFlow : string |}) : ZalgoPromise<void> {
+    const experienceFlow = inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT;
     return updateClientConfig({
         orderID,
         fundingSource,
         integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
-        userExperienceFlow:  inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT,
-        productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS
+        userExperienceFlow:  userExperienceFlow ? userExperienceFlow : experienceFlow,
+        productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS,
     });
 }
 
@@ -556,7 +557,6 @@ type PayWithNonceOptions = {|
 |};
 
 export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true, buttonSessionID } : PayWithNonceOptions) : ZalgoPromise<ApproveData> {
-    getLogger().info(`pay_with_nonce_input_params`, { orderID, paymentMethodNonce, clientID, branded, buttonSessionID });
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `

@@ -66,7 +66,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
 
     return ZalgoPromise.try(() => {
         const { merchantID, personalization } = serviceData;
-        const { clientID, onClick, createOrder, confirmOrder, env, vault } = props;
+        const { clientID, onClick, createOrder, confirmOrder, env, vault, userExperienceFlow } = props;
         
         sendPersonalizationBeacons(personalization);
 
@@ -106,7 +106,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     }
 
                     // Do not block by default
-                    updateButtonClientConfig({ orderID, fundingSource, inline }).catch(err => {
+                    updateButtonClientConfig({ orderID, fundingSource, inline, userExperienceFlow }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
                 }).catch(noop);
