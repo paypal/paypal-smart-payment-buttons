@@ -69,9 +69,12 @@ export type MessageSocketOptions = {|
 export type MessageSocket = {|
     on : <T, R>( // eslint-disable-line no-undef
         name : string,
-        messageData: T,
+        messageData : {|
+            buttonSessionID: string 
+        |},
         handler : ({| data : T |}) => ZalgoPromise<R> | R, // eslint-disable-line no-undef
         opts? : {|
+            timeout? : number,
             requireSessionUID? : boolean
         |}
     ) => {|
@@ -306,7 +309,7 @@ export function messageSocket({ sessionUID, driver, sourceApp, sourceAppVersion,
                 request_uid:  requestUID,
                 message_name: name,
                 message_type: MESSAGE_TYPE.REQUEST,
-                message_data: data
+                message_data: messageData
             });
 
             if (timeout) {
