@@ -69,9 +69,6 @@ export type MessageSocketOptions = {|
 export type MessageSocket = {|
     on : <T, R>( // eslint-disable-line no-undef
         name : string,
-        messageData : {|
-             buttonSessionID : string
-        |},
         handler : ({| data : T |}) => ZalgoPromise<R> | R, // eslint-disable-line no-undef
         opts? : {|
             timeout? : number,
@@ -290,36 +287,15 @@ export function messageSocket({ sessionUID, driver, sourceApp, sourceAppVersion,
 
     init();
 
-    const on = (name, messageData, handler, { requireSessionUID = true, timeout = 0 } = {}) => {
+    const on = (name, handler, { requireSessionUID = true, timeout = 0 } = {}) => {
         if (requestListeners[name]) {
             throw new Error(`Listener already registered for name: ${ name }`);
         }
-
-        const listenerPromise = new ZalgoPromise();
 
         requestListeners[name] = {
             handler,
             requireSessionUID
         };
-
-        socketPromise.then(socket => {
-            const requestUID = uniqueID();
-
-            sendMessage(socket, {
-                request_uid:  requestUID,
-                message_name: name,
-                message_type: MESSAGE_TYPE.REQUEST,
-                message_data: messageData
-            });
-
-            if (timeout) {
-                setTimeout(() => {
-                    listenerPromise.reject(new Error(`Timeoued out waiting for ${ name } response after ${ timeout }ms`));
-                }, timeout);
-            }
-
-            return listenerPromise;
-        });
 
         return {
             cancel: () => {

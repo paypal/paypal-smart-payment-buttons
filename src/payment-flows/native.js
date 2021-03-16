@@ -577,17 +577,17 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
-    const onApproveCallback = ({ data: { payerID, paymentID, billingToken } }) => {
+    const onApproveCallback = ({ data: { payerID, paymentID, billingToken, buttonSessionID } }) => {
         approved = true;
 
         if (isAndroidChrome() && !isControlGroup(fundingSource)) {
             androidPopupExperiment.logComplete();
         }
 
-        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
+        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken, buttonSessionID })
             .track({
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
-                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }, buttonSessionID: ${ buttonSessionID }`
             })
             .flush();
 
@@ -596,7 +596,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
             .flush();
 
-        const data = { payerID, paymentID, billingToken, forceRestAPI: true };
+        const data = { payerID, paymentID, billingToken, buttonSessionID, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
         return ZalgoPromise.all([
             onApprove(data, actions)
@@ -613,7 +613,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         ]).then(noop);
     };
 
-    const onCancelCallback = () => {
+    const onCancelCallback = ( { data: { buttonSessionID }}) => {
         cancelled = true;
         getLogger().info(`native_message_oncancel`)
             .track({
@@ -626,7 +626,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         ]).then(noop);
     };
 
-    const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
+    const onErrorCallback = ({ data : { message, buttonSessionID } } : {| data : {| message : string, buttonSessionID: string |} |}) => {
         getLogger().info(`native_message_onerror`, { err: message })
             .track({
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
@@ -638,7 +638,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         ]).then(noop);
     };
 
-    const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
+    const onShippingChangeCallback = ({ data: { data, buttonSessionID } }: {| data : OnShippingChangeData, buttonSessionID: string |}) => {
         getLogger().info(`native_message_onshippingchange`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
@@ -665,7 +665,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         }
     };
 
-    const onFallbackCallback = () => {
+    const onFallbackCallback = ({ data: { buttonSessionID } }) => {
         getLogger().info(`native_message_onfallback`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
@@ -705,16 +705,16 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             });
         });
 
-        const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, { buttonSessionID }, () : ZalgoPromise<NativeSDKProps> => {
+        const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
             getLogger().info(`native_message_getprops`).flush();
             return getSDKProps();
         });
 
-        const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, { buttonSessionID }, onShippingChangeCallback);
-        const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, { buttonSessionID }, onApproveCallback);
-        const onCancelListener = socket.on(SOCKET_MESSAGE.ON_CANCEL, { buttonSessionID }, onCancelCallback);
-        const onErrorListener = socket.on(SOCKET_MESSAGE.ON_ERROR, { buttonSessionID }, onErrorCallback);
-        const onFallbackListener = socket.on(SOCKET_MESSAGE.ON_FALLBACK, { buttonSessionID }, onFallbackCallback);
+        const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
+        const onApproveListener = socket.on(SOCKET_MESSAGE.ON_APPROVE, onApproveCallback);
+        const onCancelListener = socket.on(SOCKET_MESSAGE.ON_CANCEL, onCancelCallback);
+        const onErrorListener = socket.on(SOCKET_MESSAGE.ON_ERROR, onErrorCallback);
+        const onFallbackListener = socket.on(SOCKET_MESSAGE.ON_FALLBACK, onFallbackCallback);
 
         clean.register(getPropsListener.cancel);
         clean.register(onShippingChangeListener.cancel);
