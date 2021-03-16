@@ -71,7 +71,6 @@ export type MessageSocket = {|
         name : string,
         handler : ({| data : T |}) => ZalgoPromise<R> | R, // eslint-disable-line no-undef
         opts? : {|
-            timeout? : number,
             requireSessionUID? : boolean
         |}
     ) => {|
@@ -81,6 +80,7 @@ export type MessageSocket = {|
         name : string,
         data : T, // eslint-disable-line no-undef
         opts? : {|
+            timeout? : number,
             requireSessionUID? : boolean
         |}
     ) => ZalgoPromise<R>, // eslint-disable-line no-undef
