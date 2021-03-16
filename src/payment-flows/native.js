@@ -626,11 +626,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             onCancel(),
             close()
         ]).then(() => {
-            return { buttonSessionID }
+            return { buttonSessionID };
         });
     };
 
-    const onErrorCallback = ({data: {message}}: {| data: {| message: string |} |}) => {
+    const onErrorCallback = ({ data: { message } }: {| data: {| message: string |} |}) => {
         getLogger().info(`native_message_onerror`, {err: message})
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR,
@@ -640,14 +640,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             onError(new Error(message)),
             close()
         ]).then(() => {
-            return { buttonSessionID }
+            return { buttonSessionID };
         });
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
         getLogger().info(`native_message_onshippingchange`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
             }).flush();
         if (onShippingChange) {
             let resolved = true;
@@ -715,7 +715,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             getLogger().info(`native_message_getprops`).flush();
             return getSDKProps();
         }).then(() => {
-            return { buttonSessionID }
+            return { buttonSessionID };
         });
 
         const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
