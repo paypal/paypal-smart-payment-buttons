@@ -611,7 +611,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 }),
             close()
         ]).then(() => {
-            return { buttonSessionID }
+            return { buttonSessionID };
         });
     };
 
@@ -630,10 +630,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     };
 
-    const onErrorCallback = ({ data: { message } }: {| data: {| message: string |} |}) => {
+    const onErrorCallback = ({ data : { message } }: {| data : {| message : string |} |}) => {
         getLogger().info(`native_message_onerror`, {err: message})
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_ERROR,
                 [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${message}`
             }).flush();
         return ZalgoPromise.all([
