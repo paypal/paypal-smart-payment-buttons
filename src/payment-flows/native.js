@@ -596,7 +596,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
             .flush();
 
-        const data = { payerID, paymentID, billingToken, buttonSessionID, forceRestAPI: true };
+        const data = { payerID, paymentID, billingToken, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
         return ZalgoPromise.all([
             onApprove(data, actions)
