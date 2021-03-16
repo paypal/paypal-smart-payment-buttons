@@ -630,7 +630,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     };
 
-    const onErrorCallback = ({ data : { message }} : {| data : {| message: string |} |}) => {
+    const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
         getLogger().info(`native_message_onerror`, {err: message})
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR,
