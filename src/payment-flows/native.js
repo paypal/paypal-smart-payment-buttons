@@ -714,8 +714,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
             getLogger().info(`native_message_getprops`).flush();
             return getSDKProps();
-        }).then(() => {
-            return { buttonSessionID };
         });
 
         const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
