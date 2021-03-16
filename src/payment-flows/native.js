@@ -577,17 +577,17 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     });
 
-    const onApproveCallback = ({ data: { payerID, paymentID, billingToken, buttonSessionID } }) => {
+    const onApproveCallback = ({ data: { payerID, paymentID, billingToken } }) => {
         approved = true;
 
         if (isAndroidChrome() && !isControlGroup(fundingSource)) {
             androidPopupExperiment.logComplete();
         }
 
-        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken, buttonSessionID })
+        getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
                 [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
-                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }, buttonSessionID: ${ buttonSessionID }`
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
             })
             .flush();
 
@@ -610,10 +610,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     onError(err);
                 }),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID }
+        });
     };
 
-    const onCancelCallback = ( { data: { buttonSessionID }}) => {
+    const onCancelCallback = () => {
         cancelled = true;
         getLogger().info(`native_message_oncancel`)
             .track({
@@ -623,22 +625,26 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return ZalgoPromise.all([
             onCancel(),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID }
+        });
     };
 
-    const onErrorCallback = ({ data : { message, buttonSessionID } } : {| data : {| message : string, buttonSessionID: string |} |}) => {
-        getLogger().info(`native_message_onerror`, { err: message })
+    const onErrorCallback = ({data: {message}}: {| data: {| message: string |} |}) => {
+        getLogger().info(`native_message_onerror`, {err: message})
             .track({
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
-                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${message}`
             }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID }
+        });
     };
 
-    const onShippingChangeCallback = ({ data: { data, buttonSessionID } }: {| data : OnShippingChangeData, buttonSessionID: string |}) => {
+    const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
         getLogger().info(`native_message_onshippingchange`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
@@ -665,7 +671,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         }
     };
 
-    const onFallbackCallback = ({ data: { buttonSessionID } }) => {
+    const onFallbackCallback = () => {
         getLogger().info(`native_message_onfallback`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
@@ -708,6 +714,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const getPropsListener = socket.on(SOCKET_MESSAGE.GET_PROPS, () : ZalgoPromise<NativeSDKProps> => {
             getLogger().info(`native_message_getprops`).flush();
             return getSDKProps();
+        }).then(() => {
+            return { buttonSessionID }
         });
 
         const onShippingChangeListener = socket.on(SOCKET_MESSAGE.ON_SHIPPING_CHANGE, onShippingChangeCallback);
