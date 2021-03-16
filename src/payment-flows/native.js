@@ -619,22 +619,22 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         cancelled = true;
         getLogger().info(`native_message_oncancel`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CANCEL
             })
             .flush();
         return ZalgoPromise.all([
             onCancel(),
             close()
         ]).then(() => {
-            return {buttonSessionID};
+            return { buttonSessionID };
         });
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
-        getLogger().info(`native_message_onerror`, {err: message})
+        getLogger().info(`native_message_onerror`, { err : message})
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_ERROR,
-                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${message}`
+                [FPTI_KEY.TRANSITION]:       FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
             }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
@@ -663,7 +663,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
             };
-            return onShippingChange({...data, forceRestAPI: true}, actions).then(() => {
+            return onShippingChange({...data, forceRestAPI: true }, actions).then(() => {
                 return {
                     resolved
                 };
@@ -674,7 +674,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const onFallbackCallback = () => {
         getLogger().info(`native_message_onfallback`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_FALLBACK
             }).flush();
         fallbackToWebCheckout();
     };
@@ -693,7 +693,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).then(() => {
                 getLogger().info(`native_response_setprops`).track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
                 }).flush();
             }).catch(err => {
                 getLogger().info(`native_response_setprops_error`).track({
