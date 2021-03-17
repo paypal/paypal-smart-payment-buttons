@@ -243,7 +243,7 @@ type OnApproveXProps = {|
     vault : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, apmBrandedStandaloneButton, createOrder } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton : boolean, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, apmBrandedStandaloneButton, createOrder } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton? : boolean, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }

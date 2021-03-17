@@ -384,7 +384,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
             clientMetadataID:           cmid,
             enableFunding,
             standaloneFundingSource,
-            apmBrandedStandaloneButton: apmBrandedStandaloneButton.toString()
+            apmBrandedStandaloneButton
         });
     };
 

@@ -164,11 +164,12 @@ export type ButtonProps = {|
     onAuth : OnAuth,
 
     paymentMethodNonce : string,
-    branded : boolean
+    branded : boolean,
+    apmBrandedStandaloneButton? : boolean
 |};
 
 // eslint-disable-next-line complexity
-export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton : boolean |}) : ButtonProps {
+export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton? : boolean |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
 
