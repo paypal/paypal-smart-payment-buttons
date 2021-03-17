@@ -231,7 +231,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
         onShippingChange, locale, commit, onError, vault, clientAccessToken,
         createBillingAgreement, createSubscription, onClick, amount,
         clientID, connect, clientMetadataID: cmid, onAuth, userIDToken, env,
-        currency, intent, disableFunding, disableCard, enableFunding, 
+        currency, intent, disableFunding, disableCard, enableFunding,
         standaloneFundingSource, apmBrandedStandaloneButton } = props;
 
     let { button, win, fundingSource, card, isClick, buyerAccessToken = serviceData.buyerAccessToken,
@@ -381,9 +381,9 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
             locale,
             commit,
             cspNonce,
-            clientMetadataID: cmid,
+            clientMetadataID:           cmid,
             enableFunding,
-            standaloneFundingSource,  
+            standaloneFundingSource,
             apmBrandedStandaloneButton: apmBrandedStandaloneButton.toString()
         });
     };

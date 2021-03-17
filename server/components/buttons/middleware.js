@@ -27,9 +27,9 @@ type InlineGuestElmoParams = {|
     buyerCountry : $Values<typeof COUNTRY>
 |};
 
-type ApmStandaloneButtonElmoParam = {
-  clientID: string
-}
+type ApmStandaloneButtonElmoParam = {|
+    clientID : string
+|};
 
 type ButtonMiddlewareOptions = {|
     logger : LoggerType,
@@ -46,8 +46,8 @@ type ButtonMiddlewareOptions = {|
     },
     tracking : (ExpressRequest) => void,
     getPersonalizationEnabled : (ExpressRequest) => boolean,
-    cdn? : boolean, 
-    getApmStandaloneButtonExperiment? : (req: ExpressRequest, params : ApmStandaloneButtonElmoParam) => Promise<boolean>
+    cdn? : boolean,
+    getApmStandaloneButtonExperiment? : (req : ExpressRequest, params : ApmStandaloneButtonElmoParam) => Promise<boolean>
 |};
 
 export function getButtonMiddleware({
@@ -152,7 +152,7 @@ export function getButtonMiddleware({
 
             const setupParams = {
                 fundingEligibility, buyerCountry, cspNonce, merchantID, sdkMeta, wallet, correlationID,
-                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization, 
+                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization,
                 apmBrandedStandaloneButton
             };
 

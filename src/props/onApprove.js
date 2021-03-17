@@ -263,7 +263,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 }).flush();
 
             if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
-                if (!payerID && apmBrandedStandaloneButton ) {
+                if (!payerID && apmBrandedStandaloneButton) {
                     getLogger().error('onapprove_payerid_not_present_for_branded_standalone_button', { orderID }).flush();
                 }
             }
@@ -275,8 +275,8 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
 
                 const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
 
-                if (!payerID && !apmBrandedStandaloneButton){
-                    delete data.payerID
+                if (!payerID && !apmBrandedStandaloneButton) {
+                    delete data.payerID;
                 }
 
                 const actions = buildXApproveActions({ orderID, paymentID, payerID, intent, restart, subscriptionID, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });

@@ -57,7 +57,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     }
 
     const { facilitatorAccessToken, eligibility, fundingEligibility, buyerCountry: buyerGeoCountry, sdkMeta, buyerAccessToken, wallet, cookies,
-        cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, correlationID: buttonCorrelationID = '', 
+        cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, correlationID: buttonCorrelationID = '',
         apmBrandedStandaloneButton } = opts;
 
     const clientID = window.xprops.clientID;
@@ -67,7 +67,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         sdkMeta, buyerAccessToken, wallet, content, personalization });
     const { merchantID } = serviceData;
 
-    const props = getProps({ facilitatorAccessToken, apmBrandedStandaloneButton});
+    const props = getProps({ facilitatorAccessToken, apmBrandedStandaloneButton });
     const { env, sessionID, partnerAttributionID, commit, sdkCorrelationID, locale,
         buttonSessionID, merchantDomain, onInit, getPrerenderDetails, rememberFunding, getQueriedEligibleFunding,
         style, fundingSource, intent, createBillingAgreement, createSubscription, stickinessID } = props;
@@ -100,7 +100,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
                     return;
                 }
             } else {
-                if (!apmBrandedStandaloneButton){
+                if (!apmBrandedStandaloneButton) {
                     getLogger().error('unbranded_apm_integration_error', { err: 'no smart fields present' });
                     throw new Error(`Can not find smart fields`);
                 }
@@ -168,7 +168,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             event.preventDefault();
             event.stopPropagation();
 
-            const paymentProps = {...getProps({ facilitatorAccessToken, apmBrandedStandaloneButton }), apmBrandedStandaloneButton };
+            const paymentProps = { ...getProps({ facilitatorAccessToken, apmBrandedStandaloneButton }), apmBrandedStandaloneButton };
             const payPromise = initiatePayment({ payment, props: paymentProps });
             const { onError } = paymentProps;
 
