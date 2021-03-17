@@ -65,7 +65,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
 
     return ZalgoPromise.try(() => {
         const { merchantID, personalization } = serviceData;
-        const { clientID, onClick, createOrder, confirmOrder, env, vault, partnerAttributionID, userExperienceFlow } = props;
+        const { clientID, onClick, createOrder, env, vault, partnerAttributionID, userExperienceFlow } = props;
         
         sendPersonalizationBeacons(personalization);
 
