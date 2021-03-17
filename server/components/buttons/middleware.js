@@ -27,6 +27,10 @@ type InlineGuestElmoParams = {|
     buyerCountry : $Values<typeof COUNTRY>
 |};
 
+type ApmStandaloneButtonElmoParam = {
+  clientID: string
+}
+
 type ButtonMiddlewareOptions = {|
     logger : LoggerType,
     graphQL : GraphQL,
@@ -42,13 +46,14 @@ type ButtonMiddlewareOptions = {|
     },
     tracking : (ExpressRequest) => void,
     getPersonalizationEnabled : (ExpressRequest) => boolean,
-    cdn? : boolean
+    cdn? : boolean, 
+    getApmStandaloneButtonExperiment? : (req: ExpressRequest, params : ApmStandaloneButtonElmoParam) => Promise<boolean>
 |};
 
 export function getButtonMiddleware({
     logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
     getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking,
-    getPersonalizationEnabled = () => false
+    getPersonalizationEnabled = () => false, getApmStandaloneButtonExperiment = () => Promise.resolve(false)
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
@@ -121,7 +126,8 @@ export function getButtonMiddleware({
             const isCardFieldsExperimentEnabled = await isCardFieldsExperimentEnabledPromise;
             const wallet = await walletPromise;
             const personalization = await personalizationPromise;
-
+            const apmBrandedStandaloneButton = await getApmStandaloneButtonExperiment(req, { clientID });
+            
             const eligibility = {
                 cardFields: isCardFieldsExperimentEnabled
             };
@@ -146,7 +152,8 @@ export function getButtonMiddleware({
 
             const setupParams = {
                 fundingEligibility, buyerCountry, cspNonce, merchantID, sdkMeta, wallet, correlationID,
-                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization
+                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization, 
+                apmBrandedStandaloneButton
             };
 
             const pageHTML = `

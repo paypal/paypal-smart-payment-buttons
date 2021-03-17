@@ -243,7 +243,7 @@ type OnApproveXProps = {|
     vault : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, apmBrandedStandaloneButton, createOrder } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton : boolean, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
@@ -263,9 +263,8 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 }).flush();
 
             if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
-                if (!payerID) {
-                    getLogger().error('onapprove_payerid_not_present', { orderID }).flush();
-                    // throw new Error(`payerID not present in onApprove call`);
+                if (!payerID && apmBrandedStandaloneButton ) {
+                    getLogger().error('onapprove_payerid_not_present_for_branded_standalone_button', { orderID }).flush();
                 }
             }
 
@@ -275,6 +274,11 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 paymentID = paymentID || (supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.paymentId);
 
                 const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
+
+                if (!payerID && !apmBrandedStandaloneButton){
+                    delete data.payerID
+                }
+
                 const actions = buildXApproveActions({ orderID, paymentID, payerID, intent, restart, subscriptionID, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
 
                 return onApprove(data, actions).catch(err => {
