@@ -8,14 +8,12 @@ import { checkout, cardFields, native, nonce, vaultCapture, walletCapture, popup
 import { getLogger, promiseNoop, sendBeacon } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
 import { updateButtonClientConfig } from '../api';
-import { nativeFakeoutExperiment } from '../experiments';
-import type { SmartFields } from '../types';
+import { getConfirmOrder } from '../props/confirmOrder';
 
 import { type ButtonProps, type Config, type ServiceData, type Components } from './props';
 import { enableLoadingSpinner, disableLoadingSpinner } from './dom';
 import { validateOrder } from './validation';
 import { showButtonSmartMenu } from './menu';
-
 
 const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     nonce,
@@ -59,19 +57,18 @@ type InitiatePaymentOptions = {|
     props : ButtonProps,
     serviceData : ServiceData,
     config : Config,
-    components : Components,
-    smartFields : ?SmartFields
+    components : Components
 |};
 
-export function initiatePaymentFlow({ payment, serviceData, config, components, props, smartFields } : InitiatePaymentOptions) : ZalgoPromise<void> {
+export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentOptions) : ZalgoPromise<void> {
     const { button, fundingSource, instrumentType } = payment;
 
     return ZalgoPromise.try(() => {
         const { merchantID, personalization } = serviceData;
-        const { clientID, onClick, createOrder, env, vault } = props;
+        const { clientID, onClick, createOrder, env, vault, partnerAttributionID, userExperienceFlow } = props;
         
         sendPersonalizationBeacons(personalization);
-        
+
         const { name, init, inline, spinner, updateFlowClientConfig } = getPaymentFlow({ props, payment, config, components, serviceData });
         const { click = promiseNoop, start, close } = init({ props, config, serviceData, components, payment });
 
@@ -108,7 +105,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     }
 
                     // Do not block by default
-                    updateButtonClientConfig({ orderID, fundingSource, inline }).catch(err => {
+                    updateButtonClientConfig({ orderID, fundingSource, inline, userExperienceFlow }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
                 }).catch(noop);
@@ -118,16 +115,31 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
             const startPromise = ZalgoPromise.try(() => {
                 return updateClientConfigPromise;
             }).then(() => {
-                nativeFakeoutExperiment.logStart();
                 return start();
             });
 
             const validateOrderPromise = createOrder().then(orderID => {
                 return validateOrder(orderID, { env, clientID, merchantID, intent, currency, vault });
             });
+            
+            const confirmOrder = ({ orderID, payload }) => getConfirmOrder({ orderID, payload, partnerAttributionID }, { facilitatorAccessToken: serviceData.facilitatorAccessToken });
 
+            
+            const confirmOrderPromise = createOrder()
+                .then((orderID) => {
+                    return window.xprops.sessionState.get(
+                        `__confirm_${ fundingSource }_payload__`
+                    )
+                        .then(confirmOrderPayload => {
+                            if (!confirmOrderPayload) {
+                                // skip the confirm call when there is no confirm payload (regular flow).
+                                return;
+                            }
 
-            const confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
+                            return confirmOrder({ orderID, payload: confirmOrderPayload });
+                        });
+                });
+
 
             return ZalgoPromise.all([
                 clickPromise,

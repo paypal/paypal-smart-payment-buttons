@@ -1,5 +1,6 @@
-/* @flow */
+/* eslint max-lines: 0 */
 
+/* @flow */
 import type { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY, FUNDING, WALLET_INSTRUMENT, INTENT } from '@paypal/sdk-constants/src';
 import { request, noop, memoize } from 'belter/src';
@@ -7,7 +8,7 @@ import { request, noop, memoize } from 'belter/src';
 import { SMART_API_URI, ORDERS_API_URL, VALIDATE_PAYMENT_METHOD_API } from '../config';
 import { getLogger } from '../lib';
 import { FPTI_TRANSITION, FPTI_CONTEXT_TYPE, HEADERS, SMART_PAYMENT_BUTTONS,
-    INTEGRATION_ARTIFACT, USER_EXPERIENCE_FLOW, PRODUCT_FLOW, PREFER, FPTI_CUSTOM_KEY } from '../constants';
+    INTEGRATION_ARTIFACT, USER_EXPERIENCE_FLOW, PRODUCT_FLOW, PREFER } from '../constants';
 
 import { callSmartAPI, callGraphQL, callRestAPI } from './api';
 
@@ -26,6 +27,7 @@ export type OrderCreateRequest = {|
 
 export type OrderResponse = {||};
 export type OrderCaptureResponse = {||};
+export type OrderConfirmResponse = {||};
 export type OrderGetResponse = {||};
 export type OrderAuthorizeResponse = {||};
 
@@ -86,16 +88,6 @@ export function getOrder(orderID : string, { facilitatorAccessToken, buyerAccess
 }
 
 export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_capture')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_capture',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -117,16 +109,6 @@ export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAc
 }
 
 export function authorizeOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_authorize')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_authorize',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -152,16 +134,6 @@ type PatchData = {|
 |};
 
 export function patchOrder(orderID : string, data : PatchData, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    getLogger()
-        .info('order_patch')
-        .track({
-            [FPTI_KEY.TRANSITION]:       'process_checkout_patch',
-            [FPTI_KEY.CONTEXT_TYPE]:     FPTI_CONTEXT_TYPE.ORDER_ID,
-            [FPTI_KEY.TOKEN]:            orderID,
-            [FPTI_KEY.CONTEXT_ID]:       orderID,
-            [FPTI_CUSTOM_KEY.PMT_TOKEN]: partnerAttributionID
-        }).flush();
-    
     return forceRestAPI
         ? callRestAPI({
             accessToken: facilitatorAccessToken,
@@ -182,6 +154,31 @@ export function patchOrder(orderID : string, data : PatchData, { facilitatorAcce
                 [HEADERS.CLIENT_CONTEXT]: orderID
             }
         });
+}
+
+export type ConfirmData = {|
+    payment_source : {
+        [$Values<typeof FUNDING>] : {|
+            country_code? : string | null,
+            name? : string | null,
+            email? : string | null,
+            bic? : string | null,
+            bank_id? : string | null
+        |}
+      }
+|};
+
+export function confirmOrderAPI(orderID : string, data : ConfirmData, { facilitatorAccessToken, partnerAttributionID } : OrderAPIOptions) : ZalgoPromise<OrderConfirmResponse> {
+    return callRestAPI({
+        accessToken: facilitatorAccessToken,
+        method:      `post`,
+        url:         `${ ORDERS_API_URL }/${ orderID }/confirm-payment-source`,
+        data,
+        headers:     {
+            [HEADERS.PARTNER_ATTRIBUTION_ID]: partnerAttributionID || '',
+            [HEADERS.PREFER]:                 PREFER.REPRESENTATION
+        }
+    });
 }
 
 export type ValidatePaymentMethodOptions = {|
@@ -510,12 +507,13 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
     });
 });
 
-export function updateButtonClientConfig({ orderID, fundingSource, inline = false } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void |}) : ZalgoPromise<void> {
+export function updateButtonClientConfig({ orderID, fundingSource, inline = false, userExperienceFlow } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void, userExperienceFlow? : string |}) : ZalgoPromise<void> {
+    const experienceFlow = inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT;
     return updateClientConfig({
         orderID,
         fundingSource,
         integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
-        userExperienceFlow:  inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT,
+        userExperienceFlow:  userExperienceFlow ? userExperienceFlow : experienceFlow,
         productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS
     });
 }

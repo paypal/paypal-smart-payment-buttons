@@ -7,9 +7,10 @@ import type { InstallmentsFlowType } from '@paypal/installments/src/types';
 
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
     ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions, PersonalizationType } from '../types';
-import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
-    OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
-    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
+import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit,
+    XOnInit, OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError,
+    OnError, XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding
+} from '../props';
 import { type FirebaseConfig } from '../api';
 import { getNonce, getStorageID, isStorageStateFresh } from '../lib';
 import { getOnInit } from '../props/onInit';
@@ -100,7 +101,9 @@ export type ButtonXProps = {|
     onShippingChange : ?XOnShippingChange,
 
     paymentMethodNonce : string,
-    branded : boolean
+    branded : boolean,
+    userExperienceFlow : string
+
 |};
 
 export type ButtonProps = {|
@@ -154,6 +157,7 @@ export type ButtonProps = {|
     connect : ?ConnectOptions,
 
     createOrder : CreateOrder,
+
     createBillingAgreement : ?CreateBillingAgreement,
     createSubscription : ?XCreateSubscription,
 
@@ -165,6 +169,7 @@ export type ButtonProps = {|
 
     paymentMethodNonce : string,
     branded : boolean,
+    userExperienceFlow : string,
     apmBrandedStandaloneButton? : boolean
 |};
 
@@ -215,7 +220,8 @@ export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } 
         paymentMethodNonce,
         branded,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
-        storageID
+        storageID,
+        userExperienceFlow
     } = xprops;
 
     const onInit = getOnInit({ onInit: xprops.onInit });
@@ -344,7 +350,8 @@ export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } 
         standaloneFundingSource: fundingSource,
         paymentMethodNonce,
         branded,
-        stickinessID
+        stickinessID,
+        userExperienceFlow
     };
 }
 

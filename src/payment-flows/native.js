@@ -2,13 +2,13 @@
 /* eslint max-lines: off, max-nested-callbacks: off */
 
 import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError,
-    stringifyErrorMessage, cleanup, once, noop, inlineMemoize, isSFVC, isSFVCorSafari } from 'belter/src';
+    stringifyErrorMessage, cleanup, once, noop, inlineMemoize } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY, FUNDING } from '@paypal/sdk-constants/src';
 import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } from 'cross-domain-utils/src';
 
 import type { ButtonProps } from '../button/props';
-import { WEB_CHECKOUT_URI } from '../config';
+import { WEB_CHECKOUT_URI, AMPLITUDE_API_KEY } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig, type NativeEligibility } from '../api';
 import { getLogger, promiseOne, promiseNoop, isIOSSafari, isAndroidChrome, getStorageState, unresolvedPromise } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FPTI_CUSTOM_KEY } from '../constants';
@@ -29,6 +29,7 @@ const POST_MESSAGE = {
     DETECT_WEB_SWITCH:  'detectWebSwitch',
     ON_APPROVE:         'onApprove',
     ON_CANCEL:          'onCancel',
+    ON_FALLBACK:        'onFallback',
     ON_COMPLETE:        'onComplete',
     ON_ERROR:           'onError'
 };
@@ -83,11 +84,6 @@ const PARTIAL_ENCODING_CLIENT = [
 let clean;
 let initialPageUrl;
 let nativeEligibility : NativeEligibility;
-
-const sfvc = isSFVC();
-const sfvcLog = sfvc ? 'sfvc' : 'browser';
-const sfvcOrSafari = !sfvc ? isSFVCorSafari() : false;
-const sfvcOrSafariLog = sfvcOrSafari ? 'sfvcOrSafari' : 'browser';
 
 type NativeSocketOptions = {|
     sessionUID : string,
@@ -273,8 +269,14 @@ function isNativePaymentEligible({ payment, props } : IsPaymentEligibleOptions) 
         return true;
     }
 
-    if (isControlGroup(fundingSource) && isPopupFakeout()) {
-        return true;
+    if (isControlGroup(fundingSource)) {
+        nativeFakeoutExperiment.logStart();
+
+        if (isPopupFakeout()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     return false;
@@ -282,7 +284,7 @@ function isNativePaymentEligible({ payment, props } : IsPaymentEligibleOptions) 
 
 function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
-        const { getPageUrl, clientID, onShippingChange, currency, platform,
+        const { getPageUrl, clientID, onShippingChange, currency, platform, env,
             vault, buttonSessionID, enableFunding, stickinessID: defaultStickinessID, merchantDomain } = props;
         const { merchantID, buyerCountry, cookies } = serviceData;
 
@@ -298,11 +300,9 @@ function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void>
             }).then(result => {
                 nativeEligibility = result;
 
-                if (isTestGroup(FUNDING.PAYPAL) || isTestGroup(FUNDING.VENMO)) {
-                    getLogger().addMetaBuilder(() => {
-                        return {
-                            amplitude: true
-                        };
+                if (isTestGroup(FUNDING.PAYPAL) || isTestGroup(FUNDING.VENMO) || isControlGroup(FUNDING.PAYPAL) || isControlGroup(FUNDING.VENMO) || isNativeOptedIn({ props })) {
+                    getLogger().configure({
+                        amplitudeApiKey: AMPLITUDE_API_KEY[env]
                     });
                 }
             }),
@@ -599,16 +599,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_width_${ window.outerWidth }`)
             .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
             .flush();
-        
-        getLogger()
-            .info(`native_onapprove_sfvc_${ sfvcLog }`)
-            .info(`native_onapprove_sfvcOrSafari_${ sfvcOrSafariLog }`)
-            .track({
-                [FPTI_KEY.TRANSITION]: `${ FPTI_TRANSITION.NATIVE_ON_APPROVE }_sfvc_${ sfvcLog }`
-            })
-            .track({
-                [FPTI_KEY.TRANSITION]: `${ FPTI_TRANSITION.NATIVE_ON_APPROVE  }_sfvcOrSafari_${ sfvcOrSafariLog }`
-            }).flush();
 
         const data = { payerID, paymentID, billingToken, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
@@ -624,38 +614,44 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     onError(err);
                 }),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID };
+        });
     };
 
     const onCancelCallback = () => {
         cancelled = true;
         getLogger().info(`native_message_oncancel`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CANCEL
             })
             .flush();
         return ZalgoPromise.all([
             onCancel(),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID };
+        });
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
         getLogger().info(`native_message_onerror`, { err: message })
             .track({
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_KEY.TRANSITION]:       FPTI_TRANSITION.NATIVE_ON_ERROR,
                 [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
             }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
             close()
-        ]).then(noop);
+        ]).then(() => {
+            return { buttonSessionID };
+        });
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
         getLogger().info(`native_message_onshippingchange`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
             }).flush();
         if (onShippingChange) {
             let resolved = true;
@@ -682,7 +678,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const onFallbackCallback = () => {
         getLogger().info(`native_message_onfallback`)
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_FALLBACK
             }).flush();
         fallbackToWebCheckout();
     };
@@ -701,7 +697,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).then(() => {
                 getLogger().info(`native_response_setprops`).track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK
                 }).flush();
             }).catch(err => {
                 getLogger().info(`native_response_setprops_error`).track({
@@ -713,7 +709,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
         const closeNative = memoize(() => {
             getLogger().info(`native_message_close`).flush();
-            return socket.send(SOCKET_MESSAGE.CLOSE).then(() => {
+            return socket.send(SOCKET_MESSAGE.CLOSE, { buttonSessionID }).then(() => {
                 getLogger().info(`native_response_close`).flush();
                 return close();
             });
@@ -837,14 +833,17 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeWin = popup(nativeUrl);
 
         const closePopup = (event) => {
-            getLogger().info(`native_closing_popup_${ event }`).track({
+            const eventType = event && event.type ? String(event.type) : event;
+
+            getLogger().info(`native_closing_popup_${ eventType }`).track({
                 [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]:  event ? ` ${ FPTI_TRANSITION.NATIVE_CLOSING_POPUP }_${ event }` : FPTI_TRANSITION.NATIVE_CLOSING_POPUP
+                [FPTI_KEY.TRANSITION]:  event ? ` ${ FPTI_TRANSITION.NATIVE_CLOSING_POPUP }_${ eventType }` : FPTI_TRANSITION.NATIVE_CLOSING_POPUP
             }).flush();
 
             nativeWin.close();
         };
         window.addEventListener('pagehide', closePopup);
+        window.addEventListener('unload', closePopup);
 
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
@@ -927,9 +926,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         }, 500);
 
         const closePopup = (event) => {
-            getLogger().info(`native_closing_popup_${ event }`).track({
+            const eventType = event && event.type ? String(event.type) : event;
+
+            getLogger().info(`native_closing_popup_${ eventType }`).track({
                 [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]:  event ? `${ FPTI_TRANSITION.NATIVE_CLOSING_POPUP }_${ event }` : FPTI_TRANSITION.NATIVE_CLOSING_POPUP
+                [FPTI_KEY.TRANSITION]:  event ? `${ FPTI_TRANSITION.NATIVE_CLOSING_POPUP }_${ eventType }` : FPTI_TRANSITION.NATIVE_CLOSING_POPUP
             }).flush();
             closeListener.cancel();
             popupWin.close();
@@ -965,7 +966,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             getLogger().info(`native_popup_load_timeout`).flush();
         }, 5 * 1000);
 
-        const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app, pageUrl, stickinessID: popupStickinessID } }) => {
+        const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app, pageUrl, sfvc, stickinessID: popupStickinessID } }) => {
             getLogger().info(`native_post_message_await_redirect`).flush();
             clearTimeout(redirectListenerTimeout);
 
@@ -980,6 +981,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                 if (isNativeOptedIn({ props })) {
                     return true;
+                }
+
+                if (sfvc) {
+                    return false;
                 }
 
                 return orderPromise.then(orderID => {
@@ -997,7 +1002,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
                             return false;
                         }
-
                         return true;
                     });
                 });
@@ -1088,6 +1092,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             closePopup('onCancel');
         });
 
+        const onFallbackListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_FALLBACK, () => {
+            getLogger().info(`native_message_onfallback`)
+                .track({
+                    [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
+                }).flush();
+            fallbackToWebCheckout(popupWin);
+        });
+
         const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
             getLogger().info(`native_post_message_on_complete`)
                 .track({
@@ -1111,6 +1123,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         clean.register(detectAppSwitchListener.cancel);
         clean.register(onApproveListener.cancel);
         clean.register(onCancelListener.cancel);
+        clean.register(onFallbackListener.cancel);
         clean.register(onCompleteListener.cancel);
         clean.register(onErrorListener.cancel);
         clean.register(detectWebSwitchListener.cancel);
@@ -1126,15 +1139,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const click = () => {
-        getLogger()
-            .info(`process_button_click_sfvc_${ sfvcLog }`)
-            .info(`process_button_click_sfvcOrSafari_${ sfvcOrSafariLog }`)
-            .track({
-                [FPTI_KEY.TRANSITION]: `${ FPTI_TRANSITION.BUTTON_CLICK }_sfvc_${ sfvcLog }`
-            })
-            .track({
-                [FPTI_KEY.TRANSITION]: `${ FPTI_TRANSITION.BUTTON_CLICK }_sfvcOrSafari_${ sfvcOrSafariLog }`
-            }).flush();
         return ZalgoPromise.try(() => {
             const sessionUID = uniqueID();
 
