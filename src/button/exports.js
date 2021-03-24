@@ -23,6 +23,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
     
     window.exports = {
         name:           'smart-payment-buttons',
+        commit,
         paymentSession: () => {
             return {
                 getAvailableFundingSources: () => fundingSources,
@@ -58,8 +59,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     return onApprove(data, actions);
                 },
                 onCancel,
-                onError,
-                commit
+                onError
             };
         }
     };
