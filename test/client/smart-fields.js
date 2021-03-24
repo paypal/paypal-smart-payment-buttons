@@ -51,7 +51,7 @@ describe('smart-fields', () => {
             });
         });
 
-        it.only('should call confirm for ideal if valid', async () => {
+        it('should call confirm for ideal if valid', async () => {
             return await wrapPromise(async ({ expect }) => {
     
                 const fundingSource = FUNDING.IDEAL;
@@ -82,7 +82,7 @@ describe('smart-fields', () => {
             });
         });
 
-        it.only('should NOT call confirm for ideal if invalid', async () => {
+        it('should NOT call confirm for ideal if invalid', async () => {
             return await wrapPromise(async ({ expect, avoid }) => {
     
                 const fundingSource = FUNDING.IDEAL;

@@ -14,38 +14,44 @@ function setupNonce() {
 
 function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
-    // eslint-disable-next-line no-console
-    console.log('nonce eligibility check', paymentMethodNonce);
 
     const { wallet } = serviceData;
-
-    // eslint-disable-next-line no-console
-    console.log('wallet', wallet);
+    console.log('###################wallet', JSON.stringify(wallet));
 
     if (!wallet) {
+
         return false;
     }
-
     // Ensure wallet instruments are branded and have a valid tokenID.
+
     if (wallet.card.instruments.length === 0 ||
         !wallet.card.instruments.some(instrument => (instrument.tokenID && instrument.branded))) {
+        console.log('returning false');
         return false;
     }
-
+    console.log('################returning true');
     return true;
-}
 
+}
 function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
     const { branded } = props;
-    const { wallet } = serviceData;
 
+    const { wallet } = serviceData;
     const { fundingSource, paymentMethodID } = payment;
+
+    // eslint-disable-next-line no-console
+    console.log('wallet', JSON.stringify(wallet));
+    //
+    //
+    // console.log({ fundingSource, paymentMethodID });
 
     // $FlowFixMe
     const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
+
     // $FlowFixMe
     const { tokenID } = instrument;
+    // console.log({ instrument });
 
     if (fundingSource !== FUNDING.CARD) {
         return false;

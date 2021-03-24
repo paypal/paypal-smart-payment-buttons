@@ -1,10 +1,10 @@
 /* @flow */
 import { uniqueID, wrapPromise } from 'belter/src';
-import { FUNDING, INTENT, WALLET_INSTRUMENT } from '@paypal/sdk-constants/src';
+import { CARD, FUNDING, INTENT, WALLET_INSTRUMENT } from '@paypal/sdk-constants/src';
 
 import {
     clickButton,
-    createButtonHTML,
+    createButtonHTML, DEFAULT_FUNDING_ELIGIBILITY,
     generateOrderID, getGraphQLApiMock,
     mockAsyncProp,
     mockSetupButton
@@ -15,6 +15,9 @@ describe.only('nonce cases', () => {
         return await wrapPromise(async ({ expect }) => {
             const orderID = generateOrderID();
             const payerID = uniqueID();
+            const nonce = 'nonce';
+            window.xprops.paymentMethodNonce = nonce;
+            window.xprops.branded = true;
 
 
             window.xprops.createOrder = mockAsyncProp(
@@ -39,21 +42,24 @@ describe.only('nonce cases', () => {
                 })
             );
 
+            const userIDToken = uniqueID();
+
+            const accessToken = uniqueID();
+            const instrumentID = uniqueID();
+            const tokenID = uniqueID();
+            const paymentMethodID = tokenID;
             const wallet = {
                 [FUNDING.CARD]: {
                     instruments: [
                         {
                             type:         WALLET_INSTRUMENT.CARD,
                             instrumentID: [ uniqueID() ],
-                            oneClick:     true
+                            tokenID,
+                            branded:      true
                         }
                     ]
                 }
             };
-
-            const userIDToken = uniqueID();
-            const accessToken = uniqueID();
-            const instrumentID = uniqueID();
 
             const gqlMock = getGraphQLApiMock({
                 extraHandler: ({ headers, data }) => {
@@ -65,16 +71,7 @@ describe.only('nonce cases', () => {
                         return {
                             data: {
                                 smartWallet: {
-                                    [ FUNDING.PAYPAL ]: {
-                                        instruments: [
-                                            {
-                                                type:     WALLET_INSTRUMENT.CARD,
-                                                instrumentID,
-                                                accessToken,
-                                                oneClick: true
-                                            }
-                                        ]
-                                    }
+                                    ...wallet
                                 }
                             }
                         };
@@ -126,13 +123,34 @@ describe.only('nonce cases', () => {
                     }
                 }
             }).expectCalls();
-            
-            createButtonHTML({ wallet });
+
+            const fundingEligibility = {
+                [ FUNDING.PAYPAL ]: {
+                    eligible: true
+                },
+                [ FUNDING.CARD]: {
+                    eligible: true,
+                    vendors:  {
+                        [ CARD.VISA ]: {
+                            eligible:           true,
+                            vaultedInstruments:  [ {
+                                id:    paymentMethodID
+                            } ]
+                        }
+                    }
+                }
+            };
+
+            createButtonHTML({
+                fundingEligibility,
+                fundingSource:      FUNDING.CARD,
+                paymentMethodNonce: nonce,
+                paymentMethodID:    tokenID
+            });
+
             await mockSetupButton({
                 merchantID:         [ uniqueID() ],
-                wallet,
-                paymentMethodNonce: '46747474',
-                branded:            true
+                wallet
             });
 
             await clickButton(FUNDING.CARD);

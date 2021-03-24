@@ -220,8 +220,6 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         userExperienceFlow
     } = xprops;
 
-    console.log({ xprops });
-
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
 

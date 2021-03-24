@@ -195,7 +195,8 @@ export function mockFunction<T, A>(obj : mixed, prop : string, mock : ({| args :
 
 export async function clickButton(fundingSource? : string = FUNDING.PAYPAL) : Promise<void> {
     const button = window.document.querySelector(`[data-funding-source=${ fundingSource }]`);
-
+    console.log('fundingSource', fundingSource);
+    console.log('button', button);
     if (!button) {
         throw new Error(`Can not find ${ fundingSource } button`);
     }
@@ -255,8 +256,11 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
                     continue;
                 }
 
+                console.log('cardConfig', JSON.stringify(cardConfig));
+
                 if (cardConfig.vaultedInstruments && cardConfig.vaultedInstruments.length) {
                     const vaultedInstrument = cardConfig.vaultedInstruments[0];
+                    console.log(vaultedInstrument);
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
                 } else {
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }"></div></div>`);
