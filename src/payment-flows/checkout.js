@@ -232,7 +232,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
         createBillingAgreement, createSubscription, onClick, amount,
         clientID, connect, clientMetadataID: cmid, onAuth, userIDToken, env,
         currency, intent, disableFunding, disableCard, enableFunding,
-        standaloneFundingSource, brandedFundingSource } = props;
+        standaloneFundingSource, branded } = props;
 
     let { button, win, fundingSource, card, isClick, buyerAccessToken = serviceData.buyerAccessToken,
         venmoPayloadID, buyerIntent } = payment;
@@ -384,7 +384,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
             clientMetadataID: cmid,
             enableFunding,
             standaloneFundingSource,
-            branded:          brandedFundingSource
+            branded
         });
     };
 

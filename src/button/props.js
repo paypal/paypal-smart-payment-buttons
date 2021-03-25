@@ -169,8 +169,7 @@ export type ButtonProps = {|
 
     paymentMethodNonce : string,
     branded : boolean,
-    userExperienceFlow : string,
-    brandedFundingSource? : boolean
+    userExperienceFlow : string
 |};
 
 // eslint-disable-next-line complexity
@@ -229,6 +228,7 @@ export function getProps({ facilitatorAccessToken, brandedFundingSource } : {| f
 
     enableFunding = enableFunding || [];
     disableFunding = disableFunding || [];
+    branded = branded || brandedFundingSource || false;
 
     const onClick = getOnClick({ onClick: xprops.onClick });
 

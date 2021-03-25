@@ -275,10 +275,6 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
 
                 const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
 
-                if (!payerID && !brandedFundingSource) {
-                    delete data.payerID;
-                }
-
                 const actions = buildXApproveActions({ orderID, paymentID, payerID, intent, restart, subscriptionID, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
 
                 return onApprove(data, actions).catch(err => {

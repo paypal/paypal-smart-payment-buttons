@@ -60,9 +60,6 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, correlationID: buttonCorrelationID = '',
         brandedFundingSource } = opts;
 
-    console.log('----set up button');
-    console.log(brandedFundingSource);
-
     const clientID = window.xprops.clientID;
 
     const serviceData = getServiceData({
@@ -104,8 +101,8 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
                 }
             } else {
                 if (!brandedFundingSource) {
-                    getLogger().error('unbranded_apm_integration_error', { err: 'no smart fields present' });
-                    throw new Error(`Can not find smart fields`);
+                    getLogger().error('apm_integration_error', { err: 'no hosted components present' });
+                    throw new Error(`Can not find hosted components`);
                 }
             }
 
@@ -171,7 +168,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             event.preventDefault();
             event.stopPropagation();
 
-            const paymentProps = { ...getProps({ facilitatorAccessToken, brandedFundingSource }), brandedFundingSource };
+            const paymentProps = getProps({ facilitatorAccessToken, brandedFundingSource });
             const payPromise = initiatePayment({ payment, props: paymentProps });
             const { onError } = paymentProps;
 

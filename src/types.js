@@ -59,7 +59,7 @@ export type CheckoutProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
     amplitude? : boolean,
-    brandedFundingSource? : boolean
+    branded? : boolean
 |};
 
 export type CheckoutFlowType = ZoidComponent<CheckoutProps>;
