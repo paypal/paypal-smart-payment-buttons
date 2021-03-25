@@ -243,7 +243,7 @@ type OnApproveXProps = {|
     vault : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, apmBrandedStandaloneButton, createOrder } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton? : boolean, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, brandedFundingSource, createOrder } : {| facilitatorAccessToken : string, brandedFundingSource? : boolean, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
@@ -263,7 +263,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 }).flush();
 
             if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
-                if (!payerID && apmBrandedStandaloneButton) {
+                if (!payerID && brandedFundingSource) {
                     getLogger().error('onapprove_payerid_not_present_for_branded_standalone_button', { orderID }).flush();
                 }
             }
@@ -275,7 +275,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
 
                 const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
 
-                if (!payerID && !apmBrandedStandaloneButton) {
+                if (!payerID && !brandedFundingSource) {
                     delete data.payerID;
                 }
 

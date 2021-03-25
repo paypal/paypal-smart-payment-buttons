@@ -170,11 +170,11 @@ export type ButtonProps = {|
     paymentMethodNonce : string,
     branded : boolean,
     userExperienceFlow : string,
-    apmBrandedStandaloneButton? : boolean
+    brandedFundingSource? : boolean
 |};
 
 // eslint-disable-next-line complexity
-export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } : {| facilitatorAccessToken : string, apmBrandedStandaloneButton? : boolean |}) : ButtonProps {
+export function getProps({ facilitatorAccessToken, brandedFundingSource } : {| facilitatorAccessToken : string, brandedFundingSource? : boolean |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
 
@@ -286,7 +286,7 @@ export function getProps({ facilitatorAccessToken, apmBrandedStandaloneButton } 
     const createOrder = getCreateOrder({ createOrder: xprops.createOrder, currency, intent, merchantID, partnerAttributionID }, { facilitatorAccessToken, createBillingAgreement, createSubscription });
 
     const onError = getOnError({ onError: xprops.onError });
-    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault }, { facilitatorAccessToken, apmBrandedStandaloneButton, createOrder });
+    const onApprove = getOnApprove({ onApprove: xprops.onApprove, intent, onError, partnerAttributionID, upgradeLSAT, clientAccessToken, vault }, { facilitatorAccessToken, brandedFundingSource, createOrder });
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
