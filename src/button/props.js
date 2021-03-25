@@ -5,14 +5,14 @@ import { ENV, INTENT, COUNTRY, FUNDING, CARD, PLATFORM, CURRENCY, type FundingEl
 import { ZalgoPromise } from 'zalgo-promise/src';
 import type { InstallmentsFlowType } from '@paypal/installments/src/types';
 
-import {  UPGRADE_LSAT_RAMP } from '../constants';
 import type { ContentType, LocaleType, ProxyWindow, Wallet, CheckoutFlowType, CardFieldsFlowType,
-    ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions } from '../types';
-import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit, XOnInit,
-    OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
-    XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
+    ThreeDomainSecureFlowType, MenuFlowType, ConnectOptions, PersonalizationType } from '../types';
+import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingAgreement, OnInit,
+    XOnInit, OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError,
+    OnError, XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding
+} from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce, createExperiment, getStorageID, isStorageStateFresh } from '../lib';
+import { getNonce, getStorageID, isStorageStateFresh } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -92,7 +92,7 @@ export type ButtonXProps = {|
 
     amount : ?string,
     userIDToken : ?string,
-    
+
     onInit : XOnInit,
     onApprove : ?XOnApprove,
     onCancel : XOnCancel,
@@ -101,7 +101,9 @@ export type ButtonXProps = {|
     onShippingChange : ?XOnShippingChange,
 
     paymentMethodNonce : string,
-    branded : boolean
+    branded : boolean,
+    userExperienceFlow : string
+
 |};
 
 export type ButtonProps = {|
@@ -155,6 +157,7 @@ export type ButtonProps = {|
     connect : ?ConnectOptions,
 
     createOrder : CreateOrder,
+
     createBillingAgreement : ?CreateBillingAgreement,
     createSubscription : ?XCreateSubscription,
 
@@ -165,14 +168,14 @@ export type ButtonProps = {|
     onAuth : OnAuth,
 
     paymentMethodNonce : string,
-    branded : boolean
+    branded : boolean,
+    userExperienceFlow : string
 |};
 
 // eslint-disable-next-line complexity
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
-    const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
     let {
         uid,
@@ -206,7 +209,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         connect,
         intent,
         merchantID,
-        upgradeLSAT = upgradeLSATExperiment.isEnabled(),
+        upgradeLSAT = false,
         amount,
         userIDToken,
         enableFunding,
@@ -391,12 +394,10 @@ export type ServiceData = {|
     buyerAccessToken : ?string,
     content : ContentType,
     eligibility : {|
-        cardFields : boolean,
-        nativeCheckout : ?{
-            [ $Values<typeof FUNDING> ] : ?boolean
-        }
+        cardFields : boolean
     |},
-    cookies : string
+    cookies : string,
+    personalization : PersonalizationType
 |};
 
 type ServiceDataOptions = {|
@@ -409,16 +410,14 @@ type ServiceDataOptions = {|
     sdkMeta : string,
     content : ContentType,
     eligibility : {|
-        cardFields : boolean,
-        nativeCheckout : ?{
-            [ $Values<typeof FUNDING> ] : ?boolean
-        }
+        cardFields : boolean
     |},
-    cookies : string
+    cookies : string,
+    personalization : PersonalizationType
 |};
 
 export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyerGeoCountry,
-    fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility, cookies } : ServiceDataOptions) : ServiceData {
+    fundingEligibility, wallet, buyerAccessToken, serverMerchantID, eligibility, cookies, personalization } : ServiceDataOptions) : ServiceData {
 
     return {
         merchantID:   serverMerchantID,
@@ -430,7 +429,8 @@ export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyer
         buyerAccessToken,
         facilitatorAccessToken,
         eligibility,
-        cookies
+        cookies,
+        personalization
     };
 }
 

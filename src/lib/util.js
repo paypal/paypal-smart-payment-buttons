@@ -87,7 +87,12 @@ export function isEmailAddress(str : string) : boolean {
     return Boolean(str.match(/^.+@.+\..+$/));
 }
 
-export function createExperiment(name : string, sample : number) : Experiment {
+type CreateExperimentOptions = {|
+    sample : number,
+    sticky? : boolean
+|};
+
+export function createExperiment(name : string, { sample, sticky = true } : CreateExperimentOptions) : Experiment {
     const logger = getLogger();
 
     return experiment({
@@ -109,10 +114,12 @@ export function createExperiment(name : string, sample : number) : Experiment {
             logger.flush();
         },
 
-        logCheckpoint({ treatment, checkpoint, payload }) {
-            logger.info(`${ name }_${ treatment }_${ checkpoint }`, payload);
+        logCheckpoint({ treatment, checkpoint, payload, throttle }) {
+            logger.info(`${ treatment }_${ checkpoint }`, { ...payload, throttle: throttle.toString() });
             logger.flush();
-        }
+        },
+
+        sticky
     });
 }
 

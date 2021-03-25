@@ -20,8 +20,8 @@ type GetSmartWalletOptions = {|
     userIDToken : string,
     vetted? : boolean,
     cspNonce : ?string,
-    paymentMethodNonce : ?string,
-    branded : ?boolean
+    paymentMethodNonce? : ?string,
+    branded? : ?boolean
 |};
 
 const DEFAULT_AMOUNT = '0.00';

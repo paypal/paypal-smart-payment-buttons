@@ -57,7 +57,8 @@ export type CheckoutProps = {|
     venmoPayloadID? : ?string,
     clientMetadataID : ?string,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
-    standaloneFundingSource : ?$Values<typeof FUNDING>
+    standaloneFundingSource : ?$Values<typeof FUNDING>,
+    amplitude? : boolean
 |};
 
 export type CheckoutFlowType = ZoidComponent<CheckoutProps>;
@@ -131,7 +132,7 @@ export type ContentType = {|
 |};
 
 export type PostRobot = {|
-    
+
 |};
 
 export type PayPal = {|
@@ -172,7 +173,6 @@ export type ConnectOptions = {|
 export type SmartFields = {|
     name : string,
     fundingSource : $Values<typeof FUNDING>,
-    confirm : (orderId : string) => ZalgoPromise<void | string>,
     isValid : () => boolean
 |};
 
@@ -181,4 +181,21 @@ export type ExportCallbacks = {|
     onApprove : () => ZalgoPromise<void> | void,
     onCancel : () => ZalgoPromise<void> | void,
     onError : (mixed) => ZalgoPromise<void> | void
+|};
+
+export type PersonalizationType = {|
+    buttonText? : {|
+        text : string,
+        tracking : {|
+            impression : string,
+            click : string
+        |}
+    |},
+    tagline? : {|
+        text : string,
+        tracking : {|
+            impression : string,
+            click : string
+        |}
+    |}
 |};

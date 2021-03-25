@@ -5,16 +5,15 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import { checkout, cardFields, native, nonce, vaultCapture, walletCapture, popupBridge, type Payment, type PaymentFlow } from '../payment-flows';
-import { getLogger, promiseNoop } from '../lib';
+import { getLogger, promiseNoop, sendBeacon } from '../lib';
 import { FPTI_TRANSITION } from '../constants';
 import { updateButtonClientConfig } from '../api';
-import type { SmartFields } from '../types';
+import { getConfirmOrder } from '../props/confirmOrder';
 
 import { type ButtonProps, type Config, type ServiceData, type Components } from './props';
 import { enableLoadingSpinner, disableLoadingSpinner } from './dom';
 import { validateOrder } from './validation';
 import { showButtonSmartMenu } from './menu';
-
 
 const PAYMENT_FLOWS : $ReadOnlyArray<PaymentFlow> = [
     nonce,
@@ -37,8 +36,6 @@ export function setupPaymentFlows({ props, config, serviceData, components } : {
 export function getPaymentFlow({ props, payment, config, serviceData } : {| props : ButtonProps, payment : Payment, config : Config, components : Components, serviceData : ServiceData |}) : PaymentFlow {
     for (const flow of PAYMENT_FLOWS) {
         if (flow.isEligible({ props, config, serviceData }) && flow.isPaymentEligible({ props, payment, config, serviceData })) {
-            // eslint-disable-next-line no-console
-            console.log('####################################Flow accepted:', flow);
             return flow;
         }
     }
@@ -46,21 +43,31 @@ export function getPaymentFlow({ props, payment, config, serviceData } : {| prop
     throw new Error(`Could not find eligible payment flow`);
 }
 
+const sendPersonalizationBeacons = (personalization) => {
+    if (personalization && personalization.tagline && personalization.tagline.tracking) {
+        sendBeacon(personalization.tagline.tracking.click);
+    }
+    if (personalization && personalization.buttonText && personalization.buttonText.tracking) {
+        sendBeacon(personalization.buttonText.tracking.click);
+    }
+};
+
 type InitiatePaymentOptions = {|
     payment : Payment,
     props : ButtonProps,
     serviceData : ServiceData,
     config : Config,
-    components : Components,
-    smartFields : ?SmartFields
+    components : Components
 |};
 
-export function initiatePaymentFlow({ payment, serviceData, config, components, props, smartFields } : InitiatePaymentOptions) : ZalgoPromise<void> {
+export function initiatePaymentFlow({ payment, serviceData, config, components, props } : InitiatePaymentOptions) : ZalgoPromise<void> {
     const { button, fundingSource, instrumentType } = payment;
 
     return ZalgoPromise.try(() => {
-        const { merchantID } = serviceData;
-        const { clientID, onClick, createOrder, env, vault, userExperienceFlow } = props;
+        const { merchantID, personalization } = serviceData;
+        const { clientID, onClick, createOrder, env, vault, partnerAttributionID, userExperienceFlow } = props;
+        
+        sendPersonalizationBeacons(personalization);
 
         const { name, init, inline, spinner, updateFlowClientConfig } = getPaymentFlow({ props, payment, config, components, serviceData });
         const { click = promiseNoop, start, close } = init({ props, config, serviceData, components, payment });
@@ -98,11 +105,10 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     }
 
                     // Do not block by default
-                    updateButtonClientConfig({ orderID, clientID, fundingSource, inline, userExperienceFlow }).catch(err => {
+                    updateButtonClientConfig({ orderID, fundingSource, inline, userExperienceFlow }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
-                    // eslint-disable-next-line no-console
-                }).catch(err => console.log('ERR', err));
+                }).catch(noop);
 
             const { intent, currency } = props;
 
@@ -115,9 +121,25 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
             const validateOrderPromise = createOrder().then(orderID => {
                 return validateOrder(orderID, { env, clientID, merchantID, intent, currency, vault });
             });
+            
+            const confirmOrder = ({ orderID, payload }) => getConfirmOrder({ orderID, payload, partnerAttributionID }, { facilitatorAccessToken: serviceData.facilitatorAccessToken });
 
+            
+            const confirmOrderPromise = createOrder()
+                .then((orderID) => {
+                    return window.xprops.sessionState.get(
+                        `__confirm_${ fundingSource }_payload__`
+                    )
+                        .then(confirmOrderPayload => {
+                            if (!confirmOrderPayload) {
+                                // skip the confirm call when there is no confirm payload (regular flow).
+                                return;
+                            }
 
-            const confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
+                            return confirmOrder({ orderID, payload: confirmOrderPayload });
+                        });
+                });
+
 
             return ZalgoPromise.all([
                 clickPromise,

@@ -1,5 +1,6 @@
 /* @flow */
 
+import { ZalgoPromise } from 'zalgo-promise/src';
 import { FUNDING } from '@paypal/sdk-constants/src/funding';
 
 import { payWithNonce } from '../api';
@@ -14,65 +15,64 @@ function setupNonce() {
 
 function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
-
     const { wallet } = serviceData;
-    console.log('###################wallet', JSON.stringify(wallet));
+
+    const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodNonce))[0];
+
+    if (!paymentMethodNonce) {
+        return false;
+    }
 
     if (!wallet) {
-
         return false;
     }
+
+    if (!instrument) {
+        return false;
+    }
+
     // Ensure wallet instruments are branded and have a valid tokenID.
-
     if (wallet.card.instruments.length === 0 ||
-        !wallet.card.instruments.some(instrument => (instrument.tokenID && instrument.branded))) {
-        console.log('returning false');
+        !wallet.card.instruments.some(item => (item.tokenID && item.branded))) {
         return false;
     }
-    console.log('################returning true');
-    return true;
 
+    return true;
 }
+
 function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
     const { branded } = props;
-
     const { wallet } = serviceData;
+
     const { fundingSource, paymentMethodID } = payment;
 
-    // eslint-disable-next-line no-console
-    console.log('wallet', JSON.stringify(wallet));
-    //
-    //
-    // console.log({ fundingSource, paymentMethodID });
+    const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
 
-    // $FlowFixMe
-    const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
-
-    // $FlowFixMe
-    const { tokenID } = instrument;
-    // console.log({ instrument });
+    if (!instrument) {
+        return false;
+    }
 
     if (fundingSource !== FUNDING.CARD) {
         return false;
     }
-    // $FlowFixMe
-    if (!branded && !instrument.branded) {
+    
+    if (!branded || !instrument.branded) {
         return false;
     }
 
-    if (!tokenID) {
+    if (!instrument?.tokenID) {
         return false;
     }
 
     return true;
 }
 
-function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
+function startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }) : ZalgoPromise<{| payerID : string |}> {
     getLogger().info('nonce_payment_initiated');
-    // $FlowFixMe
-    return payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
-        .catch(error => {
+
+    return payWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID })
+        .catch((error) => {
             getLogger().info('nonce_payment_failed');
             // $FlowFixMe
             error.code = 'PAY_WITH_DIFFERENT_CARD';
@@ -81,14 +81,17 @@ function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) :
 }
 
 function initNonce({ props, components, payment, serviceData, config }) : PaymentFlowInstance {
-    const { createOrder, onApprove, clientID, branded } = props;
+    const { createOrder, onApprove, clientID, branded, buttonSessionID } = props;
     const { wallet } = serviceData;
     const { paymentMethodID } = payment;
 
-    // $FlowFixMe
-    const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
-    // $FlowFixMe
-    const paymentMethodNonce = instrument.tokenID;
+    const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
+    const paymentMethodNonce = instrument?.tokenID;
+
+    if (!paymentMethodNonce) {
+        getLogger().info('nonce_payment_failed');
+        throw new Error('PAY_WITH_DIFFERENT_CARD');
+    }
 
     const fallbackToWebCheckout = () => {
         getLogger().info('web_checkout_fallback').flush();
@@ -103,9 +106,8 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
 
     const start = () => {
         return createOrder().then(orderID => {
-            getLogger().info(`orderID_in_nonce ${ orderID }`);
-            // $FlowFixMe
-            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded).then(({ payerID }) => {
+            getLogger().info('orderid_in_nonce', { orderID });
+            return startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }).then(({ payerID }) => {
                 return onApprove({ payerID }, { restart });
             });
         });

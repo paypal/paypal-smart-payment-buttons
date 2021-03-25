@@ -14,7 +14,8 @@ import { SPB_QUERY_KEYS } from './constants';
 
 type StyleType = {|
     label? : string,
-    period? : ?number
+    period? : ?number,
+    tagline? : boolean | string
 |};
 
 type ButtonInputParams = {|
@@ -47,7 +48,8 @@ type ButtonInputParams = {|
 
 type Style = {|
     label : string,
-    period : ?number
+    period : ?number,
+    tagline? : boolean | string
 |};
 
 type ButtonParams = {|
@@ -78,7 +80,7 @@ type ButtonParams = {|
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
     cookies : string,
-    paymentMethodNonce : string,
+    paymentMethodNonce : ?string,
     branded : ?boolean
 |};
 
@@ -193,11 +195,10 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 }
 
 
-function getPaymentMethodNonce(req : ExpressRequest) : string {
+function getPaymentMethodNonce(req : ExpressRequest) : ?string {
     const paymentMethodNonce = req.query && req.query.paymentMethodNonce;
 
     if (!paymentMethodNonce || typeof paymentMethodNonce !== 'string') {
-        // $FlowFixMe
         return;
     }
 
@@ -272,13 +273,13 @@ export function getAmount(amount : ?(string | number)) : ?string {
 function getStyle(params : ButtonInputParams) : Style {
     const {
         label = 'paypal',
-        period
+        period,
+        tagline
     } = params.style || {};
 
-    return { label, period };
+    return { label, period, tagline };
 }
 
-// $FlowFixMe
 export function getButtonParams(params : ButtonInputParams, req : ExpressRequest, res : ExpressResponse) : ButtonParams {
     const {
         env,
@@ -310,7 +311,6 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
 
-    // $FlowFixMe
     const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';

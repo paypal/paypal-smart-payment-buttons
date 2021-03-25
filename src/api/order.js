@@ -1,5 +1,6 @@
-/* @flow */
+/* eslint max-lines: 0 */
 
+/* @flow */
 import type { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY, FUNDING, WALLET_INSTRUMENT, INTENT } from '@paypal/sdk-constants/src';
 import { request, noop, memoize } from 'belter/src';
@@ -26,6 +27,7 @@ export type OrderCreateRequest = {|
 
 export type OrderResponse = {||};
 export type OrderCaptureResponse = {||};
+export type OrderConfirmResponse = {||};
 export type OrderGetResponse = {||};
 export type OrderAuthorizeResponse = {||};
 
@@ -152,6 +154,31 @@ export function patchOrder(orderID : string, data : PatchData, { facilitatorAcce
                 [HEADERS.CLIENT_CONTEXT]: orderID
             }
         });
+}
+
+export type ConfirmData = {|
+    payment_source : {
+        [$Values<typeof FUNDING>] : {|
+            country_code? : string | null,
+            name? : string | null,
+            email? : string | null,
+            bic? : string | null,
+            bank_id? : string | null
+        |}
+      }
+|};
+
+export function confirmOrderAPI(orderID : string, data : ConfirmData, { facilitatorAccessToken, partnerAttributionID } : OrderAPIOptions) : ZalgoPromise<OrderConfirmResponse> {
+    return callRestAPI({
+        accessToken: facilitatorAccessToken,
+        method:      `post`,
+        url:         `${ ORDERS_API_URL }/${ orderID }/confirm-payment-source`,
+        data,
+        headers:     {
+            [HEADERS.PARTNER_ATTRIBUTION_ID]: partnerAttributionID || '',
+            [HEADERS.PREFER]:                 PREFER.REPRESENTATION
+        }
+    });
 }
 
 export type ValidatePaymentMethodOptions = {|
@@ -422,6 +449,9 @@ type SupplementalOrderInfo = {|
                     currencyValue : string,
                     currencyCode : string
                 |}
+            |},
+            supplementary? : {|
+                initiationIntent? : string
             |}
         |},
         buyer? : {|
@@ -461,6 +491,9 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
                             }
                         }
                     }
+                    supplementary {
+                        initiationIntent
+                    }
                     flags {
                         isChangeShippingAddressAllowed
                     }
@@ -480,12 +513,10 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
     });
 });
 
-export function updateButtonClientConfig({ orderID, clientID, fundingSource, inline = false, userExperienceFlow } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void |}) : ZalgoPromise<void> {
-    console.log('userExperienceFlow in CCO', userExperienceFlow);
+export function updateButtonClientConfig({ orderID, fundingSource, inline = false, userExperienceFlow } : {| orderID : string, fundingSource : $Values<typeof FUNDING>, inline : boolean | void, userExperienceFlow? : string |}) : ZalgoPromise<void> {
     const experienceFlow = inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT;
     return updateClientConfig({
         orderID,
-        clientID,
         fundingSource,
         integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
         userExperienceFlow:  userExperienceFlow ? userExperienceFlow : experienceFlow,
@@ -493,17 +524,16 @@ export function updateButtonClientConfig({ orderID, clientID, fundingSource, inl
     });
 }
 
-// eslint-disable-next-line no-warning-comments
-// TODO: check if paymentMethodNonce needs to be a type of wallet, or directly taken from wallet
 type PayWithNonceOptions = {|
     orderID : string,
-    paymentMethodNonce : ?string,
-    clientID : ?string,
-    branded : boolean
+    paymentMethodNonce : string,
+    clientID : string,
+    branded : boolean,
+    buttonSessionID : string
 |};
 
-export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true } : PayWithNonceOptions) : ZalgoPromise<mixed> {
-    // $FlowFixMe
+export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true, buttonSessionID } : PayWithNonceOptions) : ZalgoPromise<ApproveData> {
+    getLogger().info(`pay_with_nonce_input_params`, { orderID, paymentMethodNonce, clientID, branded, buttonSessionID });
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `
@@ -512,12 +542,14 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 $clientID : String!
                 $paymentMethodNonce: String!
                 $branded: Boolean!
+                $buttonSessionID: String
             ) {
                 approvePaymentWithNonce(
                     token: $orderID
                     clientID: $clientID
                     paymentMethodNonce: $paymentMethodNonce
                     branded: $branded
+                    buttonSessionID: $buttonSessionID
                 ) {
                     buyer {
                         userId
@@ -529,13 +561,14 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
             orderID,
             clientID,
             paymentMethodNonce,
-            branded
+            branded,
+            buttonSessionID
         },
         headers: {
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(({ approvePaymentWithNonce }) => {
-        getLogger().info('pay_with_paymentMethodNonce', approvePaymentWithNonce);
+        getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
         return {
             payerID: approvePaymentWithNonce.buyer.userId
         };

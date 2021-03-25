@@ -105,6 +105,7 @@ export const FPTI_TRANSITION = {
     INSTALLMENTS_INELIGIBLE:  ('installments_ineligible' : 'installments_ineligible'),
 
     CREATE_ORDER:             ('process_create_order' : 'process_create_order'),
+    CONFIRM_ORDER:             ('process_confirm_order' : 'process_confirm_order'),
     RECEIVE_ORDER:            ('process_receive_order' : 'process_receive_order'),
     CREATE_PAYMENT:           ('process_create_payment' : 'process_create_payment'),
 
@@ -117,28 +118,38 @@ export const FPTI_TRANSITION = {
     FIREBASE_CONNECTION_OPENED:     ('firebase_connection_opened' : 'firebase_connection_opened'),
     FIREBASE_CONNECTION_ERRORED:    ('firebase_connection_errored' : 'firebase_connection_errored'),
 
-    NATIVE_DETECT_APP_SWITCH:           ('native_detect_app_switch' : 'native_detect_app_switch'),
-    NATIVE_DETECT_WEB_SWITCH:           ('native_detect_web_switch' : 'native_detect_web_switch'),
-    NATIVE_APP_SWITCH_ACK:              ('native_app_switch_ack' : 'native_app_switch_ack'),
-    NATIVE_ERROR:                       ('native_app_switch_ack' : 'native_app_switch_ack'),
-    NATIVE_SET_PROPS_ATTEMPT:           ('process_set_props_attempt' : 'process_set_props_attempt'),
-    NATIVE_APP_SWITCH_INELIGIBLE:       ('app_switch_ineligible' : 'app_switch_ineligible'),
-    NATIVE_ATTEMPT_APP_SWITCH:          ('app_switch_attempted' : 'app_switch_attempted'),
-    NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
-    NATIVE_CLOSING_POPUP:               ('native_closing_popup' : 'native_closing_popup'),
-    NATIVE_POPUP_CLOSED:                ('popup_closed' : 'popup_closed'),
-    NATIVE_POPUP_HASHCHANGE:            ('popup_hashchange' : 'popup_hashchange'),
-    NATIVE_POPUP_NO_OPENER:             ('popup_no_opener' : 'popup_no_opener'),
-    NATIVE_POPUP_FALLBACK:              ('popup_fallback' : 'popup_fallback'),
-    NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
-    NATIVE_ON_APPROVE:                  ('native_onapprove' : 'native_onapprove'),
-    NATIVE_ON_CANCEL:                   ('native_oncancel' : 'native_oncancel'),
-    NATIVE_ON_CLICK_INVALID:            ('native_onclick_invalid' : 'native_onclick_invalid'),
-    NATIVE_ON_COMPLETE:                 ('native_oncomplete' : 'native_oncomplete'),
-    NATIVE_ON_ERROR:                    ('native_onerror' : 'native_onerror'),
-    NATIVE_ON_SHIPPING_CHANGE:          ('native_onshippingchange' : 'native_onshippingchange'),
-
-    HONEY_IDENTIFY:                     ('honey_identify')
+    NATIVE_DETECT_APP_SWITCH:               ('native_detect_app_switch' : 'native_detect_app_switch'),
+    NATIVE_DETECT_WEB_SWITCH:               ('native_detect_web_switch' : 'native_detect_web_switch'),
+    NATIVE_APP_SWITCH_ACK:                  ('native_app_switch_ack' : 'native_app_switch_ack'),
+    NATIVE_ERROR:                           ('native_app_switch_ack' : 'native_app_switch_ack'),
+    NATIVE_SET_PROPS_ATTEMPT:               ('process_set_props_attempt' : 'process_set_props_attempt'),
+    NATIVE_APP_INSTALLED:                   ('native_app_installed' : 'native_app_installed'),
+    NATIVE_APP_SWITCH_INELIGIBLE:           ('app_switch_ineligible' : 'app_switch_ineligible'),
+    NATIVE_ATTEMPT_APP_SWITCH:              ('app_switch_attempted' : 'app_switch_attempted'),
+    NATIVE_ATTEMPT_APP_SWITCH_ERRORED:      ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
+    NATIVE_CLOSING_POPUP:                   ('native_closing_popup' : 'native_closing_popup'),
+    NATIVE_POPUP_CLOSED:                    ('popup_closed' : 'popup_closed'),
+    NATIVE_POPUP_HASHCHANGE:                ('popup_hashchange' : 'popup_hashchange'),
+    NATIVE_POPUP_NO_OPENER:                 ('popup_no_opener' : 'popup_no_opener'),
+    NATIVE_POPUP_ANDROID_PAYPAL_APP_ERROR:  ('native_popup_android_paypal_app_installed_error' : 'native_popup_android_paypal_app_installed_error'),
+    NATIVE_POPUP_ANDROID_VENMO_APP_ERROR:   ('native_popup_android_venmo_app_installed_error' : 'native_popup_android_venmo_app_installed_error'),
+    NATIVE_POPUP_FALLBACK:                  ('popup_fallback' : 'popup_fallback'),
+    NATIVE_POPUP_SHOWN:                     ('popup_shown' : 'popup_shown'),
+    NATIVE_ON_APPROVE:                      ('native_onapprove' : 'native_onapprove'),
+    NATIVE_ON_APPROVE_ERROR:                ('native_onapprove_error' : 'native_onapprove_error'),
+    NATIVE_ON_CANCEL:                       ('native_oncancel' : 'native_oncancel'),
+    NATIVE_ON_CLICK_INVALID:                ('native_onclick_invalid' : 'native_onclick_invalid'),
+    NATIVE_ON_COMPLETE:                     ('native_oncomplete' : 'native_oncomplete'),
+    NATIVE_ON_ERROR:                        ('native_onerror' : 'native_onerror'),
+    NATIVE_ON_SHIPPING_CHANGE:              ('native_onshippingchange' : 'native_onshippingchange'),
+    NATIVE_ON_FALLBACK:                     ('native_onfallback' : 'native_onfallback'),
+    NATIVE_POPUP_INIT:                      ('native_popup_init' : 'native_popup_init'),
+    NATIVE_POPUP_UNLOAD:                    ('native_popup_unload' : 'native_popup_unload'),
+    NATIVE_POPUP_BEFORE_UNLOAD:             ('native_popup_beforeunload' : 'native_popup_beforeunload'),
+    NATIVE_POPUP_PAGEHIDE:                  ('native_popup_pagehide' : 'native_popup_pagehide'),
+    NATIVE_POPUP_OPENER_DETECT_CLOSE:       ('native_popup_opener_detect_close', 'native_popup_opener_detect_close'),
+    
+    HONEY_IDENTIFY:                         ('honey_identify')
 };
 
 export const FPTI_BUTTON_TYPE = {
@@ -151,7 +162,8 @@ export const FPTI_CUSTOM_KEY = {
     HONEY_SESSION_ID:      ('honey_session_id' : 'honey_session_id'),
     INTEGRATION_ISSUE:     ('integration_issue' : 'integration_issue'),
     INTEGRATION_WHITELIST: ('whitelist' : 'whitelist'),
-    INFO_MSG:              ('info_msg' : 'info_msg')
+    INFO_MSG:              ('info_msg' : 'info_msg'),
+    PMT_TOKEN:             ('pmt_token' : 'pmt_token')
 };
 
 export const FPTI_BUTTON_KEY = {
@@ -178,9 +190,13 @@ export const USER_ACTION = {
 
 export const UPGRADE_LSAT_RAMP = {
     EXP_NAME: 'UPGRADE_LSAT_EXPERIMENT',
-    RAMP:      1
+    RAMP:      10
 };
 
 export const FRAME_NAME = {
     SMART_FIELDS: 'smart-fields'
+};
+
+export const AMPLITUDE_KEY = {
+    USER_ID: 'user_id'
 };

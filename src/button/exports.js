@@ -20,7 +20,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
     }).filter(Boolean);
-
+    
     window.exports = {
         name:           'smart-payment-buttons',
         paymentSession: () => {
@@ -33,8 +33,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     }
 
                     return ZalgoPromise.hash({
-                        // $FlowFixMe
-                        valid: onClick ? onClick({ fundingSource }) : true
+                        valid: onClick && fundingSource ? onClick({ fundingSource }) : true
                     }).then(({ valid }) => {
                         if (!valid) {
                             throw new Error('Error occurred during async validation');
@@ -45,7 +44,19 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
 
 
                 },
-                onApprove,
+                onApprove: (merchantData) => {
+                    const data = {
+                        payerID: merchantData.payerID
+                    };
+
+                    const actions = {
+                        restart: () => {
+                            throw new Error('Action unimplemented');
+                        }
+                    };
+
+                    return onApprove(data, actions);
+                },
                 onCancel,
                 onError
             };
