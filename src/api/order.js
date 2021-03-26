@@ -491,9 +491,6 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
                             }
                         }
                     }
-                    supplementary {
-                        initiationIntent
-                    }
                     flags {
                         isChangeShippingAddressAllowed
                     }

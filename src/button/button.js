@@ -101,8 +101,8 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
                 }
             } else {
                 if (!brandedFundingSource) {
-                    getLogger().error('apm_integration_error', { err: 'no hosted components present' });
-                    throw new Error(`Can not find hosted components`);
+                    getLogger().error('integration_error', { err: 'hosted components not found' });
+                    throw new Error(`Hosted components not found`);
                 }
             }
 
