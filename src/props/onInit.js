@@ -3,7 +3,7 @@
 import { ZalgoPromise } from 'zalgo-promise/src';
 
 export type XOnInitDataType = {|
-    correlationID : string
+    sdkCorrelationID : string
 |};
 
 export type XOnInitActionsType = {|
@@ -21,7 +21,7 @@ export function buildXOnInitActions(set : (boolean) => void) : XOnInitActionsTyp
 }
 
 export type OnInitDataType = {|
-    correlationID : string
+    sdkCorrelationID : string
 |};
 
 export type OnInit = (OnInitDataType) => {|

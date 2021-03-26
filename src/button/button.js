@@ -33,7 +33,7 @@ type ButtonOpts = {|
     eligibility : {|
         cardFields : boolean
     |},
-    correlationID? : string,
+    sdkCorrelationID? : string,
     cookies : string,
     personalization : PersonalizationType
 |};
@@ -56,7 +56,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     }
 
     const { facilitatorAccessToken, eligibility, fundingEligibility, buyerCountry: buyerGeoCountry, sdkMeta, buyerAccessToken, wallet, cookies,
-        cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, correlationID: buttonCorrelationID = '' } = opts;
+        cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, sdkCorrelationID: buttonCorrelationID = '' } = opts;
 
     const clientID = window.xprops.clientID;
 
@@ -75,7 +75,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     
     const components = getComponents();
 
-    const { initPromise, isEnabled } = onInit({ correlationID: buttonCorrelationID });
+    const { initPromise, isEnabled } = onInit({ sdkCorrelationID: buttonCorrelationID });
 
     let paymentProcessing = false;
 
