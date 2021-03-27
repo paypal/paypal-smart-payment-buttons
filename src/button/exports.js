@@ -14,7 +14,7 @@ props : ButtonProps,
 |};
 
 export function setupExports({ props, isEnabled } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel, commit } = props;
+    const { createOrder, onApprove, onError, onCancel, commit, intent } = props;
     const { onClick, fundingSource } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
@@ -59,7 +59,8 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     return onApprove(data, actions);
                 },
                 onCancel,
-                onError
+                onError,
+                intent
             };
         }
     };
