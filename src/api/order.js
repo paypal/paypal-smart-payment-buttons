@@ -130,7 +130,7 @@ export function authorizeOrder(orderID : string, { facilitatorAccessToken, buyer
 }
 
 type PatchData = {|
-    
+
 |};
 
 export function patchOrder(orderID : string, data : PatchData, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
@@ -489,6 +489,9 @@ export const getSupplementalOrderInfo : GetSupplementalOrderInfo = memoize(order
                                 currencyFormatSymbolISOCurrency
                                 currencyValue
                             }
+                        }
+                        supplementary {
+                            initiationIntent
                         }
                     }
                     flags {

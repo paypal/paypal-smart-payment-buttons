@@ -164,7 +164,7 @@ export function validateOrder(orderID : string, { env, clientID, merchantID, cur
         const cartCurrency = cart.amounts && cart.amounts.total.currencyCode;
         const cartAmount = cart.amounts && cart.amounts.total.currencyValue;
         const cartBillingType = cart.billingType;
-        const intentMatch = (cartIntent === intent) || (initiationIntent === intent);
+        const intentMatch = cartIntent === intent || initiationIntent === intent;
 
         if (!intentMatch && VALIDATE_INTENTS.indexOf(intent) !== -1) {
             triggerIntegrationError({
