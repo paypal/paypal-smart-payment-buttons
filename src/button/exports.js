@@ -5,6 +5,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { querySelectorAll } from 'belter/src';
 
 import { DATA_ATTRIBUTES } from '../constants';
+import { upgradeFacilitatorAccessToken } from '../api';
 
 import type { ButtonProps } from './props';
 
@@ -14,8 +15,7 @@ props : ButtonProps,
 |};
 
 export function setupExports({ props, isEnabled } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel, commit, intent } = props;
-    const { onClick, fundingSource } = props;
+    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
@@ -64,6 +64,10 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                 onCancel,
                 onError
             };
+        },
+        upgradeFacilitatorAccessToken: (facilitatorAccessToken, buyerAccessToken, orderID) => {
+            console.log('upgrading facilitator access token');
+            upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then((token, merchantLSAT, bat = buyerAccessToken) => console.log({ token, bat, merchantLSAT }));
         }
     };
     
