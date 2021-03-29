@@ -65,7 +65,7 @@ export function getButtonMiddleware({
 
             const { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard, userIDToken, amount,
                 merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, basicFundingEligibility, locale,
-                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, style, paymentMethodNonce, branded } = getButtonParams(params, req, res);
+                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, style, paymentMethodNonce, branded, fundingSource } = getButtonParams(params, req, res);
             
             const { label, period, tagline } = style;
             logger.info(req, `button_params`, { params: JSON.stringify(params) });
@@ -126,7 +126,7 @@ export function getButtonMiddleware({
             const isCardFieldsExperimentEnabled = await isCardFieldsExperimentEnabledPromise;
             const wallet = await walletPromise;
             const personalization = await personalizationPromise;
-            const brandedFundingSource = await isFundingSourceBranded(req, { clientID });
+            const brandedFundingSource = await isFundingSourceBranded(req, { clientID, fundingSource });
             
             const eligibility = {
                 cardFields: isCardFieldsExperimentEnabled

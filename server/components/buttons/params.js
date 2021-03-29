@@ -284,6 +284,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const {
         env,
         clientID,
+        fundingSource,
         currency,
         intent,
         commit,
@@ -320,6 +321,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     return {
         env,
         clientID,
+        fundingSource,
         buyerCountry,
         currency,
         intent,
