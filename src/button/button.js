@@ -75,7 +75,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     
     const components = getComponents();
 
-    const { initPromise, isEnabled } = onInit({ sdkCorrelationID: buttonCorrelationID });
+    const { initPromise, isEnabled } = onInit({ correlationID: buttonCorrelationID });
 
     let paymentProcessing = false;
 
