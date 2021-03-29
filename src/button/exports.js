@@ -5,6 +5,7 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { querySelectorAll } from 'belter/src';
 
 import { DATA_ATTRIBUTES } from '../constants';
+import { upgradeFacilitatorAccessToken } from '../api';
 
 import type { ButtonProps } from './props';
 
@@ -64,6 +65,10 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                 onCancel,
                 onError
             };
+        },
+        upgradeFacilitatorAccessToken: (facilitatorAccessToken, buyerAccessToken, orderID) => {
+            console.log('upgrading facilitator access token');
+            upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then((token, merchantLSAT, bat = buyerAccessToken) => console.log({ token, bat, merchantLSAT }));
         }
     };
     
