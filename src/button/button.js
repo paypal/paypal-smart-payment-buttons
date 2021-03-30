@@ -36,7 +36,7 @@ type ButtonOpts = {|
     correlationID? : string,
     cookies : string,
     personalization : PersonalizationType,
-    brandedFundingSource? : boolean
+    brandedDefault? : boolean
 |};
 
 try {
@@ -58,7 +58,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
 
     const { facilitatorAccessToken, eligibility, fundingEligibility, buyerCountry: buyerGeoCountry, sdkMeta, buyerAccessToken, wallet, cookies,
         cspNonce: serverCSPNonce, merchantID: serverMerchantID, firebaseConfig, content, personalization, correlationID: buttonCorrelationID = '',
-        brandedFundingSource } = opts;
+        brandedDefault } = opts;
 
     const clientID = window.xprops.clientID;
 
@@ -67,7 +67,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         sdkMeta, buyerAccessToken, wallet, content, personalization });
     const { merchantID } = serviceData;
 
-    const props = getProps({ facilitatorAccessToken, brandedFundingSource });
+    const props = getProps({ facilitatorAccessToken, brandedDefault });
     const { env, sessionID, partnerAttributionID, commit, sdkCorrelationID, locale,
         buttonSessionID, merchantDomain, onInit, getPrerenderDetails, rememberFunding, getQueriedEligibleFunding,
         style, fundingSource, intent, createBillingAgreement, createSubscription, stickinessID } = props;
@@ -100,7 +100,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
                     return;
                 }
             } else {
-                if (!brandedFundingSource) {
+                if (!brandedDefault) {
                     getLogger().error('integration_error', { err: 'hosted components not found' });
                     throw new Error(`Hosted components not found`);
                 }
@@ -168,7 +168,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
             event.preventDefault();
             event.stopPropagation();
 
-            const paymentProps = getProps({ facilitatorAccessToken, brandedFundingSource });
+            const paymentProps = getProps({ facilitatorAccessToken, brandedDefault });
             const payPromise = initiatePayment({ payment, props: paymentProps });
             const { onError } = paymentProps;
 

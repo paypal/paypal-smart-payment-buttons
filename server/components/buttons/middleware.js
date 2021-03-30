@@ -126,7 +126,7 @@ export function getButtonMiddleware({
             const isCardFieldsExperimentEnabled = await isCardFieldsExperimentEnabledPromise;
             const wallet = await walletPromise;
             const personalization = await personalizationPromise;
-            const brandedFundingSource = fundingSource ? await isFundingSourceBranded(req, { clientID, fundingSource }) : true;
+            const brandedDefault = fundingSource ? await isFundingSourceBranded(req, { clientID, fundingSource }) : true;
             
             const eligibility = {
                 cardFields: isCardFieldsExperimentEnabled
@@ -153,7 +153,7 @@ export function getButtonMiddleware({
             const setupParams = {
                 fundingEligibility, buyerCountry, cspNonce, merchantID, sdkMeta, wallet, correlationID,
                 firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization,
-                brandedFundingSource
+                brandedDefault
             };
 
             const pageHTML = `
