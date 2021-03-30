@@ -28,7 +28,8 @@ type InlineGuestElmoParams = {|
 |};
 
 type BrandedFundingSourceElmoParam = {|
-    clientID : string
+    clientID : string,
+    fundingSource : string
 |};
 
 type ButtonMiddlewareOptions = {|
