@@ -226,7 +226,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         stickinessID, buttonCorrelationID, locale, merchantID, buttonSessionID, merchantDomain,
         fundingSource, getQueriedEligibleFunding, buyerCountry });
     const setupPaymentFlowsTask = setupPaymentFlows({ props, config, serviceData, components });
-    const setupExportsTask = setupExports({ props, isEnabled, facilitatorAccessToken });
+    const setupExportsTask = setupExports({ props, isEnabled });
 
     const validatePropsTask = setupButtonLogsTask.then(() => validateProps({ env, clientID, intent, createBillingAgreement, createSubscription }));
 
