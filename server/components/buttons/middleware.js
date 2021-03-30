@@ -126,7 +126,7 @@ export function getButtonMiddleware({
             const isCardFieldsExperimentEnabled = await isCardFieldsExperimentEnabledPromise;
             const wallet = await walletPromise;
             const personalization = await personalizationPromise;
-            const brandedFundingSource = await isFundingSourceBranded(req, { clientID, fundingSource });
+            const brandedFundingSource = fundingSource ? await isFundingSourceBranded(req, { clientID, fundingSource }) : true;
             
             const eligibility = {
                 cardFields: isCardFieldsExperimentEnabled
