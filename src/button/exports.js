@@ -15,7 +15,7 @@ props : ButtonProps,
 |};
 
 export function setupExports({ props, isEnabled } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource } = props;
+    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
@@ -23,10 +23,9 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
     
     window.exports = {
         name:           'smart-payment-buttons',
-        commit: {
-            commit,
-            intent
-        },
+        commit,
+        intent,
+        currency,
         paymentSession: () => {
             return {
                 getAvailableFundingSources: () => fundingSources,
@@ -66,8 +65,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
             };
         },
         upgradeFacilitatorAccessToken: (facilitatorAccessToken, buyerAccessToken, orderID) => {
-            console.log('upgrading facilitator access token');
-            upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then((token, merchantLSAT, bat = buyerAccessToken) => console.log({ token, bat, merchantLSAT }));
+            upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID });
         }
     };
     
