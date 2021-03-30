@@ -243,7 +243,7 @@ type OnApproveXProps = {|
     vault : boolean
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, brandedDefault, createOrder } : {| facilitatorAccessToken : string, brandedDefault? : boolean, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, branded, createOrder } : {| facilitatorAccessToken : string, branded? : boolean, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
@@ -263,7 +263,7 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 }).flush();
 
             if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
-                if (!payerID && brandedDefault) {
+                if (!payerID && branded) {
                     getLogger().error('onapprove_payerid_not_present_for_branded_standalone_button', { orderID }).flush();
                 }
             }
