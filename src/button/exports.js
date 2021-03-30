@@ -24,9 +24,11 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
     
     window.exports = {
         name:           'smart-payment-buttons',
-        commit,
-        intent,
-        currency,
+        commit: {
+            commit,
+            intent,
+            currency
+        },
         paymentSession: () => {
             return {
                 getAvailableFundingSources: () => fundingSources,
