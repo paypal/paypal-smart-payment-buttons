@@ -68,7 +68,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
     return true;
 }
 
-function startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }) : ZalgoPromise<{| payerID : string |}> {
+function startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }) : ZalgoPromise<{| payerID : string, buyerAccessToken : string |}> {
     getLogger().info('nonce_payment_initiated');
 
     return payWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID })
@@ -107,8 +107,8 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
     const start = () => {
         return createOrder().then(orderID => {
             getLogger().info('orderid_in_nonce', { orderID });
-            return startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }).then(({ payerID }) => {
-                return onApprove({ payerID }, { restart });
+            return startPaymentWithNonce({ orderID, paymentMethodNonce, clientID, branded, buttonSessionID }).then(({ payerID, buyerAccessToken }) => {
+                return onApprove({ payerID, buyerAccessToken }, { restart });
             });
         });
     };
