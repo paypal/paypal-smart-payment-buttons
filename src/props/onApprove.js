@@ -274,7 +274,6 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 paymentID = paymentID || (supplementalData && supplementalData.checkoutSession && supplementalData.checkoutSession.cart && supplementalData.checkoutSession.cart.paymentId);
 
                 const data = { orderID, payerID, paymentID, billingToken, subscriptionID, facilitatorAccessToken, authCode };
-
                 const actions = buildXApproveActions({ orderID, paymentID, payerID, intent, restart, subscriptionID, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
 
                 return onApprove(data, actions).catch(err => {

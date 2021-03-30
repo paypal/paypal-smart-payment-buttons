@@ -233,7 +233,6 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
         clientID, connect, clientMetadataID: cmid, onAuth, userIDToken, env,
         currency, intent, disableFunding, disableCard, enableFunding,
         standaloneFundingSource, branded } = props;
-
     let { button, win, fundingSource, card, isClick, buyerAccessToken = serviceData.buyerAccessToken,
         venmoPayloadID, buyerIntent } = payment;
     const { fundingEligibility, buyerCountry, sdkMeta, merchantID } = serviceData;
