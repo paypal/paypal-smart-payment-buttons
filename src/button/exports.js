@@ -11,11 +11,10 @@ import type { ButtonProps } from './props';
 
 type ExportsProps = {|
     props : ButtonProps,
-    isEnabled : () => boolean,
-    facilitatorAccessToken : string
+    isEnabled : () => boolean
 |};
 
-export function setupExports({ props, isEnabled, facilitatorAccessToken } : ExportsProps)  {
+export function setupExports({ props, isEnabled } : ExportsProps)  {
     const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
@@ -65,7 +64,8 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                 },
                 onCancel,
                 onError,
-                upgradeFacilitatorAccessToken: (buyerAccessToken, orderID) => {
+                upgradeFacilitatorAccessToken: (facilitatorAccessToken, orderID) => {
+                    // TODO: Preferred way to store buyerAccessToken?
                     upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID });
                 }
             };
