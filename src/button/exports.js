@@ -10,12 +10,13 @@ import { upgradeFacilitatorAccessToken } from '../api';
 import type { ButtonProps } from './props';
 
 type ExportsProps = {|
-props : ButtonProps,
-    isEnabled : () => boolean
+    props : ButtonProps,
+    isEnabled : () => boolean,
+    facilitatorAccessToken : string
 |};
 
-export function setupExports({ props, isEnabled } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel, onClick, fundingSource, commit, intent, currency } = props;
+export function setupExports({ props, isEnabled, facilitatorAccessToken } : ExportsProps)  {
+    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
@@ -63,12 +64,11 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     return onApprove(data, actions);
                 },
                 onCancel,
-                onError
+                onError,
+                upgradeFacilitatorAccessToken: (buyerAccessToken, orderID) => {
+                    upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID });
+                }
             };
-        },
-        upgradeFacilitatorAccessToken: (facilitatorAccessToken, buyerAccessToken, orderID) => {
-            console.log('upgrading facilitator access token');
-            upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then((token, merchantLSAT, bat = buyerAccessToken) => console.log({ token, bat, merchantLSAT }));
         }
     };
     
