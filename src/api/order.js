@@ -6,7 +6,7 @@ import { CURRENCY, FPTI_KEY, FUNDING, WALLET_INSTRUMENT, INTENT } from '@paypal/
 import { request, noop, memoize } from 'belter/src';
 
 import { SMART_API_URI, ORDERS_API_URL, VALIDATE_PAYMENT_METHOD_API } from '../config';
-import { getLogger } from '../lib';
+import { getLogger, setBuyerAccessToken } from '../lib';
 import { FPTI_TRANSITION, FPTI_CONTEXT_TYPE, HEADERS, SMART_PAYMENT_BUTTONS,
     INTEGRATION_ARTIFACT, USER_EXPERIENCE_FLOW, PRODUCT_FLOW, PREFER } from '../constants';
 import type { ShippingMethod, ShippingAddress } from '../payment-flows/types';
@@ -440,8 +440,7 @@ type ApproveOrderOptions = {|
 |};
 
 type ApproveData = {|
-    payerID : string,
-    buyerAccessToken? : string
+    payerID : string
 |};
 
 export function approveOrder({ orderID, planID, buyerAccessToken } : ApproveOrderOptions) : ZalgoPromise<ApproveData> {
@@ -735,9 +734,6 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 ) {
                     buyer {
                         userId
-                        auth {
-                            accessToken
-                        }
                     }
                 }
             }
@@ -754,9 +750,9 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
         }
     }).then(({ approvePaymentWithNonce }) => {
         getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
+        setBuyerAccessToken(approvePaymentWithNonce.buyer.auth.accessToken);
         return {
-            payerID:          approvePaymentWithNonce.buyer.userId,
-            buyerAccessToken: approvePaymentWithNonce.buyer.auth.accessToken
+            payerID:          approvePaymentWithNonce.buyer.userId
         };
     });
 }

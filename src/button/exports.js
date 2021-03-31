@@ -6,6 +6,7 @@ import { querySelectorAll } from 'belter/src';
 
 import { DATA_ATTRIBUTES } from '../constants';
 import { upgradeFacilitatorAccessToken } from '../api';
+import { getBuyerAccessToken } from '../lib';
 
 import type { ButtonProps } from './props';
 
@@ -65,8 +66,12 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                 onCancel,
                 onError,
                 upgradeFacilitatorAccessToken: (facilitatorAccessToken, orderID) => {
-                    // TODO: Preferred way to store buyerAccessToken?
-                    upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID });
+                    const buyerAccessToken = getBuyerAccessToken();
+                    if (buyerAccessToken) {
+                        upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID });
+                    } else {
+                        throw new Error('Missing buyer access token');
+                    }
                 }
             };
         }
