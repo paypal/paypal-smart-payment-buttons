@@ -53,7 +53,8 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                 },
                 onApprove: (merchantData) => {
                     const data = {
-                        payerID: merchantData.payerID
+                        payerID:      merchantData.payerID,
+                        forceRestAPI: merchantData.forceRestAPI
                     };
 
                     const actions = {
