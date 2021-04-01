@@ -43,7 +43,8 @@ type ButtonInputParams = {|
     riskData? : string,
     platform : ?$Values<typeof PLATFORM>,
     paymentMethodNonce? : ?string,
-    branded? : boolean
+    branded? : boolean,
+    fundingSource : string
 |};
 
 type Style = {|
@@ -81,7 +82,8 @@ type ButtonParams = {|
     platform : $Values<typeof PLATFORM>,
     cookies : string,
     paymentMethodNonce : ?string,
-    branded : ?boolean
+    branded : ?boolean,
+    fundingSource : string
 |};
 
 function getCookieString(req : ExpressRequest) : string {
