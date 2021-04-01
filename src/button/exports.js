@@ -12,10 +12,11 @@ import type { ButtonProps } from './props';
 
 type ExportsProps = {|
     props : ButtonProps,
-    isEnabled : () => boolean
+    isEnabled : () => boolean,
+    facilitatorAccessToken : string
 |};
 
-export function setupExports({ props, isEnabled } : ExportsProps)  {
+export function setupExports({ props, isEnabled, facilitatorAccessToken } : ExportsProps)  {
     const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
@@ -65,6 +66,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                 },
                 onCancel,
                 onError,
+                // eslint-disable-next-line no-shadow
                 upgradeFacilitatorAccessToken: (facilitatorAccessToken, orderID) => {
                     const buyerAccessToken = getBuyerAccessToken();
                     if (buyerAccessToken) {
@@ -72,6 +74,9 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     } else {
                         throw new Error('Missing buyer access token');
                     }
+                },
+                getFacilitatorAccessToken: () => {
+                    return facilitatorAccessToken;
                 }
             };
         }
