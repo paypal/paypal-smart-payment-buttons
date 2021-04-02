@@ -54,7 +54,7 @@ type ButtonMiddlewareOptions = {|
 export function getButtonMiddleware({
     logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
     getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking,
-    getPersonalizationEnabled = () => false, isFundingSourceBranded = () => Promise.resolve(false)
+    getPersonalizationEnabled = () => false, isFundingSourceBranded = () => Promise.resolve(true)
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
