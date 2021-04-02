@@ -48,7 +48,7 @@ type ButtonMiddlewareOptions = {|
     tracking : (ExpressRequest) => void,
     getPersonalizationEnabled : (ExpressRequest) => boolean,
     cdn? : boolean,
-    isFundingSourceBranded? : (req : ExpressRequest, params : BrandedFundingSourceElmoParam) => Promise<boolean>
+    isFundingSourceBranded : (req : ExpressRequest, params : BrandedFundingSourceElmoParam) => Promise<boolean>
 |};
 
 export function getButtonMiddleware({

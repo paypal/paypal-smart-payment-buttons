@@ -44,7 +44,7 @@ type ButtonInputParams = {|
     platform : ?$Values<typeof PLATFORM>,
     paymentMethodNonce? : ?string,
     branded? : boolean,
-    fundingSource : string
+    fundingSource : $Values<typeof FUNDING>
 |};
 
 type Style = {|
