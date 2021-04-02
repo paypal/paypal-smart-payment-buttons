@@ -100,7 +100,7 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
                     return;
                 }
             } else {
-                if (branded ?? false) {
+                if (branded === false) {
                     getLogger().error('integration_error', { err: 'hosted components not found' });
                     throw new Error(`Hosted components not found`);
                 }
