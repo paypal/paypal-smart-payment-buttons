@@ -83,7 +83,7 @@ type ButtonParams = {|
     cookies : string,
     paymentMethodNonce : ?string,
     branded : ?boolean,
-    fundingSource : string
+    fundingSource : $Values<typeof FUNDING>
 |};
 
 function getCookieString(req : ExpressRequest) : string {
