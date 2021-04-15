@@ -734,6 +734,9 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 ) {
                     buyer {
                         userId
+                        auth {
+                            accessToken
+                        }
                     }
                 }
             }
@@ -752,7 +755,7 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
         getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
         setBuyerAccessToken(approvePaymentWithNonce.buyer.auth.accessToken);
         return {
-            payerID:          approvePaymentWithNonce.buyer.userId
+            payerID: approvePaymentWithNonce.buyer.userId
         };
     });
 }

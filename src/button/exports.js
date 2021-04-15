@@ -52,9 +52,10 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
 
                 },
                 onApprove: (merchantData) => {
+                    // TODO: set up forceRestAPI correctly
                     const data = {
                         payerID:      merchantData.payerID,
-                        forceRestAPI: merchantData.forceRestAPI
+                        forceRestAPI: merchantData.forceRestAPI || true
                     };
 
                     const actions = {
@@ -63,6 +64,7 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                         }
                     };
 
+                    // TODO: do we need getOnApprove here to force rest api?
                     return onApprove(data, actions);
                 },
                 onCancel,
