@@ -6,7 +6,7 @@ import {
     clickButton,
     createButtonHTML, DEFAULT_FUNDING_ELIGIBILITY,
     generateOrderID, getGraphQLApiMock,
-    mockAsyncProp,
+    mockAsyncProp, mockFunction,
     mockSetupButton
 } from './mocks';
 
@@ -43,7 +43,6 @@ describe.only('nonce cases', () => {
             );
 
             const userIDToken = uniqueID();
-
             const accessToken = uniqueID();
             const instrumentID = uniqueID();
             const tokenID = uniqueID();
@@ -108,21 +107,40 @@ describe.only('nonce cases', () => {
                         };
                     }
 
-                    if (data.query.includes('mutation OneClickApproveOrder')) {
-                        if (headers['x-paypal-internal-euat'] !== accessToken) {
-                            throw new Error(`Expected buyer access token to be present in request`);
-                        }
-
+                    if (data.query.includes('mutation approvePaymentWithNonce')) {
                         return {
                             data: {
-                                oneClickPayment: {
-                                    userId: payerID
+                                approvePaymentWithNonce: {
+                                    buyer: {
+                                        userId: payerID
+                                    }
                                 }
                             }
                         };
                     }
                 }
-            }).expectCalls();
+            });
+
+            mockFunction(window.paypal, 'Checkout', expect('Checkout', ({ original: CheckoutOriginal, args: [ props ] }) => {
+
+                mockFunction(props, 'onApprove', expect('onApprove', ({ original: onApproveOriginal, args: [ data, actions ] }) => {
+                    return onApproveOriginal({ ...data, payerID }, actions);
+                }));
+
+                const checkoutInstance = CheckoutOriginal(props);
+
+                mockFunction(checkoutInstance, 'renderTo', expect('renderTo', async ({ original: renderToOriginal, args }) => {
+                    return props.createOrder().then(id => {
+                        if (id !== orderID) {
+                            throw new Error(`Expected orderID to be ${ orderID }, got ${ id }`);
+                        }
+
+                        return renderToOriginal(...args);
+                    });
+                }));
+
+                return checkoutInstance;
+            }));
 
             const fundingEligibility = {
                 [ FUNDING.PAYPAL ]: {
@@ -132,25 +150,20 @@ describe.only('nonce cases', () => {
                     eligible: true,
                     vendors:  {
                         [ CARD.VISA ]: {
-                            eligible:           true,
-                            vaultedInstruments:  [ {
-                                id:    paymentMethodID
-                            } ]
+                            eligible:           true
                         }
                     }
                 }
             };
 
-            createButtonHTML({
-                fundingEligibility,
-                fundingSource:      FUNDING.CARD,
-                paymentMethodNonce: nonce,
-                paymentMethodID:    tokenID
-            });
+            createButtonHTML({ fundingEligibility });
 
             await mockSetupButton({
                 merchantID:         [ uniqueID() ],
-                wallet
+                wallet,
+                fundingEligibility,
+                paymentMethodNonce: nonce,
+                paymentMethodID
             });
 
             await clickButton(FUNDING.CARD);
