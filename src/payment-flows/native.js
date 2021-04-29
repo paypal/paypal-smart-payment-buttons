@@ -504,7 +504,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const getDirectNativeUrl = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
         return conditionalExtendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
-                sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID, stickinessID:   defaultStickinessID,
+                ...(fundingSource === 'venmo' ? { channel } : {}), sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID, stickinessID:   defaultStickinessID,
                 enableFunding:  enableFunding.join(','),
                 domain:         merchantDomain,
                 rtdbInstanceID: firebaseConfig.databaseURL
@@ -518,6 +518,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const forceEligible = isNativeOptedIn({ props });
 
         return {
+            ...(fundingSource === 'venmo' ? { channel } : {}),
             sdkMeta,
             sessionUID,
             orderID,
