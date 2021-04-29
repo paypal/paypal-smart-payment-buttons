@@ -432,7 +432,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     let { facilitatorAccessToken, sdkMeta, buyerCountry, merchantID, cookies } = serviceData;
     const { fundingSource } = payment;
     const { sdkVersion, firebase: firebaseConfig } = config;
-
+    const channel : string = isDevice() ? 'mobile-web' : 'desktop-web';
+    
     const shippingCallbackEnabled = Boolean(onShippingChange);
     sdkMeta = sdkMeta.replace(/[=]+$/, '');
 
