@@ -2,7 +2,7 @@
 /* eslint max-lines: off, max-nested-callbacks: off */
 
 import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError,
-    stringifyErrorMessage, cleanup, once, noop, inlineMemoize, isDevice } from 'belter/src';
+    stringifyErrorMessage, cleanup, once, noop, inlineMemoize } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY, FUNDING } from '@paypal/sdk-constants/src';
 import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } from 'cross-domain-utils/src';
@@ -432,7 +432,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     let { facilitatorAccessToken, sdkMeta, buyerCountry, merchantID, cookies } = serviceData;
     const { fundingSource } = payment;
     const { sdkVersion, firebase: firebaseConfig } = config;
-    const channel : string = isDevice() ? 'mobile-web' : 'desktop-web';
+    const channel = fundingSource === FUNDING.VENMO ? { channel: 'mobile-web' } : {};
     
     const shippingCallbackEnabled = Boolean(onShippingChange);
     sdkMeta = sdkMeta.replace(/[=]+$/, '');
@@ -504,7 +504,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     const getDirectNativeUrl = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
         return conditionalExtendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
             query: {
-                ...(fundingSource === 'venmo' ? { channel } : {}), sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID, stickinessID:   defaultStickinessID,
+                ...channel, sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl, clientID, stickinessID:   defaultStickinessID,
                 enableFunding:  enableFunding.join(','),
                 domain:         merchantDomain,
                 rtdbInstanceID: firebaseConfig.databaseURL
@@ -518,7 +518,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const forceEligible = isNativeOptedIn({ props });
 
         return {
-            ...(fundingSource === 'venmo' ? { channel } : {}),
+            ...channel,
             sdkMeta,
             sessionUID,
             orderID,
