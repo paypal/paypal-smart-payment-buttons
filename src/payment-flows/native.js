@@ -86,8 +86,6 @@ const CHANNEL = {
     MOBILE:  'mobile-web'
 };
 
-const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
-
 let clean;
 let initialPageUrl;
 let nativeEligibility : NativeEligibility;
@@ -442,6 +440,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const shippingCallbackEnabled = Boolean(onShippingChange);
     sdkMeta = sdkMeta.replace(/[=]+$/, '');
+    const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
 
     if (!firebaseConfig) {
         throw new Error(`Can not run native flow without firebase config`);
