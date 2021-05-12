@@ -53,7 +53,7 @@ describe('native chrome cases', () => {
             const mockWindow = getMockWindowOpen({
                 expectedUrl:   'https://www.paypal.com/smart/checkout/native',
                 appSwitch:     true,
-                expectedQuery: [ 'sessionUID', 'pageUrl' ],
+                expectedQuery: [ 'sessionUID', 'pageUrl', 'channel' ],
                 onOpen:        ({ query }) => {
                     sessionUID = query.sessionUID;
                 }
@@ -1871,6 +1871,10 @@ describe('native ios cases', () => {
 
                         if (!redirectQuery.env) {
                             throw new Error(`Expected env to be passed in url`);
+                        }
+
+                        if (!redirectQuery.channel) {
+                            throw new Error(`Expected channel to be passed in url`);
                         }
 
                         sessionUID = redirectQuery.sessionUID;
