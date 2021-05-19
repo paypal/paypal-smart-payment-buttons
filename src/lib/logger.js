@@ -1,7 +1,7 @@
 /* @flow */
 
 import { Logger, type LoggerType } from 'beaver-logger/src';
-import { noop, stringifyError, stringifyErrorMessage, inlineMemoize } from 'belter/src';
+import { noop, stringifyError, stringifyErrorMessage, inlineMemoize, isAndroid, isIos } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FPTI_KEY, FPTI_FEED, FPTI_DATA_SOURCE, FPTI_SDK_NAME, ENV, COUNTRY } from '@paypal/sdk-constants/src';
 
@@ -22,6 +22,15 @@ export function enableAmplitude({ env } : {| env : $Values<typeof ENV> |}) {
     });
 }
 
+function getSDKEnvironment() : string {
+    if (isIos()) {
+        return 'ios';
+    }
+    if (isAndroid()) {
+        return 'android';
+    }
+    return '';
+}
 type LoggerOptions = {|
     env : $Values<typeof ENV>,
     sessionID : string,
@@ -56,6 +65,7 @@ export function setupLogger({ env, sessionID, clientID, sdkCorrelationID, buyerC
             [FPTI_KEY.BUYER_COUNTRY]:          buyerCountry,
             [FPTI_KEY.LOCALE]:                 `${ lang }_${ country }`,
             [FPTI_KEY.INTEGRATION_IDENTIFIER]: clientID,
+            [FPTI_KEY.SDK_ENVIRONMENT]:        getSDKEnvironment(),
             [FPTI_KEY.SDK_NAME]:               FPTI_SDK_NAME.PAYMENTS_SDK,
             [FPTI_KEY.SDK_VERSION]:            sdkVersion,
             [FPTI_KEY.USER_AGENT]:             window.navigator && window.navigator.userAgent,
