@@ -84,7 +84,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
         let currentShippingMethod;
 
         const onShippingChangeCallback = <T>({ orderID, shippingContact, shippingMethod = null } : {| orderID : string, shippingContact : ApplePayPaymentContact, shippingMethod? : ?ApplePayShippingMethod |}) : ZalgoPromise<T> => {
-            const { shipping_address } = validateShippingContact(shippingContact);
+            const { errors, shipping_address } = validateShippingContact(shippingContact);
 
             const data = {
                 amount: {
@@ -94,6 +94,11 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                 orderID,
                 shipping_address
             };
+
+            if (errors && errors.length && Object.keys(errors[0]).length) {
+                // $FlowFixMe
+                data.errors = errors;
+            }
 
             if (shippingMethod) {
                 // $FlowFixMe
@@ -163,10 +168,9 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                             ]
                         };
 
+                        // $FlowFixMe
                         return update;
                     });
-                }).catch(err => {
-                    throw err;
                 });
         };
 

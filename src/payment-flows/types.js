@@ -162,7 +162,7 @@ export type ApplePayPaymentContact = {|
     subAdministrativeArea? : string,
     administrativeArea? : string,
     country? : string,
-    countryCode? : $Values<typeof COUNTRY>
+    countryCode? : string
 |};
 
 export const ApplePayShippingType = {
