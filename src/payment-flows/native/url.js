@@ -90,6 +90,11 @@ type NativeUrlQuery = {|
     rtdbInstanceID : string
 |};
 
+const CHANNEL = {
+    DESKTOP: 'desktop-web',
+    MOBILE:  'mobile-web'
+};
+
 function getNativeUrlQueryParams({ props, serviceData, fundingSource, sessionUID, firebaseConfig, pageUrl, orderID, stickinessID } : GetNativeUrlOptions) : NativeUrlQuery {
     const { env, clientID, commit, buttonSessionID, stageHost, apiStageHost, enableFunding, merchantDomain } = props;
     const { facilitatorAccessToken, sdkMeta } = serviceData;
