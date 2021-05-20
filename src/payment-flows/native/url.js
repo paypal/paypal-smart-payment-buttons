@@ -1,7 +1,7 @@
 /* @flow */
 
 
-import { extendUrl, getUserAgent } from 'belter/src';
+import { extendUrl, getUserAgent, isDevice } from 'belter/src';
 import { ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { getDomain } from 'cross-domain-utils/src';
 
@@ -102,6 +102,7 @@ function getNativeUrlQueryParams({ props, serviceData, fundingSource, sessionUID
     const webCheckoutUrl = getWebCheckoutUrl({ orderID, props, fundingSource, facilitatorAccessToken });
     const userAgent = getUserAgent();
     const forceEligible = isNativeOptedIn({ props });
+    const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
 
     return {
         sdkMeta,
