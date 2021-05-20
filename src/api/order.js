@@ -673,12 +673,6 @@ export const getDetailedOrderInfo : GetDetailedOrderInfo = memoize((orderID, cou
                             type
                         }
                     }
-                    payees {
-                        merchantId
-                        email {
-                            stringValue
-                        }
-                    }
                 }
             }
         `,
