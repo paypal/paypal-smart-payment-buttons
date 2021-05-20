@@ -69,6 +69,7 @@ type GetNativeUrlOptions = {|
 |};
 
 type NativeUrlQuery = {|
+    channel : string,
     sdkMeta : string,
     sessionUID : string,
     orderID : string,
@@ -105,6 +106,7 @@ function getNativeUrlQueryParams({ props, serviceData, fundingSource, sessionUID
     const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
 
     return {
+        channel,
         sdkMeta,
         sessionUID,
         orderID,
