@@ -584,10 +584,6 @@ export type DetailedOrderInfo = {|
     checkoutSession : {|
         allowedCardIssuers : $ReadOnlyArray<string>,
         cart : {|
-            billingType? : string,
-            intent : $Values<typeof INTENT>,
-            paymentId? : ?string,
-            billingToken? : ?string,
             amounts : {|
                 shippingAndHandling : {|
                     currencyFormatSymbolISOCurrency : string,
@@ -609,16 +605,7 @@ export type DetailedOrderInfo = {|
             |},
             shippingAddress? : ShippingAddress,
             shippingMethods? : $ReadOnlyArray<ShippingMethod>
-        |},
-        buyer? : {|
-            userId? : string
-        |},
-        payees? : $ReadOnlyArray<{|
-            merchantId? : string,
-            email? : {|
-                stringValue? : string
-            |}
-        |}>
+        |}
     |}
 |};
 
@@ -632,10 +619,6 @@ export const getDetailedOrderInfo : GetDetailedOrderInfo = memoize((orderID, cou
                 checkoutSession(token: $orderID) {
                     allowedCardIssuers(country: $country)
                     cart {
-                        billingType
-                        intent
-                        paymentId
-                        billingToken
                         amounts {
                             shippingAndHandling {
                                 currencyValue
