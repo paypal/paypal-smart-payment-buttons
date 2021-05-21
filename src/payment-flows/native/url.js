@@ -141,7 +141,7 @@ function getNativeUrlQueryParams({ props, serviceData, config, fundingSource, se
 export function getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID } : GetNativeUrlOptions) : string {
     const queryParams = getNativeUrlQueryParams({ props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID });
     
-    if (fundingSource === FUNDING.VENMO) {
+    if (queryParams.channel === 'desktop-web') {
         delete queryParams.sdkMeta;
     }
 
