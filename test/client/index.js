@@ -23,6 +23,7 @@ import './payee';
 import './connect';
 import './smart-fields';
 import './popup';
+import './applepay';
 
 beforeEach(() => {
     setupMocks();
