@@ -174,7 +174,7 @@ export function createApplePayRequest(countryCode : $Values<typeof COUNTRY>, ord
 
 export function isJSON(json : Object) : boolean {
     try {
-        JSON.parse(json);
+        JSON.parse(JSON.stringify(json));
         return true;
     } catch {
         return false;
