@@ -82,7 +82,7 @@ export function callSmartAPI({ accessToken, url, method = 'get', headers: reqHea
                 throw new Error(`Api: ${ url } returned ack: ${ body.ack } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
-            return body.data;
+            return { data: body.data, headers };
         });
 }
 
