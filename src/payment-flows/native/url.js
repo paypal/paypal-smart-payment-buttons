@@ -96,8 +96,6 @@ const CHANNEL = {
     MOBILE:  'mobile-web'
 };
 
-const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
-
 function getNativeUrlQueryParams({ props, serviceData, fundingSource, sessionUID, firebaseConfig, pageUrl, orderID, stickinessID } : GetNativeUrlOptions) : NativeUrlQuery {
     const { env, clientID, commit, buttonSessionID, stageHost, apiStageHost, enableFunding, merchantDomain } = props;
     const { facilitatorAccessToken, sdkMeta } = serviceData;
@@ -105,6 +103,7 @@ function getNativeUrlQueryParams({ props, serviceData, fundingSource, sessionUID
     const webCheckoutUrl = getWebCheckoutUrl({ orderID, props, fundingSource, facilitatorAccessToken });
     const userAgent = getUserAgent();
     const forceEligible = isNativeOptedIn({ props });
+    const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
 
     return {
         channel,
