@@ -1224,18 +1224,21 @@ window.spb = function(modules) {
             var uid = script.getAttribute("data-uid");
             if (uid && "string" == typeof uid) return uid;
             if ((uid = script.getAttribute("data-uid-auto")) && "string" == typeof uid) return uid;
-            uid = script.src ? "uid_" + function(str) {
-                var hash = "";
-                for (var i = 0; i < str.length; i++) {
-                    var total = str[i].charCodeAt(0) * i;
-                    str[i + 1] && (total += str[i + 1].charCodeAt(0) * (i - 1));
-                    hash += String.fromCharCode(97 + Math.abs(total) % 26);
-                }
-                return hash;
-            }(JSON.stringify({
-                src: script.src,
-                dataset: script.dataset
-            })).slice(0, 20) : uniqueID();
+            if (script.src) {
+                var hashedString = function(str) {
+                    var hash = "";
+                    for (var i = 0; i < str.length; i++) {
+                        var total = str[i].charCodeAt(0) * i;
+                        str[i + 1] && (total += str[i + 1].charCodeAt(0) * (i - 1));
+                        hash += String.fromCharCode(97 + Math.abs(total) % 26);
+                    }
+                    return hash;
+                }(JSON.stringify({
+                    src: script.src,
+                    dataset: script.dataset
+                }));
+                uid = "uid_" + hashedString.slice(hashedString.length - 30);
+            } else uid = uniqueID();
             script.setAttribute("data-uid-auto", uid);
             return uid;
         }));
@@ -2009,7 +2012,7 @@ window.spb = function(modules) {
             logger_getLogger().info("rest_api_create_order_token");
             var headers = ((_headers14 = {}).authorization = "Bearer " + accessToken, _headers14["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers14["paypal-client-metadata-id"] = clientMetadataID, _headers14["x-app-name"] = "smart-payment-buttons", 
-            _headers14["x-app-version"] = "5.0.28", _headers14);
+            _headers14["x-app-version"] = "5.0.29", _headers14);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -7129,7 +7132,7 @@ window.spb = function(modules) {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
                     _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "5.0.28", _ref3.button_correlation_id = buttonCorrelationID, 
+                    _ref3.button_version = "5.0.29", _ref3.button_correlation_id = buttonCorrelationID, 
                     _ref3.stickiness_id = isAndroidChrome() ? stickinessID : null, _ref3.bn_code = partnerAttributionID, 
                     _ref3.user_action = commit ? "commit" : "continue", _ref3.seller_id = merchantID[0], 
                     _ref3.merchant_domain = merchantDomain, _ref3.t = Date.now().toString(), _ref3.user_id = buttonSessionID, 
