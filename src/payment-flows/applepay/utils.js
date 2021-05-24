@@ -187,7 +187,7 @@ type ShippingContactValidation = {|
 |};
 
 export function validateShippingContact(contact : ApplePayPaymentContact) : ShippingContactValidation {
-    const errors = [];
+    const errors : Array<ApplePayError> = [];
 
     if (!contact.locality) {
         errors.push({
