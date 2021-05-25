@@ -71,8 +71,8 @@ export function createOrderID(order : OrderCreateRequest, { facilitatorAccessTok
 
 const handleRestAPIResponse = (err, orderID : string, action : string) : string => {
     // $FlowFixMe
-    const { headers } = err.response;
-    const corrID = headers && headers[HEADERS.PAYPAL_DEBUG_ID] ? headers[HEADERS.PAYPAL_DEBUG_ID] : '';
+    const headers = err?.response?.headers;
+    const corrID = headers && headers[HEADERS.PAYPAL_DEBUG_ID] ? headers[HEADERS.PAYPAL_DEBUG_ID] : 'No correlation id.  Probably because the request wasn\'t made due to no access token being passed.';
     
     getLogger().info(`call_rest_api_failure_${ action }`, { corrID, orderID });
 
