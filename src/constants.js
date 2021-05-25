@@ -216,3 +216,7 @@ export const AMPLITUDE_KEY = {
 };
 
 export const VENMO_BLUE : string = '#3D93CE';
+
+export const LSAT_UPGRADE_EXCLUDED = [
+
+];
