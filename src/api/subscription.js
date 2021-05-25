@@ -6,7 +6,7 @@ import { request } from 'belter/src';
 import { CREATE_SUBSCRIPTIONS_API_URL, SMART_API_URI } from '../config';
 import { getLogger } from '../lib';
 
-import { callSmartAPI } from './api';
+import { type APIResponse, callSmartAPI } from './api';
 import { createAccessToken } from './auth';
 
 export type SubscriptionCreateRequest = {|
@@ -25,8 +25,6 @@ export type SubscriptionCreateRequest = {|
         user_action? : string
     |}
 |};
-
-export type SubscriptionResponse = {||};
 
 type SubscriptionOptions = {|
     clientID : ?string,
@@ -126,7 +124,7 @@ type SubscriptionAPICredentials = {|
     buyerAccessToken : ?string
 |};
 
-export function activateSubscription(subscriptionID : string, { buyerAccessToken } : SubscriptionAPICredentials) : ZalgoPromise<SubscriptionResponse> {
+export function activateSubscription(subscriptionID : string, { buyerAccessToken } : SubscriptionAPICredentials) : ZalgoPromise<APIResponse> {
     return callSmartAPI({
         accessToken: buyerAccessToken,
         method:      `post`,
@@ -134,7 +132,7 @@ export function activateSubscription(subscriptionID : string, { buyerAccessToken
     });
 }
 
-export function getSubscription(subscriptionID : string, { buyerAccessToken } : SubscriptionAPICredentials) : ZalgoPromise<SubscriptionResponse> {
+export function getSubscription(subscriptionID : string, { buyerAccessToken } : SubscriptionAPICredentials) : ZalgoPromise<APIResponse> {
     return callSmartAPI({
         accessToken: buyerAccessToken,
         url:         `${ SMART_API_URI.SUBSCRIPTION }/${ subscriptionID }`
