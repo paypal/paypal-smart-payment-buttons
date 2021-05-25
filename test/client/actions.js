@@ -694,7 +694,7 @@ describe('actions cases', () => {
         });
     });
 
-   it('should render a button, click the button, and render checkout, then pass onApprove callback to the parent with actions.order.authorize and use RestAPI and fail', async () => {
+    it('should render a button, click the button, and render checkout, then pass onApprove callback to the parent with actions.order.authorize and use RestAPI and fail', async () => {
         return await wrapPromise(async ({ expect }) => {
 
             const orderID = generateOrderID();
