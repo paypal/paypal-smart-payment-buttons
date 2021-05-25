@@ -74,9 +74,7 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                     // eslint-disable-next-line no-console
                     console.log('@@@ attempt token upgrade', { buyerAccessToken, facilitatorAccessToken, orderID });
 
-                    // return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));
-                    // eslint-disable-next-line no-console
-                    return onAuth({ accessToken: buyerAccessToken }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));
+                    return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));
                 },
                 getFacilitatorAccessToken: () => {
                     return facilitatorAccessToken;
