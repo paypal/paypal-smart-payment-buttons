@@ -5,7 +5,6 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { querySelectorAll } from 'belter/src';
 
 import { DATA_ATTRIBUTES } from '../constants';
-// eslint-disable-next-line no-unused-vars
 import { upgradeFacilitatorAccessToken } from '../api';
 import { getBuyerAccessToken } from '../lib';
 
@@ -18,7 +17,7 @@ type ExportsProps = {|
 |};
 
 export function setupExports({ props, isEnabled, facilitatorAccessToken } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency, onAuth } = props;
+    const { createOrder, onApprove, onError, onCancel, onClick, commit, intent, fundingSource, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
@@ -74,6 +73,7 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                     // eslint-disable-next-line no-console
                     console.log('@@@ attempt token upgrade', { buyerAccessToken, facilitatorAccessToken, orderID });
 
+                    // eslint-disable-next-line no-console
                     return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));
                 },
                 getFacilitatorAccessToken: () => {
