@@ -1867,7 +1867,7 @@ describe('native ios cases', () => {
         });
     });
 
-    it('should render a button with createOrder, click the button, and render checkout via popup to native path with error in onApprove in iOS', async () => {
+    it.only('should render a button with createOrder, click the button, and render checkout via popup to native path with error in onApprove in iOS', async () => {
         return await wrapPromise(async ({ expect, expectError, avoid }) => {
             window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
             window.xprops.enableNativeCheckout = true;
@@ -2015,7 +2015,7 @@ describe('native ios cases', () => {
             window.xprops.onCancel = avoid('onCancel');
 
             window.xprops.onApprove = expectError('onApprove', () => {
-                return ZalgoPromise.delay(50).then(() => {
+                return ZalgoPromise.try(() => {
                     throw err;
                 });
             });
