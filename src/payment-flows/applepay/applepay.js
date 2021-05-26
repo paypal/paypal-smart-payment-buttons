@@ -183,9 +183,6 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                         const {
                             cart: {
                                 amounts: {
-                                    shippingAndHandling: {
-                                        currencyValue: updatedShippingValue
-                                    },
                                     tax: {
                                         currencyValue: updatedTaxValue
                                     },
@@ -199,7 +196,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                             }
                         } = updatedOrder.checkoutSession;
 
-                        currentShippingAmount = updatedShippingValue;
+                        currentShippingAmount = currentShippingMethod?.amount || '0.00';
                         currentTaxAmount = updatedTaxValue;
                         currentSubtotalAmount = updatedSubtotalValue;
                         currentTotalAmount = updatedTotalValue;
@@ -220,7 +217,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                 },
                                 {
                                     label:  currentShippingMethod?.label || 'Shipping',
-                                    amount: updatedShippingValue
+                                    amount: currentShippingAmount
                                 }
                             ]
                         };
