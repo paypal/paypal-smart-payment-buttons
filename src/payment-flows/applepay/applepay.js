@@ -178,6 +178,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
 
                     if (shippingMethod) {
                         currentShippingMethod = shippingMethod;
+                        currentShippingLabel = currentShippingMethod.label;
                     }
 
                     return getDetailedOrderInfo(orderID, locale.country).then(updatedOrder => {
