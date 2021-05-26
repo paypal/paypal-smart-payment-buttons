@@ -4,8 +4,7 @@
 import { wrapPromise } from 'belter/src';
 import { FUNDING } from '@paypal/sdk-constants/src';
 
-import { mockSetupButton, mockAsyncProp, createButtonHTML } from './mocks';
-import { native } from '../../src/payment-flows/native/native';
+import { mockSetupButton, mockAsyncProp } from './mocks';
 
 describe('eligibility cases', () => {
 
