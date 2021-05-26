@@ -85,6 +85,32 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
         let currentShippingMethod;
 
         const onShippingChangeCallback = <T>({ orderID, shippingContact, shippingMethod = null } : {| orderID : string, shippingContact : ApplePayPaymentContact, shippingMethod? : ?ApplePayShippingMethod |}) : ZalgoPromise<T> => {
+            if (!onShippingChange) {
+                const update = {
+                    newTotal: {
+                        label:  'Total',
+                        amount: currentTotalAmount
+                    },
+                    newLineItems: [
+                        {
+                            label:  'Subtotal',
+                            amount: currentSubtotalAmount
+                        },
+                        {
+                            label:  'Sales Tax',
+                            amount: currentTaxAmount
+                        },
+                        {
+                            label:  currentShippingLabel,
+                            amount: currentShippingAmount
+                        }
+                    ]
+                };
+
+                // $FlowFixMe
+                return ZalgoPromise.resolve(update);
+            }
+
             const { errors, shipping_address } = validateShippingContact(shippingContact);
             
             if (errors && errors.length) {
