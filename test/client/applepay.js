@@ -13,7 +13,7 @@ const IOS_SAFARI_USER_AGENT = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac 
 
 describe('Apple Pay Flow', () => {
 
-    it.only('should render a button with createOrder, click the button, and render Apple Pay paysheet', async () => {
+    it('should render a button with createOrder, click the button, and render Apple Pay paysheet', async () => {
         return await wrapPromise(async ({ expect, avoid, wait }) => {
             window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
 
