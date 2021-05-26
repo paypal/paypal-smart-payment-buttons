@@ -77,6 +77,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
 
     function initApplePaySession() : ZalgoPromise<void> {
         let currentTotalAmount;
+        let currentSubtotalAmount;
         let currentTaxAmount;
         let currentShippingAmount;
         let currentShippingLabel = 'Shipping';
@@ -94,6 +95,10 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                         amount: currentTotalAmount
                     },
                     newLineItems: [
+                        {
+                            label:  'Subtotal',
+                            amount: currentSubtotalAmount
+                        },
                         {
                             label:  'Sales Tax',
                             amount: currentTaxAmount
@@ -159,6 +164,9 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                     tax: {
                                         currencyValue: updatedTaxValue
                                     },
+                                    subtotal: {
+                                        currencyValue: updatedSubtotalValue
+                                    },
                                     total: {
                                         currencyValue: updatedTotalValue
                                     }
@@ -168,6 +176,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
 
                         currentShippingAmount = updatedShippingValue;
                         currentTaxAmount = updatedTaxValue;
+                        currentSubtotalAmount = updatedSubtotalValue;
                         currentTotalAmount = updatedTotalValue;
 
                         const update = {
@@ -176,6 +185,10 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                 amount: updatedTotalValue
                             },
                             newLineItems: [
+                                {
+                                    label:  'Subtotal',
+                                    amount: currentSubtotalAmount
+                                },
                                 {
                                     label:  'Sales Tax',
                                     amount: updatedTaxValue
@@ -230,6 +243,9 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                 tax: {
                                     currencyValue: taxValue
                                 },
+                                subtotal: {
+                                    currencyValue: subtotalValue
+                                },
                                 total: {
                                     currencyValue: totalValue
                                 }
@@ -241,6 +257,7 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                     currentShippingLabel = applePayRequest.shippingMethods && applePayRequest.shippingMethods.length ? applePayRequest.shippingMethods[0].label : 'Shipping';
                     currentShippingMethod = applePayRequest.shippingMethods && applePayRequest.shippingMethods.length ? applePayRequest.shippingMethods[0] : null;
                     currentTaxAmount = taxValue;
+                    currentSubtotalAmount = subtotalValue;
                     currentTotalAmount = totalValue;
 
                     return applePay(SUPPORTED_VERSION, applePayRequest).then(response => {
@@ -282,6 +299,13 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                 newLineItems: []
                             };
 
+                            if (subtotalValue && subtotalValue.length) {
+                                update.newLineItems.push({
+                                    label:  'Subtotal',
+                                    amount: currentSubtotalAmount
+                                });
+                            }
+                    
                             if (taxValue && taxValue.length) {
                                 update.newLineItems.push({
                                     label:  'Sales Tax',
@@ -317,6 +341,13 @@ function initApplePay({ props, payment, serviceData } : InitOptions) : PaymentFl
                                         newLineItems: []
                                     };
 
+                                    if (subtotalValue && subtotalValue.length) {
+                                        update.newLineItems.push({
+                                            label:  'Subtotal',
+                                            amount: currentSubtotalAmount
+                                        });
+                                    }
+                                    
                                     if (taxValue && taxValue.length) {
                                         update.newLineItems.push({
                                             label:  'Sales Tax',
