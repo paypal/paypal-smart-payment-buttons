@@ -37,6 +37,8 @@ let buyerAccessToken;
 export function getBuyerAccessToken() : ?string {
     return buyerAccessToken;
 }
-export function setBuyerAccessToken(token : string) : void {
-    buyerAccessToken = token;
+export function setBuyerAccessToken(token : ?string) : void {
+    if (token) {
+        buyerAccessToken = token;
+    }
 }

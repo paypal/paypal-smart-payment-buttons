@@ -470,8 +470,6 @@ export function approveOrder({ orderID, planID, buyerAccessToken } : ApproveOrde
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(({ approvePayment }) => {
-        // eslint-disable-next-line no-console
-        console.log('@@@ approve payment', approvePayment);
         setBuyerAccessToken(approvePayment.buyer.auth.accessToken);
         return {
             payerID: approvePayment.buyer.userId
@@ -759,8 +757,6 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
         }
     }).then(({ approvePaymentWithNonce }) => {
         getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
-        // eslint-disable-next-line no-console
-        console.log('@@@ pay with nonce returned', approvePaymentWithNonce);
         setBuyerAccessToken(approvePaymentWithNonce.buyer.auth.accessToken);
         return {
             payerID: approvePaymentWithNonce.buyer.userId
