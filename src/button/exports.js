@@ -6,7 +6,7 @@ import { querySelectorAll } from 'belter/src';
 
 import { DATA_ATTRIBUTES } from '../constants';
 import { upgradeFacilitatorAccessToken } from '../api';
-import { getBuyerAccessToken } from '../lib';
+import { getLogger, getBuyerAccessToken } from '../lib';
 
 import type { ButtonProps } from './props';
 
@@ -69,9 +69,12 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                 onError,
                 // eslint-disable-next-line no-shadow
                 upgradeFacilitatorAccessToken: (facilitatorAccessToken, orderID) => {
-                    const buyerAccessToken = getBuyerAccessToken() || '';
-                    // eslint-disable-next-line no-console
-                    console.log('@@@ attempt token upgrade', { buyerAccessToken, facilitatorAccessToken, orderID });
+                    const buyerAccessToken = getBuyerAccessToken();
+                    
+                    if (!buyerAccessToken) {
+                        getLogger().error('lsat_upgrade_error', { err: 'buyer access token not found' });
+                        throw new Error('Buyer access token not found');
+                    }
 
                     // eslint-disable-next-line no-console
                     return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));

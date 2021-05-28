@@ -33,7 +33,7 @@ export function getStickinessID() : string {
     return (hashStr(getBrowserFingerprint().toString()) % 100).toString();
 }
 
-let buyerAccessToken = 'defaultTokenValue';
+let buyerAccessToken;
 export function getBuyerAccessToken() : ?string {
     return buyerAccessToken;
 }
