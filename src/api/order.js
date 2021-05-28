@@ -756,7 +756,7 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(({ approvePaymentWithNonce }) => {
-        getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
+        getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce.buyer.userId));
         setBuyerAccessToken(approvePaymentWithNonce.buyer.auth.accessToken);
         return {
             payerID: approvePaymentWithNonce.buyer.userId
