@@ -1,6 +1,6 @@
 /* @flow */
 
-import { FUNDING } from '@paypal/sdk-constants';
+import { FUNDING } from '@paypal/sdk-constants/src';
 import { wrapPromise } from 'belter/src';
 
 import { promiseNoop } from '../../src/lib';

@@ -2,7 +2,7 @@
 
 import { join } from 'path';
 
-import { ENV } from '@paypal/sdk-constants';
+import { ENV } from '@paypal/sdk-constants/src';
 
 import type { CacheType } from '../../types';
 import { QRCODE_CLIENT_JS, QRCODE_CLIENT_MIN_JS, WEBPACK_CONFIG, ACTIVE_TAG, SMART_BUTTONS_MODULE } from '../../config';

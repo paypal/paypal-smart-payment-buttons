@@ -1,7 +1,7 @@
 /* @flow */
 
 import { noop } from 'belter';
-import { FUNDING } from '@paypal/sdk-constants';
+import { FUNDING } from '@paypal/sdk-constants/src';
 
 import { getNativePopupMiddleware, getNativeFallbackMiddleware, cancelWatchers } from '../../server';
 

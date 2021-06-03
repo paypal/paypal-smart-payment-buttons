@@ -1,6 +1,6 @@
 /* @flow */
 
-import { ENV, FUNDING } from '@paypal/sdk-constants';
+import { ENV, FUNDING } from '@paypal/sdk-constants/src';
 
 import { FNCLS, FRAUDNET_ID } from '../config';
 import { safeJSON } from '../lib';

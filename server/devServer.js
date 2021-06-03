@@ -6,7 +6,7 @@ import express from 'express';
 import webpack from 'webpack';
 import webpackDevMiddleware from 'webpack-dev-middleware';
 import { noop } from 'belter';
-import { FUNDING } from '@paypal/sdk-constants';
+import { FUNDING } from '@paypal/sdk-constants/src';
 
 import { WEBPACK_CONFIG_BUTTONS_LOCAL_DEBUG } from '../webpack.config';
 import {

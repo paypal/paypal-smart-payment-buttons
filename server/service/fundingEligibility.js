@@ -1,7 +1,7 @@
 /* @flow */
 
 import type { FundingEligibilityType } from '@paypal/sdk-constants/src/types';
-import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING } from '@paypal/sdk-constants';
+import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING } from '@paypal/sdk-constants/src';
 import { strictMerge } from 'strict-merge';
 
 import { pruneQuery, buildQuery, graphqlTypes, copy, type GraphQLBatchCall } from '../lib';

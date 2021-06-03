@@ -1,7 +1,7 @@
 /* @flow */
 
 import { html } from 'jsx-pragmatic';
-import { COUNTRY, LANG, FUNDING } from '@paypal/sdk-constants';
+import { COUNTRY, LANG, FUNDING } from '@paypal/sdk-constants/src';
 import { stringifyError, noop } from 'belter';
 
 import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware,

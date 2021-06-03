@@ -2,7 +2,7 @@
 /* eslint  max-nested-callbacks: off */
 /* eslint  max-lines: off */
 import { wrapPromise } from 'belter/src';
-import { FUNDING } from '@paypal/sdk-constants';
+import { FUNDING } from '@paypal/sdk-constants/src';
 
 import type { SmartFields } from '../../src/types';
 import { getSmartFieldsByFundingSource } from '../../src/lib/comms';

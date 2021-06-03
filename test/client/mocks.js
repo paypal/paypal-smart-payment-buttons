@@ -5,8 +5,7 @@ import { $mockEndpoint, patchXmlHttpRequest } from 'sync-browser-mocks/src/xhr';
 import { mockWebSocket, patchWebSocket } from 'sync-browser-mocks/src/webSocket';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { values, destroyElement, noop, uniqueID, parseQuery } from 'belter/src';
-import { FUNDING } from '@paypal/sdk-constants';
-import { INTENT, CURRENCY, CARD, PLATFORM, COUNTRY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
+import { FUNDING, INTENT, CURRENCY, CARD, PLATFORM, COUNTRY, type FundingEligibilityType } from '@paypal/sdk-constants/src';
 import { isWindowClosed, type CrossDomainWindowType } from 'cross-domain-utils/src';
 
 import type { ZoidComponentInstance, MenuFlowProps } from '../../src/types';
@@ -19,7 +18,7 @@ export const MOCK_BUYER_ACCESS_TOKEN = 'abc123xxxyyyzzz456';
 
 export function mockAsyncProp(handler? : Function = noop, time? : number = 1) : Function {
     const currentPromise = new ZalgoPromise();
-    
+
     const asyncHandler = (...args) => {
         return ZalgoPromise.delay(time).then(() => handler(...args)).then((res) => {
             ZalgoPromise.delay(time).then(() => currentPromise.resolve(res));
@@ -29,7 +28,7 @@ export function mockAsyncProp(handler? : Function = noop, time? : number = 1) : 
             throw err;
         });
     };
-    
+
     asyncHandler.await = () => currentPromise;
 
     return asyncHandler;

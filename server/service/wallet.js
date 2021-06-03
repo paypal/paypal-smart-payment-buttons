@@ -1,6 +1,6 @@
 /* @flow */
 
-import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, WALLET_INSTRUMENT } from '@paypal/sdk-constants';
+import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, WALLET_INSTRUMENT } from '@paypal/sdk-constants/src';
 import { params, types, query } from 'typed-graphqlify';
 import { values } from 'belter';
 

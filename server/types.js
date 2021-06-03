@@ -1,6 +1,6 @@
 /* @flow */
 
-import { COUNTRY, LANG } from '@paypal/sdk-constants';
+import { COUNTRY, LANG } from '@paypal/sdk-constants/src';
 
 
 export type ExpressRequest = express$Request & {| // eslint-disable-line no-undef

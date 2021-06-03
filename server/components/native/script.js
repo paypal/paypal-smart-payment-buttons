@@ -3,7 +3,7 @@
 import { join, dirname } from 'path';
 import { readFileSync } from 'fs';
 
-import { ENV, FUNDING } from '@paypal/sdk-constants';
+import { ENV, FUNDING } from '@paypal/sdk-constants/src';
 
 import type { CacheType } from '../../types';
 import { NATIVE_POPUP_CLIENT_JS, NATIVE_POPUP_CLIENT_MIN_JS, NATIVE_FALLBACK_CLIENT_JS,

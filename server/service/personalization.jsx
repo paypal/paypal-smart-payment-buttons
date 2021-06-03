@@ -1,7 +1,7 @@
 /* @flow */
 /** @jsx node */
 
-import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT } from '@paypal/sdk-constants';
+import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT } from '@paypal/sdk-constants/src';
 import type { ComponentFunctionType } from 'jsx-pragmatic/src';
 import { node } from 'jsx-pragmatic';
 import { LOGO_COLOR, PPLogo, PayPalLogo } from '@paypal/sdk-logos';

@@ -1,6 +1,6 @@
 /* @flow */
 
-import { ENV, DEFAULT_COUNTRY, COUNTRY_LANGS } from '@paypal/sdk-constants';
+import { ENV, DEFAULT_COUNTRY, COUNTRY_LANGS } from '@paypal/sdk-constants/src';
 
 import type { ExpressRequest, ExpressResponse, LocaleType } from '../../types';
 import { getCSPNonce } from '../../lib';

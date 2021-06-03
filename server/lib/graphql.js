@@ -1,7 +1,7 @@
 /* @flow */
 
 import { params as gqlParams, query as gqlQuery, types as gqlTypes } from 'typed-graphqlify';
-import { ENV } from '@paypal/sdk-constants';
+import { ENV } from '@paypal/sdk-constants/src';
 
 import type { ExpressRequest } from '../types';
 import { HTTP_HEADER } from '../config';

@@ -3,7 +3,7 @@
 import { join, dirname } from 'path';
 import { readFileSync } from 'fs';
 
-import { ENV } from '@paypal/sdk-constants';
+import { ENV } from '@paypal/sdk-constants/src';
 
 import type { CacheType } from '../../types';
 import { BUTTON_RENDER_JS, BUTTON_CLIENT_JS, SMART_BUTTONS_MODULE, CHECKOUT_COMPONENTS_MODULE,

@@ -1,6 +1,6 @@
 /* @flow */
 
-import { ENV } from '@paypal/sdk-constants';
+import { ENV } from '@paypal/sdk-constants/src';
 
 export function getEnv() : $Values<typeof ENV> {
     let ppEnv;

@@ -1,6 +1,6 @@
 /* @flow */
 
-import { FUNDING } from '@paypal/sdk-constants';
+import { FUNDING } from '@paypal/sdk-constants/src';
 import { html } from 'jsx-pragmatic';
 
 import { htmlResponse, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware,
