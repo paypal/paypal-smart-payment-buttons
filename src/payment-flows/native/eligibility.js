@@ -5,7 +5,7 @@ import { PLATFORM, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { supportsPopups } from 'belter/src';
 
 import { type NativeEligibility, getNativeEligibility } from '../../api';
-import { isIOSSafari, isAndroidChrome, enableAmplitude } from '../../lib';
+import { isIOSSafari, isAndroidChrome, enableAmplitude, getStorageState } from '../../lib';
 import type { ButtonProps, ServiceData } from '../../button/props';
 import type { IsEligibleOptions, IsPaymentEligibleOptions } from '../types';
 import { LSAT_UPGRADE_EXCLUDED_MERCHANTS } from '../../constants';
@@ -89,6 +89,20 @@ export function isNativeEligible({ props, config, serviceData } : IsEligibleOpti
     const { clientID, platform, onShippingChange, createBillingAgreement, createSubscription, env } = props;
     const { firebase: firebaseConfig } = config;
     const { merchantID } = serviceData;
+
+    const now = Date.now();
+    let nativeOptOutLifetime = 0;
+    getStorageState(state => {
+        if (state.nativeOptOutLifetime && typeof state.nativeOptOutLifetime === 'number') {
+            nativeOptOutLifetime = state.nativeOptOutLifetime;
+        }
+    });
+
+    // Use web checkout if the native checkout was opt-out
+    // and the lifetime of the opt-out is still valid
+    if (nativeOptOutLifetime > now) {
+        return false;
+    }
 
     if (platform !== PLATFORM.MOBILE) {
         return false;

@@ -130,7 +130,10 @@ type NativePopupOptions = {|
             buttonSessionID : string
         |}>,
         onFallback : ({|
-            win : CrossDomainWindowType
+            data? : {|
+                type? : string,
+                win? : CrossDomainWindowType
+            |}
         |}) => ZalgoPromise<{|
             buttonSessionID : string
         |}>,
@@ -313,7 +316,7 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
             }).flush();
-        onFallback({ win: nativePopupWin });
+        onFallback({ data: { win: nativePopupWin } });
     });
 
     const onCompleteListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_COMPLETE, () => {

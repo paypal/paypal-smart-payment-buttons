@@ -155,13 +155,27 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
     };
 
-    const onFallbackCallback = () => {
+    const onFallbackCallback = ({ data } : {| data? : {| type? : string,  win? : CrossDomainWindowType |} |}) => {
+        
         return ZalgoPromise.try(() => {
+            let optOut = false;
+            if (data && data.type === FPTI_TRANSITION.NATIVE_OPT_OUT) {
+                const OPT_OUT_TIME = 7 * 24 * 60 * 60 * 1000;
+                const now = Date.now();
+                getStorageState(state => {
+                    state.nativeOptOutLifetime = now + OPT_OUT_TIME;
+                });
+                optOut = true;
+            }
+
             getLogger().info(`native_message_onfallback`)
                 .track({
-                    [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_FALLBACK
+                    [FPTI_KEY.TRANSITION]:  !optOut ? FPTI_TRANSITION.NATIVE_ON_FALLBACK : FPTI_TRANSITION.NATIVE_OPT_OUT
                 }).flush();
-            fallbackToWebCheckout();
+
+
+            const fallbackWin = data && data.win ? data.win : null;
+            fallbackToWebCheckout(fallbackWin);
             return { buttonSessionID };
         });
     };

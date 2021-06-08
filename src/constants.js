@@ -156,6 +156,7 @@ export const FPTI_TRANSITION = {
     NATIVE_POPUP_BEFORE_UNLOAD:             ('native_popup_beforeunload' : 'native_popup_beforeunload'),
     NATIVE_POPUP_PAGEHIDE:                  ('native_popup_pagehide' : 'native_popup_pagehide'),
     NATIVE_POPUP_OPENER_DETECT_CLOSE:       ('native_popup_opener_detect_close', 'native_popup_opener_detect_close'),
+    NATIVE_OPT_OUT:                         ('native_opt_out', 'native_opt_out'),
     
     HONEY_IDENTIFY:                         ('honey_identify')
 };
