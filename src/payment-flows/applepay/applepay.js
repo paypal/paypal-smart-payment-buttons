@@ -491,5 +491,5 @@ export const applepay : PaymentFlow = {
     isEligible:        isApplePayEligible,
     isPaymentEligible: isApplePayPaymentEligible,
     init:              initApplePay,
-    spinner:           true
+    spinner:           false
 };

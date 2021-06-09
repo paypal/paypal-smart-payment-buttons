@@ -315,5 +315,5 @@ export const native : PaymentFlow = {
     isPaymentEligible:      isNativePaymentEligible,
     init:                   initNative,
     updateFlowClientConfig: updateNativeClientConfig,
-    spinner:                true
+    spinner:                false
 };
