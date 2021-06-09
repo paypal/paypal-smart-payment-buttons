@@ -60,6 +60,18 @@ export function isNativeOptedIn({ props } : {| props : ButtonProps |}) : boolean
     return false;
 }
 
+export function isNativeOptOut() : boolean {
+    const now = Date.now();
+    let optOutLifetime = 0;
+    getStorageState(state => {
+        const { nativeOptOutLifetime } = state;
+        if (nativeOptOutLifetime && typeof nativeOptOutLifetime === 'number') {
+            optOutLifetime = nativeOptOutLifetime;
+        }
+    });
+    return optOutLifetime > now;
+}
+
 type PrefetchNativeEligibilityOptions = {|
     props : ButtonProps,
     serviceData : ServiceData
@@ -90,19 +102,6 @@ export function isNativeEligible({ props, config, serviceData } : IsEligibleOpti
     const { firebase: firebaseConfig } = config;
     const { merchantID } = serviceData;
 
-    const now = Date.now();
-    let nativeOptOutLifetime = 0;
-    getStorageState(state => {
-        if (state.nativeOptOutLifetime && typeof state.nativeOptOutLifetime === 'number') {
-            nativeOptOutLifetime = state.nativeOptOutLifetime;
-        }
-    });
-
-    // Use web checkout if the native checkout was opt-out
-    // and the lifetime of the opt-out is still valid
-    if (nativeOptOutLifetime > now) {
-        return false;
-    }
 
     if (platform !== PLATFORM.MOBILE) {
         return false;
@@ -125,6 +124,10 @@ export function isNativeEligible({ props, config, serviceData } : IsEligibleOpti
     }
 
     if (!isIOSSafari() && !isAndroidChrome()) {
+        return false;
+    }
+
+    if (isNativeOptOut()) {
         return false;
     }
 

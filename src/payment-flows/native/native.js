@@ -160,6 +160,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         return ZalgoPromise.try(() => {
             let optOut = false;
             if (data && data.type === FPTI_TRANSITION.NATIVE_OPT_OUT) {
+                // Opt-out 1 week from native experience
                 const OPT_OUT_TIME = 7 * 24 * 60 * 60 * 1000;
                 const now = Date.now();
                 getStorageState(state => {
