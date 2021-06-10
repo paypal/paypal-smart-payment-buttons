@@ -271,6 +271,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             });
 
             clean.register(nativePopup.cancel);
+
+            resolve();
         });
     };
 
