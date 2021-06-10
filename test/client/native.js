@@ -4344,20 +4344,14 @@ describe('native chrome cases', () => {
         });
     });
 
-    it('should render a button with createOrder, click the button, render checkout via popup to native path in Android and fallback due native opt-out', async () => {
+    it('should render a button with createOrder, click the button, render checkout via popup to native path in Android, fallback due native opt-out and continue with web checkout', async () => {
         return await wrapPromise(async ({ expect, avoid }) => {
-
-
-            getStorageState(state => {
-                state.nativeOptOutLifetime = 0;
-            });
 
             window.navigator.mockUserAgent = ANDROID_CHROME_USER_AGENT;
 
             window.xprops.enableNativeCheckout = true;
             window.xprops.platform = PLATFORM.MOBILE;
             delete window.xprops.onClick;
-            let clientConfigCorrectlyCalled = false;
 
             const sessionToken = uniqueID();
             
@@ -4379,14 +4373,6 @@ describe('native chrome cases', () => {
                                 }
                             }
                         };
-                    }
-
-                    if (data.query.includes('mutation UpdateClientConfig')) {
-                        if (data.variables.buttonSessionID) {
-                            clientConfigCorrectlyCalled = true;
-                        } else {
-                            throw new Error(`Expected button session id to be present in UpdateClientConfig call`);
-                        }
                     }
                 })
             }).expectCalls();
@@ -4491,10 +4477,6 @@ describe('native chrome cases', () => {
                 if (data.payerID !== payerID) {
                     throw new Error(`Expected payerID to be ${ payerID }, got ${ data.payerID }`);
                 }
-
-                if (!clientConfigCorrectlyCalled) {
-                    throw new Error(`Expected UpdateClientConfig call to go through correctly`);
-                }
             }));
 
             createButtonHTML();
@@ -4506,6 +4488,21 @@ describe('native chrome cases', () => {
                 }
             });
 
+            // First click should trigger the native flow
+            await clickButton(FUNDING.PAYPAL);
+            await window.xprops.onApprove.await();
+
+            window.xprops.onApprove = mockAsyncProp(expect('onApprove', async (data) => {
+                if (data.orderID !== orderID) {
+                    throw new Error(`Expected orderID to be ${ orderID }, got ${ data.orderID }`);
+                }
+
+                if (data.payerID !== payerID) {
+                    throw new Error(`Expected payerID to be ${ payerID }, got ${ data.payerID }`);
+                }
+            }));
+
+            // Second click should use the web flow
             await clickButton(FUNDING.PAYPAL);
             await window.xprops.onApprove.await();
 
@@ -4514,14 +4511,9 @@ describe('native chrome cases', () => {
             gqlMock.done();
             mockWindow.done();
 
-            getStorageState(state => {
-                const now = Date.now();
-                const { nativeOptOutLifetime } = state;
-                if (!nativeOptOutLifetime || nativeOptOutLifetime < now) {
-                    throw new Error(`Expected to have a nativeOptOutLifetime greater than ${ now }, got ${ nativeOptOutLifetime }`);
-                }
 
-                // Reset nativeOptOutLifetime
+            // Reset nativeOptOutLifetime
+            getStorageState(state => {
                 state.nativeOptOutLifetime = 0;
             });
 

@@ -311,12 +311,13 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
         closePopup('onCancel');
     });
 
-    const onFallbackListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_FALLBACK, () => {
+    const onFallbackListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_FALLBACK, (data) => {
         getLogger().info(`native_message_onfallback`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
             }).flush();
-        onFallback({ data: { win: nativePopupWin } });
+        const { type } = data;
+        onFallback({ data: { win: nativePopupWin, type } });
     });
 
     const onCompleteListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_COMPLETE, () => {
