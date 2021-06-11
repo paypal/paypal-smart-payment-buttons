@@ -205,8 +205,10 @@ export function mockFunction<T, A>(obj : mixed, prop : string, mock : ({| args :
 
 export async function clickButton(fundingSource? : string = FUNDING.PAYPAL) : Promise<void> {
     const button = window.document.querySelector(`[data-funding-source=${ fundingSource }]`);
+
     console.log('fundingSource', fundingSource);
     console.log('button', button);
+
     if (!button) {
         throw new Error(`Can not find ${ fundingSource } button`);
     }
@@ -266,13 +268,17 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
                     continue;
                 }
 
-                console.log('cardConfig', JSON.stringify(cardConfig));
-
                 if (cardConfig.vaultedInstruments && cardConfig.vaultedInstruments.length) {
                     const vaultedInstrument = cardConfig.vaultedInstruments[0];
-                    console.log(vaultedInstrument);
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
-                } else {
+                } else if (wallet && wallet[fundingSource] && wallet[fundingSource].instruments.length) {
+                    const walletInstrument = wallet[fundingSource].instruments[0];
+                    console.log('IN WALLLLETTTTSSSSS 2===================================');
+                    if (walletInstrument.instrumentID && walletInstrument.paymentMethodID) {
+                        buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-instrument-id="${ walletInstrument.instrumentID }" data-payment-method-id="${ walletInstrument.paymentMethodID }"></div></div>`);
+                    }
+                }
+                else {
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }"></div></div>`);
                 }
             }
@@ -282,6 +288,7 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
                 buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
             } else if (wallet && wallet[fundingSource] && wallet[fundingSource].instruments.length) {
                 const walletInstrument = wallet[fundingSource].instruments[0];
+                console.log('IN WALLLLETTTTSSSSS ===================================');
                 if (walletInstrument.instrumentID) {
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-instrument-id="${ walletInstrument.instrumentID }"></div><div data-menu></div></div>`);
                 } else if (walletInstrument.paymentID) {
@@ -299,6 +306,7 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
         throw new Error(`No document.body found`);
     }
 
+    console.log('buttons', buttons);
     body.innerHTML += buttons.join('\n');
 }
 

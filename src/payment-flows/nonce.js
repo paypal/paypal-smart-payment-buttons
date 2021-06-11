@@ -16,54 +16,59 @@ function setupNonce() {
 function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
     const { wallet } = serviceData;
-
-    const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodNonce))[0];
-
-    if (!paymentMethodNonce) {
-        return false;
-    }
-
-    if (!wallet) {
-        return false;
-    }
-
-    if (!instrument) {
-        return false;
-    }
-
-    // Ensure wallet instruments are branded and have a valid tokenID.
-    if (wallet.card.instruments.length === 0 ||
-        !wallet.card.instruments.some(item => (item.tokenID && item.branded))) {
-        return false;
-    }
-
+    //
+    // const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodNonce))[0];
+    // console.log('props in nonce', paymentMethodNonce, wallet, instrument);
+    //
+    // if (!paymentMethodNonce) {
+    //     return false;
+    // }
+    //
+    // if (!wallet) {
+    //     return false;
+    // }
+    //
+    // if (!instrument) {
+    //     return false;
+    // }
+    //
+    // // Ensure wallet instruments are branded and have a valid tokenID.
+    // if (wallet.card.instruments.length === 0 ||
+    //     !wallet.card.instruments.some(item => (item.tokenID && item.branded))) {
+    //     return false;
+    // }
+    //
+    //
+    // console.log('nonce true');
     return true;
 }
 
 function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
-    const { branded } = props;
-    const { wallet } = serviceData;
-
-    const { fundingSource, paymentMethodID } = payment;
-
-    const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
-
-    if (!instrument) {
-        return false;
-    }
-
-    if (fundingSource !== FUNDING.CARD) {
-        return false;
-    }
-    
-    if (!branded || !instrument.branded) {
-        return false;
-    }
-
-    if (!instrument?.tokenID) {
-        return false;
-    }
+    // const { branded } = props;
+    // const { wallet } = serviceData;
+    //
+    // const { fundingSource, paymentMethodID } = payment;
+    //
+    // const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
+    //
+    // if (!instrument) {
+    //     return false;
+    // }
+    //
+    // if (fundingSource !== FUNDING.CARD) {
+    //     return false;
+    // }
+    //
+    // if (!branded || !instrument.branded) {
+    //     return false;
+    // }
+    //
+    // if (!instrument?.tokenID) {
+    //     return false;
+    // }
+    //
+    // console.log('nonce true twice');
 
     return true;
 }
@@ -85,11 +90,23 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
     const { wallet } = serviceData;
     const { paymentMethodID } = payment;
 
+    console.log('###################################');
+    console.log('###################################');
+    console.log('###################################');
+    console.log('payment', payment);
     const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
+
     const paymentMethodNonce = instrument?.tokenID;
+    console.log(wallet.card.instruments);
+
+    console.log('instrument', instrument);
+    console.log('###################################');
+    console.log('###################################');
+    console.log('###################################');
 
     if (!paymentMethodNonce) {
         getLogger().info('nonce_payment_failed');
+        console.log('paymentMethodNonce', paymentMethodNonce);
         throw new Error('PAY_WITH_DIFFERENT_CARD');
     }
 
