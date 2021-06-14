@@ -4393,7 +4393,7 @@ describe('native chrome cases', () => {
                         domain: 'https://history.paypal.com',
                         data:   {
                             redirect: true,
-                            pageUrl:  `${ window.location.href }#close`
+                            pageUrl:  `${ window.location.href }#fallback`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
                         if (res.redirect !== true) {
