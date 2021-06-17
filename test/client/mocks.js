@@ -1412,7 +1412,7 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
     };
 
     const onFallbackOptOut = () => {
-        fallbackRequestID = `${ uniqueID()  }_onApprove`;
+        fallbackRequestID = `${ uniqueID()  }_fallback`;
 
         send(`users/${ getSessionUID() }/messages/${ uniqueID() }`, JSON.stringify({
             session_uid:        getSessionUID(),
