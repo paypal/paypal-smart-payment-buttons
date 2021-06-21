@@ -8,7 +8,6 @@ import { htmlResponse, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddl
 import type { LoggerType, CacheType, ExpressRequest } from '../../types';
 import type { NativePopupOptions } from '../../../src/native/popup';
 
-import { EVENT } from './constants';
 import { getNativePopupParams, getNativeFallbackParams } from './params';
 import { getNativePopupClientScript, getNativeFallbackClientScript, getNativePopupRenderScript, getNativeFallbackRenderScript } from './script';
 
@@ -29,18 +28,22 @@ export function getNativePopupMiddleware({
 
     return sdkMiddleware({ logger, cache }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
-            logger.info(req, EVENT.RENDER);
+            logger.info(req, 'smart_native_popup_render');
             tracking(req);
 
+            for (const name of Object.keys(req.cookies || {})) {
+                logger.info(req, `smart_native_popup_cookie_${ name || 'unknown' }`);
+            }
+
             const { cspNonce, debug, parentDomain, env, sessionID, buttonSessionID,
-                sdkCorrelationID, clientID, locale } = getNativePopupParams(params, req, res);
+                sdkCorrelationID, clientID, locale, buyerCountry } = getNativePopupParams(params, req, res);
 
             const { NativePopup } = (await getNativePopupRenderScript({ logBuffer, cache, debug, useLocal })).popup;
             const client = await getNativePopupClientScript({ debug, logBuffer, cache, useLocal });
 
             const setupParams : NativePopupOptions = {
                 parentDomain, env, sessionID, buttonSessionID, sdkCorrelationID,
-                clientID, fundingSource, locale
+                clientID, fundingSource, locale, buyerCountry
             };
 
             const pageHTML = `
@@ -80,8 +83,12 @@ export function getNativeFallbackMiddleware({
 
     return sdkMiddleware({ logger, cache }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
-            logger.info(req, EVENT.RENDER);
+            logger.info(req, 'smart_native_fallback_render');
             tracking(req);
+
+            for (const name of Object.keys(req.cookies || {})) {
+                logger.info(req, `smart_native_fallback_cookie_${ name || 'unknown' }`);
+            }
 
             const { cspNonce, debug } = getNativeFallbackParams(params, req, res);
 

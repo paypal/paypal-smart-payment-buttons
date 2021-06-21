@@ -18,7 +18,21 @@ import { triggerKeyPress } from './util';
 export const MOCK_BUYER_ACCESS_TOKEN = 'abc123xxxyyyzzz456';
 
 export function mockAsyncProp(handler? : Function = noop, time? : number = 1) : Function {
-    return (...args) => ZalgoPromise.delay(time).then(() => handler(...args));
+    const currentPromise = new ZalgoPromise();
+    
+    const asyncHandler = (...args) => {
+        return ZalgoPromise.delay(time).then(() => handler(...args)).then((res) => {
+            ZalgoPromise.delay(time).then(() => currentPromise.resolve(res)).catch(noop);
+            return res;
+        }, err => {
+            ZalgoPromise.delay(time).then(() => currentPromise.reject(err)).catch(noop);
+            throw err;
+        });
+    };
+    
+    asyncHandler.await = () => currentPromise;
+
+    return asyncHandler;
 }
 
 type CancelableZalgoPromise<T> = ZalgoPromise<T> & {| cancel : () => void |};
@@ -404,6 +418,20 @@ export function getAuthorizeOrderApiMock(options : Object = {}) : MockEndpoint {
     });
 }
 
+export function getRestfulAuthorizeOrderApiMock(options : Object = {}) : MockEndpoint {
+    return $mockEndpoint.register({
+        method: 'POST',
+        uri:    new RegExp('/v2/checkout/orders/[^/]+/authorize'),
+        data:   {
+            ack:  'success',
+            data: {
+
+            }
+        },
+        ...options
+    });
+}
+
 export function getMapBillingTokenApiMock(options : Object = {}) : MockEndpoint {
     return $mockEndpoint.register({
         method: 'POST',
@@ -659,18 +687,21 @@ type NativeMockWebSocket = {|
         done : () => Promise<void>
     |},
     // getProps : () => void,
+    onInit : () => void,
     onApprove : () => void,
     onCancel : () => void,
     onError : () => void,
     onShippingChange : () => void,
     onFallback : () => void,
-    fallback : ({| buyerAccessToken : string |}) => void
+    fallback : ({| buyerAccessToken : string |}) => void,
+    onFallbackOptOut : () => void
 |};
 
 export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : () => ?string |}) : NativeMockWebSocket {
     let props;
 
     let getPropsRequestID;
+    let onInitRequestID;
     let onApproveRequestID;
     let onCancelRequestID;
     let onErrorRequestID;
@@ -742,6 +773,22 @@ export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : ()
     };
 
     */
+
+    const onInit = () => {
+        onInitRequestID = uniqueID();
+
+        send(JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        onInitRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onInit',
+            message_data:       {}
+        }));
+    };
 
     const onApprove = () => {
         if (!props) {
@@ -843,7 +890,7 @@ export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : ()
     };
 
     return {
-        expect, onApprove, onCancel, onError, onShippingChange, onFallback, fallback: noop
+        expect, onInit, onApprove, onCancel, onError, onShippingChange, onFallback, fallback: noop, onFallbackOptOut: noop
     };
 }
 
@@ -851,7 +898,7 @@ const mockScripts = {};
 
 export function mockScript({ src, expect = true, block = true } : {| src : string, expect? : boolean, block? : boolean |}) : {| done : () => void, await : () => ZalgoPromise<HTMLElement> |} {
     const promise = new ZalgoPromise();
-    mockScripts[src] = { expect, block, promise };
+    mockScripts[src] = { expect, block, promise, created: false };
 
     return {
         await: () => {
@@ -1063,6 +1110,7 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
     let props;
 
     let getPropsRequestID;
+    let onInitRequestID;
     let onApproveRequestID;
     let onCancelRequestID;
     let onErrorRequestID;
@@ -1218,6 +1266,25 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
 
     */
 
+    const onInit = () => {
+        onInitRequestID = `${ uniqueID()  }_onInit`;
+
+        send(`users/${ getSessionUID() }/messages/${ uniqueID() }`, JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        onInitRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onInit',
+            message_data:       {}
+        }));
+
+        waitingForResponse.push(onInitRequestID);
+    };
+
+
     const onApprove = () => {
         if (!props) {
             throw new Error(`Can not approve without getting props`);
@@ -1350,6 +1417,26 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
         waitingForResponse.push(onApproveRequestID);
     };
 
+    const onFallbackOptOut = () => {
+        fallbackRequestID = `${ uniqueID()  }_fallback`;
+
+        send(`users/${ getSessionUID() }/messages/${ uniqueID() }`, JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        fallbackRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onFallback',
+            message_data:       {
+                type: 'native_opt_out'
+            }
+        }));
+
+        waitingForResponse.push(fallbackRequestID);
+    };
+
     const expect = () => {
         const { done: firebaseDone } = expectFirebase();
 
@@ -1369,7 +1456,7 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
     };
 
     return {
-        expect, onApprove, onCancel, onError, onShippingChange, fallback, onFallback
+        expect, onInit, onApprove, onCancel, onError, onShippingChange, fallback, onFallback, onFallbackOptOut
     };
 }
 

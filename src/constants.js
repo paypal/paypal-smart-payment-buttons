@@ -118,6 +118,15 @@ export const FPTI_TRANSITION = {
     FIREBASE_CONNECTION_OPENED:     ('firebase_connection_opened' : 'firebase_connection_opened'),
     FIREBASE_CONNECTION_ERRORED:    ('firebase_connection_errored' : 'firebase_connection_errored'),
 
+    APPLEPAY_EVENT:                                     ('applepay_event' : 'applepay_event'),
+    APPLEPAY_FLOW_ERROR:                                ('applepay_flow_error' : 'applepay_flow_error'),
+    APPLEPAY_ON_CLICK_INVALID:                          ('applepay_onclick_invalid' : 'applepay_onclick_invalid'),
+    APPLEPAY_MERCHANT_VALIDATION_COMPLETION_ERROR:      ('applepay_merchant_validation_completion_error' : 'applepay_merchant_validation_completion_error'),
+    APPLEPAY_MERCHANT_VALIDATION_ERROR:                 ('applepay_merchant_validation_error' : 'applepay_merchant_validation_error'),
+    APPLEPAY_CREATE_ORDER_ERROR:                        ('applepay_create_order_error' : 'applepay_create_order_error'),
+    APPLEPAY_GET_DETAILS_ERROR:                         ('applepay_get_details_error' : 'applepay_get_details_error'),
+    APPLEPAY_PAYMENT_ERROR:                             ('applepay_payment_error' : 'applepay_payment_error'),
+
     NATIVE_DETECT_APP_SWITCH:               ('native_detect_app_switch' : 'native_detect_app_switch'),
     NATIVE_DETECT_WEB_SWITCH:               ('native_detect_web_switch' : 'native_detect_web_switch'),
     NATIVE_APP_SWITCH_ACK:                  ('native_app_switch_ack' : 'native_app_switch_ack'),
@@ -148,8 +157,16 @@ export const FPTI_TRANSITION = {
     NATIVE_POPUP_BEFORE_UNLOAD:             ('native_popup_beforeunload' : 'native_popup_beforeunload'),
     NATIVE_POPUP_PAGEHIDE:                  ('native_popup_pagehide' : 'native_popup_pagehide'),
     NATIVE_POPUP_OPENER_DETECT_CLOSE:       ('native_popup_opener_detect_close', 'native_popup_opener_detect_close'),
+    NATIVE_OPT_OUT:                         ('native_opt_out', 'native_opt_out'),
+    NATIVE_FALLBACK:                        ('native_fallback', 'native_fallback'),
     
     HONEY_IDENTIFY:                         ('honey_identify')
+};
+
+export const FPTI_MENU_OPTION = {
+    CHOOSE_FUNDING:     ('pay_with_different_payment_method' : 'pay_with_different_payment_method'),
+    CHOOSE_ACCOUNT:     ('pay_with_different_account' : 'pay_with_different_account'),
+    UNLINK_ACCOUNT:     ('unlink_account' : 'unlink_account')
 };
 
 export const FPTI_BUTTON_TYPE = {
@@ -163,7 +180,8 @@ export const FPTI_CUSTOM_KEY = {
     INTEGRATION_ISSUE:     ('integration_issue' : 'integration_issue'),
     INTEGRATION_WHITELIST: ('whitelist' : 'whitelist'),
     INFO_MSG:              ('info_msg' : 'info_msg'),
-    PMT_TOKEN:             ('pmt_token' : 'pmt_token')
+    PMT_TOKEN:             ('pmt_token' : 'pmt_token'),
+    TRANSITION_TYPE:       ('transition_type' : 'transition_type')
 };
 
 export const FPTI_BUTTON_KEY = {
@@ -190,7 +208,7 @@ export const USER_ACTION = {
 
 export const UPGRADE_LSAT_RAMP = {
     EXP_NAME: 'UPGRADE_LSAT_EXPERIMENT',
-    RAMP:      10
+    RAMP:      100
 };
 
 export const FRAME_NAME = {
@@ -200,3 +218,17 @@ export const FRAME_NAME = {
 export const AMPLITUDE_KEY = {
     USER_ID: 'user_id'
 };
+
+export const VENMO_BLUE : string = '#3D93CE';
+
+export const LSAT_UPGRADE_EXCLUDED_MERCHANTS = [
+    'AQipcJ1uXz50maKgYx49lKUB8MlSOXP573M6cpsFpHqDZOqnopsJpfYY7bQC_9CtQJsEhGlk8HLs2oZz',
+    'Aco-yrRKihknb5vDBbDOdtYywjYMEPaM7mQg6kev8VDAz01lLA88J4oAUnF4UV9F_InqkqX7K62_jOjx',
+    'AeAiB9K2rRsTXsFKZt4FMAQ8a6VEu4hijducis3a8NcIjV2J_c5I2H2PYhT3qCOwxT8P4l17skqgBlmg',
+    'AXKrWRqEvxiDoUIZQaD1tFi2QhtmhWve3yTDBi58bxWjieYJ9j73My-yJmM7hP00JvOXu4YD6L2eaI5O',
+    'AfRTnXv_QcuVyalbUxThtgk1xTygygsdevlBUTz36dDgD6XZNHp3Ym99a-mjMaokXyTTiI8VJ9mRgaFB',
+    'AejlsIlg_KjKjmLKqxJqFIAwn3ZP02emx41Z2It4IfirQ-nNgZgzWk1CU-Q1QDbYUXjWoYJZ4dq1S2pK',
+    'AQXD7-m_2yMo-5AxJ1fQaPeEWYDE7NZ9XrLzEXeiPLTHDu9vfe_T0foF8BoX8K5cMfXuRDysUEmhw-8Z'
+];
+
+export const LSAT_UPGRADE_FAILED = '__pp_lsat_upgrade_failure__';

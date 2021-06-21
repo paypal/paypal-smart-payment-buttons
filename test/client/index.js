@@ -24,6 +24,8 @@ import './connect';
 import './smart-fields';
 import './popup';
 import './nonce';
+import './applepay';
+import './applepay-utils';
 
 beforeEach(() => {
     setupMocks();

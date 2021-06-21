@@ -58,7 +58,8 @@ export type CheckoutProps = {|
     clientMetadataID : ?string,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
-    amplitude? : boolean
+    amplitude? : boolean,
+    branded : boolean | null
 |};
 
 export type CheckoutFlowType = ZoidComponent<CheckoutProps>;
@@ -118,6 +119,13 @@ export type MenuFlowProps = {|
 export type MenuFlowType = ZoidComponent<MenuFlowProps>;
 export type MenuComponentInstance = ZoidComponentInstance<MenuFlowProps>;
 
+export type QRCodeProps = {|
+    qrPath : string,
+    cspNonce : ?string
+|};
+export type QRCodeType = ZoidComponent<QRCodeProps>;
+export type QRCodeComponentInstance = ZoidComponentInstance<QRCodeProps>;
+
 export type ContentType = {|
     instantlyPayWith : string,
     poweredBy : string,
@@ -153,7 +161,7 @@ export type WalletInstrument = {|
     vendor? : $Values<typeof CARD>,
     oneClick : boolean,
     accessToken? : ?string,
-    branded : boolean
+    branded : boolean | null
 |};
 
 export type WalletPaymentType = {|

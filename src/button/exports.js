@@ -14,8 +14,7 @@ props : ButtonProps,
 |};
 
 export function setupExports({ props, isEnabled } : ExportsProps)  {
-    const { createOrder, onApprove, onError, onCancel } = props;
-    const { onClick, fundingSource } = props;
+    const { createOrder, onApprove, onError, onCancel, onClick, fundingSource, commit, intent, currency } = props;
 
     const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
         return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
@@ -23,6 +22,11 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
     
     window.exports = {
         name:           'smart-payment-buttons',
+        commit: {
+            commit,
+            currency,
+            intent
+        },
         paymentSession: () => {
             return {
                 getAvailableFundingSources: () => fundingSources,

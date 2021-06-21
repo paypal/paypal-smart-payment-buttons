@@ -1,12 +1,12 @@
 /* @flow */
 
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { stringifyError } from 'belter/src';
+import { stringifyError, noop } from 'belter/src';
 import { FUNDING, WALLET_INSTRUMENT, FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import type { MenuChoices, Wallet, WalletInstrument } from '../types';
 import { getSupplementalOrderInfo, oneClickApproveOrder, getSmartWallet, updateButtonClientConfig } from '../api';
-import { BUYER_INTENT, FPTI_TRANSITION } from '../constants';
+import { BUYER_INTENT, FPTI_TRANSITION, FPTI_MENU_OPTION } from '../constants';
 import { getLogger } from '../lib';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions, MenuOptions, Payment } from './types';
@@ -106,7 +106,7 @@ function isWalletCapturePaymentEligible({ serviceData, payment } : IsPaymentElig
 }
 
 function initWalletCapture({ props, components, payment, serviceData, config } : InitOptions) : PaymentFlowInstance {
-    const { createOrder, onApprove, clientMetadataID, vault } = props;
+    const { createOrder, onApprove, clientMetadataID, vault, onAuth } = props;
     const { fundingSource, instrumentID } = payment;
     const { wallet } = serviceData;
 
@@ -195,14 +195,15 @@ function initWalletCapture({ props, components, payment, serviceData, config } :
             
             return ZalgoPromise.hash({
                 requireShipping: shippingRequired(orderID),
-                orderApproval:   oneClickApproveOrder({ orderID, instrumentType, buyerAccessToken, instrumentID, clientMetadataID })
+                orderApproval:   oneClickApproveOrder({ orderID, instrumentType, buyerAccessToken, instrumentID, clientMetadataID }),
+                onAuth:          onAuth({ accessToken: buyerAccessToken })
             }).then(({ requireShipping, orderApproval }) => {
                 if (requireShipping) {
                     return fallbackToWebCheckout();
                 }
 
                 const { payerID } = orderApproval;
-                return onApprove({ payerID }, { restart });
+                return onApprove({ payerID, buyerAccessToken }, { restart }).catch(noop);
                 
             });
         }).catch(err => {
@@ -265,7 +266,8 @@ function setupWalletMenu({ props, payment, serviceData, components, config } : M
         onSelect: ({ win }) => {
 
             getLogger().info('click_choose_funding').track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_FUNDING
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.CLICK_CHOOSE_FUNDING,
+                [FPTI_KEY.OPTION_SELECTED]: FPTI_MENU_OPTION.CHOOSE_FUNDING
             }).flush();
 
             return ZalgoPromise.try(() => {
@@ -304,7 +306,8 @@ function setupWalletMenu({ props, payment, serviceData, components, config } : M
         onSelect: ({ win }) => {
 
             getLogger().info('click_choose_account').track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.CLICK_CHOOSE_ACCOUNT
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.CLICK_CHOOSE_ACCOUNT,
+                [FPTI_KEY.OPTION_SELECTED]: FPTI_MENU_OPTION.CHOOSE_ACCOUNT
             }).flush();
 
             return loadCheckout({

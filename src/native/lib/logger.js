@@ -2,7 +2,7 @@
 
 import { isIEIntranet, getPageRenderTime } from 'belter/src';
 import { type LoggerType } from 'beaver-logger/src';
-import { FPTI_KEY, ENV, FUNDING } from '@paypal/sdk-constants/src';
+import { FPTI_KEY, ENV, FUNDING, COUNTRY } from '@paypal/sdk-constants/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 
 import type { LocaleType } from '../../types';
@@ -17,13 +17,14 @@ type NativeLoggerOptions = {|
     sdkCorrelationID : string,
     fundingSource : ?$Values<typeof FUNDING>,
     sdkVersion : string,
-    locale : LocaleType
+    locale : LocaleType,
+    buyerCountry : $Values<typeof COUNTRY>
 |};
 
-export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelationID, clientID, fundingSource, sdkVersion, locale } : NativeLoggerOptions) : LoggerType {
+export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelationID, clientID, fundingSource, sdkVersion, locale, buyerCountry } : NativeLoggerOptions) : LoggerType {
     const logger = getLogger();
 
-    setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale, sdkVersion });
+    setupLogger({ env, sessionID, clientID, sdkCorrelationID, locale, sdkVersion, buyerCountry });
 
     logger.addMetaBuilder(() => {
         return {
@@ -43,7 +44,6 @@ export function setupNativeLogger({ env, sessionID, buttonSessionID, sdkCorrelat
             [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
             [FPTI_KEY.CONTEXT_TYPE]:                 FPTI_CONTEXT_TYPE.BUTTON_SESSION_ID,
             [FPTI_KEY.CONTEXT_ID]:                   buttonSessionID,
-            [FPTI_KEY.STATE]:                        FPTI_STATE.BUTTON,
             [FPTI_KEY.BUTTON_SESSION_UID]:           buttonSessionID,
             [FPTI_KEY.BUTTON_VERSION]:               __SMART_BUTTONS__.__MINOR_VERSION__,
             [AMPLITUDE_KEY.USER_ID]:                 buttonSessionID

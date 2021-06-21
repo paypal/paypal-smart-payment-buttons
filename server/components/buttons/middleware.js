@@ -1,7 +1,7 @@
 /* @flow */
 
 import { html } from 'jsx-pragmatic';
-import { COUNTRY, LANG } from '@paypal/sdk-constants';
+import { COUNTRY, LANG, FUNDING } from '@paypal/sdk-constants';
 import { stringifyError, noop } from 'belter';
 
 import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware,
@@ -9,10 +9,9 @@ import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON,
 import { renderFraudnetScript, shouldRenderFraudnet, resolveFundingEligibility, resolveMerchantID, resolveWallet, resolvePersonalization } from '../../service';
 import { EXPERIMENT_TIMEOUT } from '../../config';
 import type { LoggerType, CacheType, ExpressRequest, FirebaseConfig } from '../../types';
-import type { ContentType } from '../../../src/types';
+import type { ContentType, Wallet } from '../../../src/types';
 
 import { getSmartPaymentButtonsClientScript, getPayPalSmartPaymentButtonsRenderScript } from './script';
-import { EVENT } from './constants';
 import { getButtonParams, getButtonPreflightParams } from './params';
 import { buttonStyle } from './style';
 import { setRootTransaction } from './instrumentation';
@@ -25,6 +24,12 @@ type InlineGuestElmoParams = {|
         country : $Values<typeof LANG>
     |},
     buyerCountry : $Values<typeof COUNTRY>
+|};
+
+type BrandedFundingSourceElmoParam = {|
+    clientID : string,
+    fundingSource : ?$Values<typeof FUNDING>,
+    wallet : Wallet
 |};
 
 type ButtonMiddlewareOptions = {|
@@ -42,25 +47,30 @@ type ButtonMiddlewareOptions = {|
     },
     tracking : (ExpressRequest) => void,
     getPersonalizationEnabled : (ExpressRequest) => boolean,
-    cdn? : boolean
+    cdn? : boolean,
+    isFundingSourceBranded : (req : ExpressRequest, params : BrandedFundingSourceElmoParam) => Promise<boolean>
 |};
 
 export function getButtonMiddleware({
     logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
     getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking,
-    getPersonalizationEnabled = () => false
+    getPersonalizationEnabled = () => false, isFundingSourceBranded
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
     return sdkMiddleware({ logger, cache }, {
         app: async ({ req, res, params, meta, logBuffer, sdkMeta }) => {
-            logger.info(req, EVENT.RENDER);
+            logger.info(req, 'smart_buttons_render');
+
+            for (const name of Object.keys(req.cookies || {})) {
+                logger.info(req, `smart_buttons_cookie_${ name || 'unknown' }`);
+            }
             
             tracking(req);
 
             const { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard, userIDToken, amount,
                 merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, basicFundingEligibility, locale,
-                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, style, paymentMethodNonce, branded } = getButtonParams(params, req, res);
+                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, style, paymentMethodNonce, branded, fundingSource } = getButtonParams(params, req, res);
             
             const { label, period, tagline } = style;
             logger.info(req, `button_params`, { params: JSON.stringify(params) });
@@ -121,7 +131,8 @@ export function getButtonMiddleware({
             const isCardFieldsExperimentEnabled = await isCardFieldsExperimentEnabledPromise;
             const wallet = await walletPromise;
             const personalization = await personalizationPromise;
-
+            const brandedDefault = await isFundingSourceBranded(req, { clientID, fundingSource, wallet });
+            
             const eligibility = {
                 cardFields: isCardFieldsExperimentEnabled
             };
@@ -146,7 +157,8 @@ export function getButtonMiddleware({
 
             const setupParams = {
                 fundingEligibility, buyerCountry, cspNonce, merchantID, sdkMeta, wallet, correlationID,
-                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization
+                firebaseConfig, facilitatorAccessToken, eligibility, content, cookies, personalization,
+                brandedDefault
             };
 
             const pageHTML = `
@@ -155,7 +167,7 @@ export function getButtonMiddleware({
                 <body data-nonce="${ cspNonce }" data-client-version="${ client.version }" data-render-version="${ render.version }">
                     <style nonce="${ cspNonce }">${ buttonStyle }</style>
                     
-                    <div id="buttons-container" class="buttons-container">${ buttonHTML }</div>
+                    <div id="buttons-container" class="buttons-container" role="main" aria-label="PayPal">${ buttonHTML }</div>
 
                     ${ meta.getSDKLoader({ nonce: cspNonce }) }
                     <script nonce="${ cspNonce }">${ client.script }</script>
@@ -170,7 +182,7 @@ export function getButtonMiddleware({
         },
 
         script: async ({ req, res, params, logBuffer }) => {
-            logger.info(req, EVENT.RENDER);
+            logger.info(req, 'smart_buttons_script_render');
 
             const { debug } = getButtonParams(params, req, res);
             const { script } = await getSmartPaymentButtonsClientScript({ debug, logBuffer, cache, useLocal });

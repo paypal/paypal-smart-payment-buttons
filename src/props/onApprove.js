@@ -6,10 +6,9 @@ import { memoize, redirect as redir, noop } from 'belter/src';
 import { INTENT, SDK_QUERY_KEYS, FPTI_KEY } from '@paypal/sdk-constants/src';
 
 import { type OrderResponse, type PaymentResponse, getOrder, captureOrder, authorizeOrder, patchOrder, getSubscription, activateSubscription, type SubscriptionResponse, getPayment, executePayment, patchPayment, getSupplementalOrderInfo } from '../api';
-import { ORDER_API_ERROR, FPTI_TRANSITION, FPTI_CONTEXT_TYPE } from '../constants';
+import { ORDER_API_ERROR, FPTI_TRANSITION, FPTI_CONTEXT_TYPE, LSAT_UPGRADE_EXCLUDED_MERCHANTS } from '../constants';
 import { unresolvedPromise, getLogger } from '../lib';
 import { ENABLE_PAYMENT_API } from '../config';
-import { upgradeLSATExperiment } from '../experiments';
 
 import type { CreateOrder } from './createOrder';
 import type { XOnError } from './onError';
@@ -61,21 +60,20 @@ type ActionOptions = {|
     forceRestAPI : boolean
 |};
 
+const handleProcessorError = <T>(err : mixed, restart : () => ZalgoPromise<void>) : ZalgoPromise<T> => {
+    // $FlowFixMe
+    const isProcessorDecline = err && err.data && err.data.details && err.data.details.some(detail => {
+        return detail.issue === ORDER_API_ERROR.INSTRUMENT_DECLINED || detail.issue === ORDER_API_ERROR.PAYER_ACTION_REQUIRED;
+    });
+
+    if (isProcessorDecline) {
+        return restart().then(unresolvedPromise);
+    }
+
+    throw err;
+};
+
 function buildOrderActions({ intent, orderID, restart, facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI } : ActionOptions) : OrderActions {
-
-    const handleProcessorError = (err : mixed) : ZalgoPromise<OrderResponse> => {
-        // $FlowFixMe
-        const isProcessorDecline = err && err.data && err.data.details && err.data.details.some(detail => {
-            return detail.issue === ORDER_API_ERROR.INSTRUMENT_DECLINED || detail.issue === ORDER_API_ERROR.PAYER_ACTION_REQUIRED;
-        });
-
-        if (isProcessorDecline) {
-            return restart().then(unresolvedPromise);
-        }
-
-        throw new Error('Order could not be captured');
-    };
-
     const get = memoize(() => {
         return getOrder(orderID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI });
     });
@@ -88,7 +86,7 @@ function buildOrderActions({ intent, orderID, restart, facilitatorAccessToken, b
         return captureOrder(orderID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI })
             .finally(get.reset)
             .finally(capture.reset)
-            .catch(handleProcessorError);
+            .catch(err => handleProcessorError<OrderResponse>(err, restart));
     });
 
     const authorize = memoize(() => {
@@ -99,7 +97,7 @@ function buildOrderActions({ intent, orderID, restart, facilitatorAccessToken, b
         return authorizeOrder(orderID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI })
             .finally(get.reset)
             .finally(authorize.reset)
-            .catch(handleProcessorError);
+            .catch(err => handleProcessorError<OrderResponse>(err, restart));
     });
 
     const patch = (data = {}) => {
@@ -117,19 +115,6 @@ function buildPaymentActions({ intent, paymentID, payerID, restart, facilitatorA
         return;
     }
 
-    const handleProcessorError = (err : mixed) : ZalgoPromise<PaymentResponse> => {
-        // $FlowFixMe
-        const isProcessorDecline = err && err.data && err.data.details && err.data.details.some(detail => {
-            return detail.issue === ORDER_API_ERROR.INSTRUMENT_DECLINED || detail.issue === ORDER_API_ERROR.PAYER_ACTION_REQUIRED;
-        });
-
-        if (isProcessorDecline) {
-            return restart().then(unresolvedPromise);
-        }
-
-        throw new Error('Order could not be captured');
-    };
-
     const get = memoize(() => {
         return getPayment(paymentID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID });
     });
@@ -146,7 +131,7 @@ function buildPaymentActions({ intent, paymentID, payerID, restart, facilitatorA
         return executePayment(paymentID, payerID, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID })
             .finally(get.reset)
             .finally(execute.reset)
-            .catch(handleProcessorError);
+            .catch(err => handleProcessorError<PaymentResponse>(err, restart));
     });
 
     const patch = (data = {}) => {
@@ -233,21 +218,22 @@ function getDefaultOnApprove(intent : $Values<typeof INTENT>) : XOnApprove {
     };
 }
 
-type OnApproveXProps = {|
+type GetOnApproveOptions = {|
     intent : $Values<typeof INTENT>,
     onApprove : ?XOnApprove,
     partnerAttributionID : ?string,
     onError : XOnError,
-    upgradeLSAT : boolean,
     clientAccessToken : ?string,
-    vault : boolean
+    vault : boolean,
+    clientID : string
 |};
 
-export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, upgradeLSAT = false } : OnApproveXProps, { facilitatorAccessToken, createOrder } : {| facilitatorAccessToken : string, createOrder : CreateOrder |}) : OnApprove {
+export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), partnerAttributionID, onError, clientAccessToken, vault, clientID } : GetOnApproveOptions, { facilitatorAccessToken, branded, createOrder } : {| facilitatorAccessToken : string, branded : boolean | null, createOrder : CreateOrder |}) : OnApprove {
     if (!onApprove) {
         throw new Error(`Expected onApprove`);
     }
-    upgradeLSAT = upgradeLSAT || upgradeLSATExperiment.isEnabled();
+    
+    const upgradeLSAT = LSAT_UPGRADE_EXCLUDED_MERCHANTS.indexOf(clientID) === -1;
 
     return memoize(({ payerID, paymentID, billingToken, subscriptionID, buyerAccessToken, authCode, forceRestAPI = upgradeLSAT } : OnApproveData, { restart } : OnApproveActions) => {
         return ZalgoPromise.try(() => {
@@ -263,9 +249,8 @@ export function getOnApprove({ intent, onApprove = getDefaultOnApprove(intent), 
                 }).flush();
 
             if (!billingToken && !subscriptionID && !clientAccessToken && !vault) {
-                if (!payerID) {
-                    getLogger().error('onapprove_payerid_not_present', { orderID }).flush();
-                    // throw new Error(`payerID not present in onApprove call`);
+                if (!payerID && branded) {
+                    getLogger().error('onapprove_payerid_not_present_for_branded_standalone_button', { orderID }).flush();
                 }
             }
 

@@ -191,6 +191,10 @@
         function getUserAgent() {
             return window.navigator.mockUserAgent || window.navigator.userAgent;
         }
+        function isAndroid(ua) {
+            void 0 === ua && (ua = getUserAgent());
+            return /Android/.test(ua);
+        }
         function isIos(ua) {
             void 0 === ua && (ua = getUserAgent());
             return /iPhone|iPod|iPad/.test(ua);
@@ -813,13 +817,13 @@
         function base64encode(str) {
             if ("function" == typeof btoa) return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (function(m, p1) {
                 return String.fromCharCode(parseInt(p1, 16));
-            })));
-            if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64");
+            }))).replace(/[=]/g, "");
+            if ("undefined" != typeof Buffer) return Buffer.from(str, "utf8").toString("base64").replace(/[=]/g, "");
             throw new Error("Can not find window.btoa or Buffer");
         }
         function uniqueID() {
             var chars = "0123456789abcdef";
-            return "xxxxxxxxxx".replace(/./g, (function() {
+            return "uid_" + "xxxxxxxxxx".replace(/./g, (function() {
                 return chars.charAt(Math.floor(Math.random() * chars.length));
             })) + "_" + base64encode((new Date).toISOString().slice(11, 19).replace("T", ".")).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         }
@@ -1023,7 +1027,21 @@
             var uid = script.getAttribute("data-uid");
             if (uid && "string" == typeof uid) return uid;
             if ((uid = script.getAttribute("data-uid-auto")) && "string" == typeof uid) return uid;
-            uid = uniqueID();
+            if (script.src) {
+                var hashedString = function(str) {
+                    var hash = "";
+                    for (var i = 0; i < str.length; i++) {
+                        var total = str[i].charCodeAt(0) * i;
+                        str[i + 1] && (total += str[i + 1].charCodeAt(0) * (i - 1));
+                        hash += String.fromCharCode(97 + Math.abs(total) % 26);
+                    }
+                    return hash;
+                }(JSON.stringify({
+                    src: script.src,
+                    dataset: script.dataset
+                }));
+                uid = "uid_" + hashedString.slice(hashedString.length - 30);
+            } else uid = uniqueID();
             script.setAttribute("data-uid-auto", uid);
             return uid;
         }));
@@ -1392,33 +1410,35 @@
         }
         function setupNativePopup(_ref) {
             var _logger$info$track;
-            var parentDomain = _ref.parentDomain, env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, locale = _ref.locale;
+            var parentDomain = _ref.parentDomain, env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, locale = _ref.locale, buyerCountry = _ref.buyerCountry;
             var appInstalledPromise = promise_ZalgoPromise.resolve({
                 installed: !0
             });
             var logger = function(_ref) {
-                var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, sdkVersion = _ref.sdkVersion, locale = _ref.locale;
+                var env = _ref.env, sessionID = _ref.sessionID, buttonSessionID = _ref.buttonSessionID, sdkCorrelationID = _ref.sdkCorrelationID, clientID = _ref.clientID, fundingSource = _ref.fundingSource, sdkVersion = _ref.sdkVersion, locale = _ref.locale, buyerCountry = _ref.buyerCountry;
                 var logger = getLogger();
-                !function(_ref) {
-                    var env = _ref.env, sessionID = _ref.sessionID, clientID = _ref.clientID, sdkCorrelationID = _ref.sdkCorrelationID, locale = _ref.locale, sdkVersion = _ref.sdkVersion;
+                !function(_ref2) {
+                    var env = _ref2.env, sessionID = _ref2.sessionID, clientID = _ref2.clientID, sdkCorrelationID = _ref2.sdkCorrelationID, buyerCountry = _ref2.buyerCountry, locale = _ref2.locale, sdkVersion = _ref2.sdkVersion;
                     var logger = getLogger();
                     logger.addPayloadBuilder((function() {
                         return {
                             referer: window.location.host,
                             sdkCorrelationID: sdkCorrelationID,
                             sessionID: sessionID,
+                            clientID: clientID,
                             env: env
                         };
                     }));
                     logger.addTrackingBuilder((function() {
-                        var _ref2;
+                        var _ref3;
                         var lang = locale.lang, country = locale.country;
-                        return (_ref2 = {}).feed_name = "payments_sdk", _ref2.serverside_data_source = "checkout", 
-                        _ref2.client_id = clientID, _ref2.page_session_id = sessionID, _ref2.referer_url = window.location.host, 
-                        _ref2.locale = lang + "_" + country, _ref2.integration_identifier = clientID, _ref2.sdk_name = "payments_sdk", 
-                        _ref2.sdk_version = sdkVersion, _ref2.user_agent = window.navigator && window.navigator.userAgent, 
-                        _ref2.context_correlation_id = sdkCorrelationID, _ref2.t = Date.now().toString(), 
-                        _ref2;
+                        return (_ref3 = {}).feed_name = "payments_sdk", _ref3.serverside_data_source = "checkout", 
+                        _ref3.client_id = clientID, _ref3.page_session_id = sessionID, _ref3.referer_url = window.location.host, 
+                        _ref3.buyer_cntry = buyerCountry, _ref3.locale = lang + "_" + country, _ref3.integration_identifier = clientID, 
+                        _ref3.sdk_environment = isIos() ? "ios" : isAndroid() ? "android" : null, _ref3.sdk_name = "payments_sdk", 
+                        _ref3.sdk_version = sdkVersion, _ref3.user_agent = window.navigator && window.navigator.userAgent, 
+                        _ref3.context_correlation_id = sdkCorrelationID, _ref3.t = Date.now().toString(), 
+                        _ref3;
                     }));
                     promise_ZalgoPromise.onPossiblyUnhandledException((function(err) {
                         var _logger$track;
@@ -1435,7 +1455,8 @@
                     clientID: clientID,
                     sdkCorrelationID: sdkCorrelationID,
                     locale: locale,
-                    sdkVersion: sdkVersion
+                    sdkVersion: sdkVersion,
+                    buyerCountry: buyerCountry
                 });
                 logger.addMetaBuilder((function() {
                     return {
@@ -1451,8 +1472,8 @@
                 logger.addTrackingBuilder((function() {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
-                    _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "5.0.17", _ref3.user_id = buttonSessionID, _ref3;
+                    _ref3.context_id = buttonSessionID, _ref3.button_session_id = buttonSessionID, _ref3.button_version = "5.0.37", 
+                    _ref3.user_id = buttonSessionID, _ref3;
                 }));
                 (function() {
                     if (window.document.documentMode) try {
@@ -1493,7 +1514,8 @@
                 clientID: clientID,
                 fundingSource: fundingSource,
                 sdkVersion: getPayPal().version,
-                locale: locale
+                locale: locale,
+                buyerCountry: buyerCountry
             });
             logger.info("native_popup_init", {
                 buttonSessionID: buttonSessionID,
@@ -1543,10 +1565,7 @@
                 logger.info("native_popup_pagehide").track((_logger$info$track5 = {}, _logger$info$track5.transition_name = "native_popup_pagehide", 
                 _logger$info$track5)).flush();
             }));
-            (function(ua) {
-                void 0 === ua && (ua = getUserAgent());
-                return /Android/.test(ua);
-            })() && isChrome() && ("paypal" === fundingSource ? appInstalledPromise = isAndroidAppInstalled("com.paypal.android.p2pmobile").then((function(app) {
+            isAndroid() && isChrome() && ("paypal" === fundingSource ? appInstalledPromise = isAndroidAppInstalled("com.paypal.android.p2pmobile").then((function(app) {
                 return _extends({}, app);
             })).catch((function(err) {
                 var _logger$info$track6;
