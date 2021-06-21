@@ -159,7 +159,7 @@ export const FPTI_TRANSITION = {
     NATIVE_POPUP_OPENER_DETECT_CLOSE:       ('native_popup_opener_detect_close', 'native_popup_opener_detect_close'),
     NATIVE_OPT_OUT:                         ('native_opt_out', 'native_opt_out'),
     NATIVE_FALLBACK:                        ('native_fallback', 'native_fallback'),
-    
+
     HONEY_IDENTIFY:                         ('honey_identify')
 };
 
