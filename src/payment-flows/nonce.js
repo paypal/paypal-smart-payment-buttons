@@ -94,7 +94,6 @@ function initNonce({ props, components, payment, serviceData, config }) : Paymen
     const { paymentMethodID } = payment;
 
     const instrument  = wallet?.card?.instruments.filter(({ tokenID })  => (tokenID === paymentMethodID))[0];
-
     const paymentMethodNonce = instrument?.tokenID;
 
     if (!paymentMethodNonce) {

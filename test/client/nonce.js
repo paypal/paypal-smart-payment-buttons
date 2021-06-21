@@ -593,7 +593,7 @@ describe('nonce cases', () => {
                 }
             }).expectCalls();
 
-            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', () => {
                 return orderID;
             }));
 

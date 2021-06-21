@@ -261,6 +261,7 @@ export const DEFAULT_FUNDING_ELIGIBILITY : FundingEligibilityType = {
     }
 };
 
+// eslint-disable-next-line complexity
 export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBILITY, wallet } : {| fundingEligibility? : Object, wallet? : Object |} = {}) {
     const buttons = [];
 
