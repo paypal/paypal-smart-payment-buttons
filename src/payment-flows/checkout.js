@@ -400,7 +400,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
     });
 
     const restart = memoize(() : ZalgoPromise<void> => {
-        // Closing any previous checkout instance before restarting
+        // Closing any previous checkout popup before restarting
         return close().finally(() => {
             return initCheckout({ props, components, serviceData, config, payment: { button, fundingSource, card, buyerIntent, isClick: false } })
                 .start().finally(unresolvedPromise);
