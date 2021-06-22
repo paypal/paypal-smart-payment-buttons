@@ -147,6 +147,10 @@ describe('nonce cases', () => {
                             }
                         };
                     }
+
+                    if (!data.query.includes('mutation ApprovePaymentWithNonces')) {
+                        throw new Error(`ApprovePaymentWithNonce mutation must be called`);
+                    }
                 }
             }).expectCalls();
 
