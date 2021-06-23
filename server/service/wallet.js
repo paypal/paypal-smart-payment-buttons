@@ -232,6 +232,9 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
         },
         card: {
             instruments: []
+        },
+        venmo: {
+            instruments: []
         }
     };
 

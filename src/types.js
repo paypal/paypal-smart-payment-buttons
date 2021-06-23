@@ -171,6 +171,7 @@ export type WalletPaymentType = {|
 export type Wallet = {|
     paypal : WalletPaymentType,
     card : WalletPaymentType,
+    venmo : WalletPaymentType,
     credit : WalletPaymentType
 |};
 
