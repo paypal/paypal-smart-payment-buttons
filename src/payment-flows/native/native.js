@@ -310,7 +310,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         };
         
         return orderIDPromise.then((orderID) => {
-            const url = getNativeUrl({ props, serviceData, firebaseConfig, fundingSource, sessionUID, orderID, stickinessID, pageUrl });
+            const url = getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, orderID, stickinessID, pageUrl });
 
             const qrCodeComponentInstance = QRCode({
                 cspNonce:  config.cspNonce,
