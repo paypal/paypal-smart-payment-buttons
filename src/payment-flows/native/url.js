@@ -10,7 +10,6 @@ import { isIOSSafari } from '../../lib';
 import { USER_ACTION } from '../../constants';
 import { HASH } from '../../native/popup/constants';
 import { CHANNEL } from '../../../server/components/native/constants';
-import type { FirebaseConfig } from '../../api';
 import type { ButtonProps, ServiceData, Config } from '../../button/props';
 import type { NativePopupInputParams } from '../../../server/components/native/params';
 
@@ -107,7 +106,7 @@ function getNativeUrlQueryParams({ props, serviceData, config, fundingSource, se
     if (!firebase) {
         throw new Error(`Can not find firebase config`);
     }
-    let queryParams = {
+    const queryParams = {
         channel,
         sdkMeta,
         sessionUID,
