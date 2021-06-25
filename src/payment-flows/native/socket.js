@@ -148,7 +148,7 @@ type ConnectNativeOptions = {|
             data? : {|
                 win? : CrossDomainWindowType,
                 type? : string,
-                duration? : number
+                skip_native_duration? : number
             |}
         |}) => ZalgoPromise<{|
             buttonSessionID : string
