@@ -229,6 +229,8 @@ const getMerchantID = () => {
 
 const getPersonalizationEnabled = () => true;
 const isFundingSourceBranded = () => Promise.resolve(true);
+const getSdkCdnNamespace = () => 'https://www.paypalobjects.com/js-sdk-release';
+const getSPBCdnNamespace = () => 'https://www.paypalobjects.com/smart-payment-buttons';
 
 const content = {
     US: {
@@ -267,12 +269,17 @@ const buttonMiddleware = getButtonMiddleware({
     content,
     tracking,
     getPersonalizationEnabled,
-    isFundingSourceBranded
+    isFundingSourceBranded,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
 });
 
 const menuMiddleware = getMenuMiddleware({
     cache,
-    logger
+    logger,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const nativePopupMiddleware = getNativePopupMiddleware({
@@ -280,7 +287,10 @@ const nativePopupMiddleware = getNativePopupMiddleware({
     logger,
     graphQL,
     tracking,
-    fundingSource: FUNDING.PAYPAL
+    fundingSource: FUNDING.PAYPAL,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const nativeFallbackMiddleware = getNativeFallbackMiddleware({
@@ -288,12 +298,18 @@ const nativeFallbackMiddleware = getNativeFallbackMiddleware({
     logger,
     graphQL,
     tracking,
-    fundingSource: FUNDING.PAYPAL
+    fundingSource: FUNDING.PAYPAL,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const qrCodeMiddleware = getQRCodeMiddleware({
     cache,
-    logger
+    logger,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const venmoPopupMiddleware = getNativePopupMiddleware({
@@ -301,7 +317,10 @@ const venmoPopupMiddleware = getNativePopupMiddleware({
     logger,
     graphQL,
     tracking,
-    fundingSource: FUNDING.VENMO
+    fundingSource: FUNDING.VENMO,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const venmoFallbackMiddleware = getNativeFallbackMiddleware({
@@ -309,7 +328,10 @@ const venmoFallbackMiddleware = getNativeFallbackMiddleware({
     logger,
     graphQL,
     tracking,
-    fundingSource: FUNDING.VENMO
+    fundingSource: FUNDING.VENMO,
+    getSdkCdnNamespace,
+    getSPBCdnNamespace
+
 });
 
 const buttonsScriptMiddleware = webpackDevMiddleware(webpack(WEBPACK_CONFIG_BUTTONS_LOCAL_DEBUG), { serverSideRender: true });

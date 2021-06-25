@@ -47,10 +47,11 @@ export async function getLocalSmartPaymentButtonRenderScript() : Promise<?SmartP
 type GetPayPalSmartPaymentButtonsRenderScriptOptions = {|
     logBuffer : ?LoggerBufferType,
     cache : ?CacheType,
-    useLocal? : boolean
+    useLocal? : boolean,
+    sdkCdnNamespace : string
 |};
 
-export async function getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cache, useLocal = isLocalOrTest() } : GetPayPalSmartPaymentButtonsRenderScriptOptions) : Promise<SmartPaymentButtonsRenderScript> {
+export async function getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cache, useLocal = isLocalOrTest(), sdkCdnNamespace } : GetPayPalSmartPaymentButtonsRenderScriptOptions) : Promise<SmartPaymentButtonsRenderScript> {
     if (useLocal) {
         const script = await getLocalSmartPaymentButtonRenderScript();
         if (script) {
@@ -58,7 +59,7 @@ export async function getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cach
         }
     }
 
-    const { getTag, getDeployTag, importDependency } = getPayPalSDKWatcher({ logBuffer, cache });
+    const { getTag, getDeployTag, importDependency } = getPayPalSDKWatcher({ logBuffer, cache, sdkCdnNamespace });
     const { version } = await getTag();
     const button = await importDependency(CHECKOUT_COMPONENTS_MODULE, BUTTON_RENDER_JS, ACTIVE_TAG);
 
@@ -94,10 +95,11 @@ type GetSmartPaymentButtonsClientScriptOptions = {|
     debug : boolean,
     logBuffer : LoggerBufferType,
     cache : CacheType,
-    useLocal? : boolean
+    useLocal? : boolean,
+    spbCdnNamespace : string
 |};
 
-export async function getSmartPaymentButtonsClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest() } : GetSmartPaymentButtonsClientScriptOptions = {}) : Promise<SmartPaymentButtonsClientScript> {
+export async function getSmartPaymentButtonsClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest(), spbCdnNamespace } : GetSmartPaymentButtonsClientScriptOptions = {}) : Promise<SmartPaymentButtonsClientScript> {
     if (useLocal) {
         const script = await compileLocalSmartButtonsClientScript();
         if (script) {
@@ -105,7 +107,7 @@ export async function getSmartPaymentButtonsClientScript({ logBuffer, cache, deb
         }
     }
 
-    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache });
+    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNamespace });
     const { version } = await getTag();
     const script = await read(debug ? BUTTON_CLIENT_JS : BUTTON_CLIENT_MIN_JS, ACTIVE_TAG);
 

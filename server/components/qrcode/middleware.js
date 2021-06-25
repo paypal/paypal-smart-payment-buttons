@@ -13,13 +13,18 @@ import { QRCode } from './node-qrcode';
 type QRcodeMiddlewareOptions = {|
     logger? : LoggerType,
     cache? : CacheType,
-    cdn? : boolean
+    cdn? : boolean,
+    getSdkCdnNamespace : () => string,
+    getSPBCdnNamespace : () => string
 |};
 
-export function getQRCodeMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest() } : QRcodeMiddlewareOptions = {}) : ExpressMiddleware {
+export function getQRCodeMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest(), getSdkCdnNamespace, getSPBCdnNamespace } : QRcodeMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
+    const sdkCdnNamespace = getSdkCdnNamespace();
+    const spbCdnNamespace = getSPBCdnNamespace();
 
-    return sdkMiddleware({ logger, cache }, {
+
+    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
             logger.info(req, EVENT.RENDER);
 
@@ -40,7 +45,7 @@ export function getQRCodeMiddleware({ logger = defaultLogger, cache, cdn = !isLo
                 }
             );
 
-            const client = await getSmartQRCodeClientScript({ debug, logBuffer, cache, useLocal });
+            const client = await getSmartQRCodeClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
 
             logger.info(req, `qrcode_client_version_${ client.version }`);
             logger.info(req, `qrcode_params`, { params: JSON.stringify(params) });

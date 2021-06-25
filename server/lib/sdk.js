@@ -30,7 +30,9 @@ export function getSDKMeta(req : ExpressRequest) : SDKMeta {
 
 export type SDKMiddlewareOptions = {|
     logger : LoggerType | void,
-    cache : ?CacheType
+    cache : ?CacheType,
+    sdkCdnNamespace : string,
+    spbCdnNamespace : string
 |};
 
 export type SDKMiddleware = ({|
@@ -64,9 +66,9 @@ export type ExpressMiddleware = (
 
 let logBuffer;
 
-export function sdkMiddleware({ logger = defaultLogger, cache } : SDKMiddlewareOptions, { app, script, preflight } : {| app : SDKMiddleware, script? : SDKScriptMiddleware, preflight? : SDKPreflightMiddleware |}) : ExpressMiddleware {
+export function sdkMiddleware({ logger = defaultLogger, cache, sdkCdnNamespace, spbCdnNamespace } : SDKMiddlewareOptions, { app, script, preflight } : {| app : SDKMiddleware, script? : SDKScriptMiddleware, preflight? : SDKPreflightMiddleware |}) : ExpressMiddleware {
     logBuffer = logBuffer || getLogBuffer(logger);
-    startWatchers({ logBuffer, cache });
+    startWatchers({ logBuffer, cache, sdkCdnNamespace, spbCdnNamespace });
 
     const appMiddleware = async (req : ExpressRequest, res : ExpressResponse) : Promise<void> => {
         logBuffer.flush(req);

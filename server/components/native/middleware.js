@@ -17,16 +17,21 @@ type NativePopupMiddlewareOptions = {|
     cache : CacheType,
     tracking : (ExpressRequest) => void,
     fundingSource : $Values<typeof FUNDING>,
-    cdn? : boolean
+    cdn? : boolean,
+    getSdkCdnNamespace : () => string,
+    getSPBCdnNamespace : () => string
 |};
 
 export function getNativePopupMiddleware({
     logger = defaultLogger, cdn = !isLocalOrTest(),
-    cache, tracking, fundingSource
+    cache, tracking, fundingSource, getSdkCdnNamespace, getSPBCdnNamespace
 } : NativePopupMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
-    return sdkMiddleware({ logger, cache }, {
+    const sdkCdnNamespace = getSdkCdnNamespace();
+    const spbCdnNamespace = getSPBCdnNamespace();
+
+    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
             logger.info(req, 'smart_native_popup_render');
             tracking(req);
@@ -38,8 +43,8 @@ export function getNativePopupMiddleware({
             const { cspNonce, debug, parentDomain, env, sessionID, buttonSessionID,
                 sdkCorrelationID, clientID, locale, buyerCountry } = getNativePopupParams(params, req, res);
 
-            const { NativePopup } = (await getNativePopupRenderScript({ logBuffer, cache, debug, useLocal })).popup;
-            const client = await getNativePopupClientScript({ debug, logBuffer, cache, useLocal });
+            const { NativePopup } = (await getNativePopupRenderScript({ logBuffer, cache, debug, useLocal, spbCdnNamespace })).popup;
+            const client = await getNativePopupClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
 
             const setupParams : NativePopupOptions = {
                 parentDomain, env, sessionID, buttonSessionID, sdkCorrelationID,
@@ -72,16 +77,20 @@ type NativeFallbackMiddlewareOptions = {|
     cache : CacheType,
     tracking : (ExpressRequest) => void,
     fundingSource : $Values<typeof FUNDING>,
-    cdn? : boolean
+    cdn? : boolean,
+    getSdkCdnNamespace : () => string,
+    getSPBCdnNamespace : () => string
 |};
 
 export function getNativeFallbackMiddleware({
     logger = defaultLogger, cdn = !isLocalOrTest(),
-    cache, tracking, fundingSource
+    cache, tracking, fundingSource, getSdkCdnNamespace, getSPBCdnNamespace
 } : NativeFallbackMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
+    const sdkCdnNamespace = getSdkCdnNamespace();
+    const spbCdnNamespace = getSPBCdnNamespace();
 
-    return sdkMiddleware({ logger, cache }, {
+    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace  }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
             logger.info(req, 'smart_native_fallback_render');
             tracking(req);
@@ -92,8 +101,8 @@ export function getNativeFallbackMiddleware({
 
             const { cspNonce, debug } = getNativeFallbackParams(params, req, res);
 
-            const { NativeFallback } = (await getNativeFallbackRenderScript({ logBuffer, cache, debug, useLocal })).fallback;
-            const client = await getNativeFallbackClientScript({ debug, logBuffer, cache, useLocal });
+            const { NativeFallback } = (await getNativeFallbackRenderScript({ logBuffer, cache, debug, useLocal, spbCdnNamespace })).fallback;
+            const client = await getNativeFallbackClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
 
             const setupParams = {
                 

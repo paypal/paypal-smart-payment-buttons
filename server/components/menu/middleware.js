@@ -11,19 +11,23 @@ import { getSmartMenuClientScript } from './script';
 type MenuMiddlewareOptions = {|
     logger? : LoggerType,
     cache? : CacheType,
-    cdn? : boolean
+    cdn? : boolean,
+    getSdkCdnNamespace : () => string,
+    getSPBCdnNamespace : () => string
 |};
 
-export function getMenuMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest() } : MenuMiddlewareOptions = {}) : ExpressMiddleware {
+export function getMenuMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest(), getSdkCdnNamespace, getSPBCdnNamespace } : MenuMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
+    const sdkCdnNamespace = getSdkCdnNamespace();
+    const spbCdnNamespace = getSPBCdnNamespace();
 
-    return sdkMiddleware({ logger, cache }, {
+    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
             logger.info(req, EVENT.RENDER);
 
             const { clientID, cspNonce, debug } = getParams(params, req, res);
             
-            const client = await getSmartMenuClientScript({ debug, logBuffer, cache, useLocal });
+            const client = await getSmartMenuClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
 
             logger.info(req, `menu_client_version_${ client.version }`);
             logger.info(req, `menu_params`, { params: JSON.stringify(params) });
