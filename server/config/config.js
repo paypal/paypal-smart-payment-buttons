@@ -38,7 +38,7 @@ export const NATIVE_FALLBACK_CLIENT_MIN_JS = 'dist/smart-native-fallback.min.js'
 
 export const BROWSER_CACHE_TIME = 6 * 60 * 60;
 
-export const CDN_NAMESPACE = 'https://www.paypalobjects.com';
+export const CDN_NAMESPACE = 'www.paypalobjects.com';
 
 export const SDK_CDN_NAMESPACE = 'js-sdk-release';
 export const SMART_BUTTONS_CDN_NAMESPACE = 'smart-payment-buttons';

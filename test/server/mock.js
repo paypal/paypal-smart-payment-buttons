@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint no-restricted-globals: off, promise/no-native: off, compat/compat: off */
 
-import type { ExpressRequest } from '../../server/types';
+import type { ExpressRequest, InstanceLocationInformation } from '../../server/types';
 
 type MockReq = {|
     query : { [string] : string }
@@ -238,8 +238,11 @@ export function isFundingSourceBranded() : Promise<boolean> {
     return Promise.resolve(true);
 }
 
-export function getCdnNamespace() : string {
-    return 'https://www.paypalobjects.com/js-sdk-release';
+export function getInstanceLocationInformation() : InstanceLocationInformation {
+    return {
+        cdnHostName:  '',
+        paypalDomain: ''
+    };
 }
 
 export const mockContent = {

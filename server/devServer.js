@@ -229,7 +229,12 @@ const getMerchantID = () => {
 
 const getPersonalizationEnabled = () => true;
 const isFundingSourceBranded = () => Promise.resolve(true);
-const getCdnNamespace = () => 'https://www.paypalobjects.com/js-sdk-release';
+const getInstanceLocationInformation = () => {
+    return {
+        cdnHostName:  'string',
+        paypalDomain: 'string'
+    };
+};
 
 const content = {
     US: {
@@ -269,13 +274,13 @@ const buttonMiddleware = getButtonMiddleware({
     tracking,
     getPersonalizationEnabled,
     isFundingSourceBranded,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const menuMiddleware = getMenuMiddleware({
     cache,
     logger,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const nativePopupMiddleware = getNativePopupMiddleware({
@@ -284,7 +289,7 @@ const nativePopupMiddleware = getNativePopupMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.PAYPAL,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const nativeFallbackMiddleware = getNativeFallbackMiddleware({
@@ -293,13 +298,13 @@ const nativeFallbackMiddleware = getNativeFallbackMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.PAYPAL,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const qrCodeMiddleware = getQRCodeMiddleware({
     cache,
     logger,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const venmoPopupMiddleware = getNativePopupMiddleware({
@@ -308,7 +313,7 @@ const venmoPopupMiddleware = getNativePopupMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.VENMO,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const venmoFallbackMiddleware = getNativeFallbackMiddleware({
@@ -317,7 +322,7 @@ const venmoFallbackMiddleware = getNativeFallbackMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.VENMO,
-    getCdnNamespace
+    getInstanceLocationInformation
 });
 
 const buttonsScriptMiddleware = webpackDevMiddleware(webpack(WEBPACK_CONFIG_BUTTONS_LOCAL_DEBUG), { serverSideRender: true });
