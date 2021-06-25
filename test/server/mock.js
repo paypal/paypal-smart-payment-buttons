@@ -238,12 +238,8 @@ export function isFundingSourceBranded() : Promise<boolean> {
     return Promise.resolve(true);
 }
 
-export function getSdkCdnNamespace() : string {
+export function getCdnNamespace() : string {
     return 'https://www.paypalobjects.com/js-sdk-release';
-}
-
-export function getSPBCdnNamespace() : string {
-    return 'https://www.paypalobjects.com/smart-payment-buttons';
 }
 
 export const mockContent = {
