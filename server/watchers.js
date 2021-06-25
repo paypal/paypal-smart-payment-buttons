@@ -5,7 +5,7 @@ import { poll } from 'grabthar';
 import type { CacheType } from './types';
 import type { LoggerBufferType } from './lib';
 import { SDK_RELEASE_MODULE, SMART_BUTTONS_MODULE, MODULE_POLL_INTERVAL, SDK_CDN_NAMESPACE, SMART_BUTTONS_CDN_NAMESPACE,
-    CHECKOUT_COMPONENTS_MODULE, LATEST_TAG, ACTIVE_TAG } from './config';
+    CDN_NAMESPACE, CHECKOUT_COMPONENTS_MODULE, LATEST_TAG, ACTIVE_TAG } from './config';
 
 let paypalSDKWatcher;
 let paypalSmartButtonsWatcher;
@@ -46,13 +46,13 @@ function logInfo(logBuffer : LoggerBufferType, name : string, moduleDetails : Mo
     logBuffer.info(`${ name }_version_${ version.replace(/[^0-9]+/g, '_') }`, {});
 }
 
-export function getPayPalSDKWatcher({ logBuffer, cache, sdkCdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, sdkCdnNamespace : string |}) : Watcher {
+export function getPayPalSDKWatcher({ logBuffer, cache, cdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, cdnNamespace : string |}) : Watcher {
     if (!cache || !logBuffer) {
         throw new Error(`Cache and logBuffer required`);
     }
 
     paypalSDKWatcher = paypalSDKWatcher || poll({
-        cdnRegistry:  sdkCdnNamespace || SDK_CDN_NAMESPACE,
+        cdnRegistry:  `${ cdnNamespace || CDN_NAMESPACE }/${ SDK_CDN_NAMESPACE }`,
         name:         SDK_RELEASE_MODULE,
         tags:         [ LATEST_TAG, ACTIVE_TAG ],
         period:       MODULE_POLL_INTERVAL,
@@ -90,13 +90,13 @@ export function getPayPalSDKWatcher({ logBuffer, cache, sdkCdnNamespace } : {| l
     };
 }
 
-export function getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, spbCdnNamespace : string |}) : Watcher {
+export function getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, cdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, cdnNamespace : string |}) : Watcher {
     if (!cache || !logBuffer) {
         throw new Error(`Cache and logBuffer required`);
     }
 
     paypalSmartButtonsWatcher = paypalSmartButtonsWatcher || poll({
-        cdnRegistry:  spbCdnNamespace || SMART_BUTTONS_CDN_NAMESPACE,
+        cdnRegistry:  `${ cdnNamespace || CDN_NAMESPACE }/${ SMART_BUTTONS_CDN_NAMESPACE }`,
         name:         SMART_BUTTONS_MODULE,
         tags:         [ LATEST_TAG, ACTIVE_TAG ],
         period:       MODULE_POLL_INTERVAL,
@@ -133,9 +133,9 @@ export function getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNa
     };
 }
 
-export function startWatchers({ logBuffer, cache, sdkCdnNamespace, spbCdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, sdkCdnNamespace : string, spbCdnNamespace : string |} = {}) {
-    getPayPalSDKWatcher({ logBuffer, cache, sdkCdnNamespace });
-    getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNamespace });
+export function startWatchers({ logBuffer, cache, cdnNamespace } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, cdnNamespace : string |} = {}) {
+    getPayPalSDKWatcher({ logBuffer, cache, cdnNamespace });
+    getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, cdnNamespace });
 }
 
 export function cancelWatchers() {

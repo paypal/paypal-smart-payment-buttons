@@ -12,22 +12,20 @@ type MenuMiddlewareOptions = {|
     logger? : LoggerType,
     cache? : CacheType,
     cdn? : boolean,
-    getSdkCdnNamespace : () => string,
-    getSPBCdnNamespace : () => string
+    getCdnNamespace : () => string
 |};
 
-export function getMenuMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest(), getSdkCdnNamespace, getSPBCdnNamespace } : MenuMiddlewareOptions = {}) : ExpressMiddleware {
+export function getMenuMiddleware({ logger = defaultLogger, cache, cdn = !isLocalOrTest(), getCdnNamespace } : MenuMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
-    const sdkCdnNamespace = getSdkCdnNamespace();
-    const spbCdnNamespace = getSPBCdnNamespace();
+    const cdnNamespace = getCdnNamespace();
 
-    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace }, {
+    return sdkMiddleware({ logger, cache, cdnNamespace }, {
         app: async ({ req, res, params, meta, logBuffer }) => {
             logger.info(req, EVENT.RENDER);
 
             const { clientID, cspNonce, debug } = getParams(params, req, res);
             
-            const client = await getSmartMenuClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
+            const client = await getSmartMenuClientScript({ debug, logBuffer, cache, useLocal, cdnNamespace });
 
             logger.info(req, `menu_client_version_${ client.version }`);
             logger.info(req, `menu_params`, { params: JSON.stringify(params) });

@@ -39,8 +39,8 @@ test('getSmartQRCodeClientScript - base', async () => {
 
 test('getSmartQRCodeClientScript - debug', async () => {
     const debug = true;
-    const spbCdnNamespace = 'https://www.paypalobjects.com/smart-payment-buttons';
-    const script = await getSmartQRCodeClientScript({ logBuffer, cache, debug, spbCdnNamespace });
+    const cdnNamespace = 'https://www.paypalobjects.com';
+    const script = await getSmartQRCodeClientScript({ logBuffer, cache, debug, cdnNamespace });
 
     if (!script) {
         throw new Error(`Expected a script from compileLocalSmartQRCodeClientScript`);

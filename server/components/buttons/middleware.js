@@ -49,21 +49,19 @@ type ButtonMiddlewareOptions = {|
     getPersonalizationEnabled : (ExpressRequest) => boolean,
     cdn? : boolean,
     isFundingSourceBranded : (req : ExpressRequest, params : BrandedFundingSourceElmoParam) => Promise<boolean>,
-    getSdkCdnNamespace : () => string,
-    getSPBCdnNamespace : () => string
+    getCdnNamespace : () => string
 |};
 
 export function getButtonMiddleware({
     logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
     getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking,
-    getPersonalizationEnabled = () => false, isFundingSourceBranded, getSdkCdnNamespace, getSPBCdnNamespace
+    getPersonalizationEnabled = () => false, isFundingSourceBranded, getCdnNamespace
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
 
-    const sdkCdnNamespace = getSdkCdnNamespace();
-    const spbCdnNamespace = getSPBCdnNamespace();
+    const cdnNamespace = getCdnNamespace();
 
-    return sdkMiddleware({ logger, cache, sdkCdnNamespace, spbCdnNamespace }, {
+    return sdkMiddleware({ logger, cache, cdnNamespace }, {
         app: async ({ req, res, params, meta, logBuffer, sdkMeta }) => {
             logger.info(req, 'smart_buttons_render');
 
@@ -90,8 +88,8 @@ export function getButtonMiddleware({
 
             const facilitatorAccessTokenPromise = getAccessToken(req, clientID);
             const merchantIDPromise = facilitatorAccessTokenPromise.then(facilitatorAccessToken => resolveMerchantID(req, { merchantID: sdkMerchantID, getMerchantID, facilitatorAccessToken }));
-            const clientPromise = getSmartPaymentButtonsClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
-            const renderPromise = getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cache, useLocal, sdkCdnNamespace });
+            const clientPromise = getSmartPaymentButtonsClientScript({ debug, logBuffer, cache, useLocal, cdnNamespace });
+            const renderPromise = getPayPalSmartPaymentButtonsRenderScript({ logBuffer, cache, useLocal, cdnNamespace });
 
             const isCardFieldsExperimentEnabledPromise = promiseTimeout(
                 merchantIDPromise.then(merchantID =>
@@ -196,7 +194,7 @@ export function getButtonMiddleware({
             logger.info(req, 'smart_buttons_script_render');
 
             const { debug } = getButtonParams(params, req, res);
-            const { script } = await getSmartPaymentButtonsClientScript({ debug, logBuffer, cache, useLocal, spbCdnNamespace });
+            const { script } = await getSmartPaymentButtonsClientScript({ debug, logBuffer, cache, useLocal, cdnNamespace });
 
             return javascriptResponse(res, script);
         },

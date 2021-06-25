@@ -39,10 +39,10 @@ type GetSmartQRCodeClientScriptOptions = {|
     logBuffer : ?LoggerBufferType,
     cache : ?CacheType,
     useLocal? : boolean,
-    spbCdnNamespace : string
+    cdnNamespace : string
 |};
 
-export async function getSmartQRCodeClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest(), spbCdnNamespace } : GetSmartQRCodeClientScriptOptions = {}) : Promise<SmartQRCodeClientScript> {
+export async function getSmartQRCodeClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest(), cdnNamespace } : GetSmartQRCodeClientScriptOptions = {}) : Promise<SmartQRCodeClientScript> {
     if (useLocal) {
         const script = await compileLocalSmartQRCodeClientScript();
 
@@ -51,7 +51,7 @@ export async function getSmartQRCodeClientScript({ logBuffer, cache, debug = fal
         }
     }
 
-    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNamespace });
+    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, cdnNamespace });
     const { version } = await getTag();
     const script = await read(debug ? QRCODE_CLIENT_JS : QRCODE_CLIENT_MIN_JS, ACTIVE_TAG);
 

@@ -39,10 +39,10 @@ type GetSmartMenuClientScriptOptions = {|
     logBuffer : ?LoggerBufferType,
     cache : ?CacheType,
     useLocal? : boolean,
-    spbCdnNamespace : string
+    cdnNamespace : string
 |};
 
-export async function getSmartMenuClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest(), spbCdnNamespace } : GetSmartMenuClientScriptOptions = {}) : Promise<SmartMenuClientScript> {
+export async function getSmartMenuClientScript({ logBuffer, cache, debug = false, useLocal = isLocalOrTest(), cdnNamespace } : GetSmartMenuClientScriptOptions = {}) : Promise<SmartMenuClientScript> {
     if (useLocal) {
         const script = await compileLocalSmartMenuClientScript();
 
@@ -51,7 +51,7 @@ export async function getSmartMenuClientScript({ logBuffer, cache, debug = false
         }
     }
 
-    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, spbCdnNamespace });
+    const { getTag, getDeployTag, read } = getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, cdnNamespace });
     const { version } = await getTag();
     const script = await read(debug ? MENU_CLIENT_JS : MENU_CLIENT_MIN_JS, ACTIVE_TAG);
 

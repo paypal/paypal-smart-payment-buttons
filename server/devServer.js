@@ -229,8 +229,7 @@ const getMerchantID = () => {
 
 const getPersonalizationEnabled = () => true;
 const isFundingSourceBranded = () => Promise.resolve(true);
-const getSdkCdnNamespace = () => 'https://www.paypalobjects.com/js-sdk-release';
-const getSPBCdnNamespace = () => 'https://www.paypalobjects.com/smart-payment-buttons';
+const getCdnNamespace = () => 'https://www.paypalobjects.com/js-sdk-release';
 
 const content = {
     US: {
@@ -270,16 +269,13 @@ const buttonMiddleware = getButtonMiddleware({
     tracking,
     getPersonalizationEnabled,
     isFundingSourceBranded,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
+    getCdnNamespace
 });
 
 const menuMiddleware = getMenuMiddleware({
     cache,
     logger,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const nativePopupMiddleware = getNativePopupMiddleware({
@@ -288,9 +284,7 @@ const nativePopupMiddleware = getNativePopupMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.PAYPAL,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const nativeFallbackMiddleware = getNativeFallbackMiddleware({
@@ -299,17 +293,13 @@ const nativeFallbackMiddleware = getNativeFallbackMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.PAYPAL,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const qrCodeMiddleware = getQRCodeMiddleware({
     cache,
     logger,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const venmoPopupMiddleware = getNativePopupMiddleware({
@@ -318,9 +308,7 @@ const venmoPopupMiddleware = getNativePopupMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.VENMO,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const venmoFallbackMiddleware = getNativeFallbackMiddleware({
@@ -329,9 +317,7 @@ const venmoFallbackMiddleware = getNativeFallbackMiddleware({
     graphQL,
     tracking,
     fundingSource: FUNDING.VENMO,
-    getSdkCdnNamespace,
-    getSPBCdnNamespace
-
+    getCdnNamespace
 });
 
 const buttonsScriptMiddleware = webpackDevMiddleware(webpack(WEBPACK_CONFIG_BUTTONS_LOCAL_DEBUG), { serverSideRender: true });
