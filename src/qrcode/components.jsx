@@ -181,6 +181,7 @@ export const cardStyle : string = `
     #qr-code {
         min-width: 160px;
         min-height: 160px;
+        width: calc(100% - 32px);
     }
     #instructions {
         background-color: #F5F5F5;
