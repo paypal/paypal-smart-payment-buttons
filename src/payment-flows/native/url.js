@@ -130,7 +130,7 @@ function getNativeUrlQueryParams({ props, serviceData, config, fundingSource, se
         buyerCountry,
         sdkVersion
     };
-
+    // shorten universal link to make the QR Code easier to read
     if (queryParams.channel === CHANNEL.DESKTOP) {
         delete queryParams.sdkMeta;
     }
