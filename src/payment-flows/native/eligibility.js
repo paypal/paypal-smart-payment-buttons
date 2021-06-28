@@ -110,10 +110,6 @@ export function isNativeEligible({ props, config, serviceData } : IsEligibleOpti
     const { merchantID } = serviceData;
     const funding = fundingSource;
     const isValidVenmoDesktopPaySituation = canUseQRPay(funding);
-    // eslint-disable-next-line no-debugger
-    debugger;
-    // eslint-disable-next-line no-alert
-    alert('in isNativeEligible');
 
     if (platform !== PLATFORM.MOBILE &&
         !isValidVenmoDesktopPaySituation
