@@ -5,6 +5,7 @@ import { request } from 'belter/src';
 
 import { GRAPHQL_URI } from '../config';
 import { HEADERS, SMART_PAYMENT_BUTTONS } from '../constants';
+import { getLogger } from '../lib';
 
 type RESTAPIParams<D> = {|
     accessToken : string,
@@ -42,6 +43,7 @@ export function callRestAPI<D, T>({ accessToken, method, url, data, headers } : 
             // $FlowFixMe
             error.response = { status, headers: responseHeaders };
 
+            getLogger().warn(`call_rest_api_error`, { accessToken, url });
             throw error;
         }
 
@@ -80,10 +82,12 @@ export function callSmartAPI({ accessToken, url, method = 'get', headers: reqHea
             }
 
             if (status > 400) {
+                getLogger().warn(`smart_api_${ status }_error`, { accessToken, method });
                 throw new Error(`Api: ${ url } returned status code: ${ status } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
             if (body.ack !== 'success') {
+                getLogger().warn(`smart_api_ack_error`, { accessToken, method });
                 throw new Error(`Api: ${ url } returned ack: ${ body.ack } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
@@ -108,10 +112,13 @@ export function callGraphQL<T>({ name, query, variables = {}, headers = {} } : {
 
         if (errors.length) {
             const message = errors[0].message || JSON.stringify(errors[0]);
+
+            getLogger().warn(`call_graphql_error`, { query });
             throw new Error(message);
         }
 
         if (status !== 200) {
+            getLogger().warn(`call_graphql_${ status }_error`, { query });
             throw new Error(`${ GRAPHQL_URI } returned status ${ status }`);
         }
 
