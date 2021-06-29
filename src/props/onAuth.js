@@ -42,6 +42,7 @@ export function getOnAuth({ facilitatorAccessToken, createOrder, createSubscript
                         })
                         .then(() => {
                             getLogger().info(`upgrade_lsat_success`);
+                            window[LSAT_UPGRADE_FAILED] = false;
 
                             return accessToken;
                         })

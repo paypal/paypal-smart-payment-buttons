@@ -88,7 +88,9 @@ const handleSmartResponse = (data : Object, headers : {| [$Values<typeof HEADERS
 };
 
 export function getOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    if (forceRestAPI && LSAT_UPGRADE_FAILED in window && window[LSAT_UPGRADE_FAILED]) {
+    const lsatUpgraded = LSAT_UPGRADE_FAILED in window && !window[LSAT_UPGRADE_FAILED];
+    
+    if (forceRestAPI && lsatUpgraded) {
         return callRestAPI({
             accessToken: facilitatorAccessToken,
             url:         `${ ORDERS_API_URL }/${ orderID }`,
@@ -124,7 +126,9 @@ export function getOrder(orderID : string, { facilitatorAccessToken, buyerAccess
 }
 
 export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    if (forceRestAPI && LSAT_UPGRADE_FAILED in window && window[LSAT_UPGRADE_FAILED]) {
+    const lsatUpgraded = LSAT_UPGRADE_FAILED in window && !window[LSAT_UPGRADE_FAILED];
+    
+    if (forceRestAPI && lsatUpgraded) {
         return callRestAPI({
             accessToken: facilitatorAccessToken,
             method:      `post`,
@@ -163,7 +167,9 @@ export function captureOrder(orderID : string, { facilitatorAccessToken, buyerAc
 }
 
 export function authorizeOrder(orderID : string, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    if (forceRestAPI && LSAT_UPGRADE_FAILED in window && window[LSAT_UPGRADE_FAILED]) {
+    const lsatUpgraded = LSAT_UPGRADE_FAILED in window && !window[LSAT_UPGRADE_FAILED];
+
+    if (forceRestAPI && lsatUpgraded) {
         return callRestAPI({
             accessToken: facilitatorAccessToken,
             method:      `post`,
@@ -206,7 +212,9 @@ type PatchData = {|
 |};
 
 export function patchOrder(orderID : string, data : PatchData, { facilitatorAccessToken, buyerAccessToken, partnerAttributionID, forceRestAPI = false } : OrderAPIOptions) : ZalgoPromise<OrderResponse> {
-    if (forceRestAPI && LSAT_UPGRADE_FAILED in window && window[LSAT_UPGRADE_FAILED]) {
+    const lsatUpgraded = LSAT_UPGRADE_FAILED in window && !window[LSAT_UPGRADE_FAILED];
+
+    if (forceRestAPI && lsatUpgraded) {
         return callRestAPI({
             accessToken: facilitatorAccessToken,
             method:      `patch`,
