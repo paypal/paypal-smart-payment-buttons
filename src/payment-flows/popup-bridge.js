@@ -7,9 +7,10 @@ import { extendUrl } from 'belter/src';
 import { WEB_CHECKOUT_URI } from '../config';
 import { promiseNoop } from '../lib';
 import { POPUP_BRIDGE_OPTYPE } from '../props';
-import { USER_ACTION } from '../constants';
+import { USER_ACTION, BUYER_INTENT } from '../constants';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions } from './types';
+import { enableVaultSetup } from './vault-setup';
 
 let parentPopupBridge;
 
@@ -48,27 +49,42 @@ function isPopupBridgePaymentEligible({ payment } : IsPaymentEligibleOptions) : 
     return true;
 }
 
-function initPopupBridge({ props, payment } : InitOptions) : PaymentFlowInstance {
-    const { createOrder, onApprove, onCancel, commit } = props;
-    const { fundingSource } = payment;
+function initPopupBridge({ props, payment, serviceData } : InitOptions) : PaymentFlowInstance {
+
+    const { createOrder, onApprove, onCancel, commit, vault, clientAccessToken,
+        createBillingAgreement, createSubscription, clientID, userIDToken,
+        currency, intent, disableFunding, disableCard } = props;
+
+    const { fundingSource, buyerIntent } = payment;
+
+    const { fundingEligibility, buyerCountry, merchantID } = serviceData;
 
     const start = () => {
         return createOrder().then(orderID => {
-            if (!parentPopupBridge) {
-                throw new Error(`Popup bridge required`);
-            }
-            
-            const url = extendUrl(`${ getDomain() }${ WEB_CHECKOUT_URI }`, {
-                query: {
-                    fundingSource,
-                    token:        orderID,
-                    useraction:   commit ? USER_ACTION.COMMIT : USER_ACTION.CONTINUE,
-                    redirect_uri: parentPopupBridge.nativeUrl,
-                    native_xo:    '1'
+
+            return ZalgoPromise.try(() => {
+                if (clientID && buyerIntent === BUYER_INTENT.PAY) {
+                    return enableVaultSetup({ orderID, vault, clientAccessToken, fundingEligibility, fundingSource, createBillingAgreement, createSubscription,
+                        clientID, merchantID, buyerCountry, currency, commit, intent, disableFunding, disableCard, userIDToken });
                 }
+            }).then(() => {
+                if (!parentPopupBridge) {
+                    throw new Error(`Popup bridge required`);
+                }
+                
+                const url = extendUrl(`${ getDomain() }${ WEB_CHECKOUT_URI }`, {
+                    query: {
+                        fundingSource,
+                        token:        orderID,
+                        useraction:   commit ? USER_ACTION.COMMIT : USER_ACTION.CONTINUE,
+                        redirect_uri: parentPopupBridge.nativeUrl,
+                        native_xo:    '1'
+                    }
+                });
+
+                return parentPopupBridge.start(url);
             });
 
-            return parentPopupBridge.start(url);
 
         }).then(({ opType, PayerID: payerID, paymentId: paymentID, ba_token: billingToken }) => {
             if (opType === POPUP_BRIDGE_OPTYPE.PAYMENT) {
