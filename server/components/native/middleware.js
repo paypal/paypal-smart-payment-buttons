@@ -90,12 +90,13 @@ export function getNativeFallbackMiddleware({
                 logger.info(req, `smart_native_fallback_cookie_${ name || 'unknown' }`);
             }
 
-            const { cspNonce, debug } = getNativeFallbackParams(params, req, res);
+            const { webCheckoutUrl, cspNonce, debug } = getNativeFallbackParams(params, req, res);
 
             const { NativeFallback } = (await getNativeFallbackRenderScript({ logBuffer, cache, debug, useLocal })).fallback;
             const client = await getNativeFallbackClientScript({ debug, logBuffer, cache, useLocal });
 
             const setupParams = {
+                webCheckoutUrl
                 
             };
 

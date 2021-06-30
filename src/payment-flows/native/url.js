@@ -6,7 +6,6 @@ import { COUNTRY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { getDomain } from 'cross-domain-utils/src';
 
 import { WEB_CHECKOUT_URI } from '../../config';
-import { isIOSSafari } from '../../lib';
 import { USER_ACTION } from '../../constants';
 import { HASH } from '../../native/popup/constants';
 import { CHANNEL } from '../../../server/components/native/constants';
@@ -115,7 +114,7 @@ function getNativeUrlQueryParams({ props, serviceData, config, fundingSource, se
         pageUrl,
         clientID,
         commit:         String(commit),
-        webCheckoutUrl: webCheckoutUrl,
+        webCheckoutUrl,
         stickinessID,
         userAgent,
         buttonSessionID,
