@@ -1296,12 +1296,16 @@ describe('native ios cases', () => {
                 }
             });
 
-            window.xprops.createOrder = mockAsyncProp(avoid('createOrder', promiseNoop));
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+                return ZalgoPromise.try(() => {
+                    return generateOrderID();
+                });
+            }), 50);
 
             window.xprops.onClick = mockAsyncProp(expect('onClick', async (data, actions) => {
                 mockWindow.expectClose();
                 return actions.reject();
-            }), 50);
+            }), 75);
 
             window.xprops.onCancel = mockAsyncProp(avoid('onCancel', promiseNoop));
             window.xprops.onApprove = mockAsyncProp(avoid('onApprove', promiseNoop));
@@ -1692,7 +1696,11 @@ describe('native ios cases', () => {
                 }
             });
 
-            window.xprops.createOrder = mockAsyncProp(avoid('createOrder'));
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+                return ZalgoPromise.try(() => {
+                    return generateOrderID();
+                });
+            }), 50);
 
             window.xprops.onClick = mockAsyncProp(expect('onClick', async (data, actions) => {
                 mockWindow.expectClose();
@@ -3335,7 +3343,11 @@ describe('native chrome cases', () => {
                 }
             });
 
-            window.xprops.createOrder = mockAsyncProp(avoid('createOrder', promiseNoop));
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+                return ZalgoPromise.try(() => {
+                    return generateOrderID();
+                });
+            }), 50);
 
             window.xprops.onClick = mockAsyncProp(expect('onClick', async (data, actions) => {
                 mockWindow.expectClose();
@@ -3731,7 +3743,12 @@ describe('native chrome cases', () => {
                 }
             });
 
-            window.xprops.createOrder = mockAsyncProp(avoid('createOrder'));
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+                return ZalgoPromise.try(() => {
+                    return generateOrderID();
+                });
+            }), 50);
+
 
             window.xprops.onClick = mockAsyncProp(expect('onClick', async (data, actions) => {
                 mockWindow.expectClose();
