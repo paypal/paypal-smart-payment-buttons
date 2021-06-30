@@ -37,11 +37,9 @@ describe('funding source cases', () => {
         return await wrapPromise(async ({ expect }) => {
             const fundingSource = FUNDING.VENMO;
 
-            mockFunction(window.paypal, 'QRCode', expect('QRCode', ({ args: [ props ] }) => {
-                if (!props.qrPath) {
-                    throw new Error(`Expected QRCode to have a qrPath`);
-                } else if (!props.qrPath.includes(NATIVE_CHECKOUT_URI[fundingSource])) {
-                    throw new Error(`Expected QRCode.qrPath to include ${ NATIVE_CHECKOUT_URI[fundingSource] }, got ${ props.qrPath }`);
+            mockFunction(window.paypal, 'Checkout', expect('Checkout', ({ args: [ props ] }) => {
+                if (props.fundingSource !== fundingSource) {
+                    throw new Error(`Expected fundingSource to be ${ fundingSource }, got ${ props.fundingSource }`);
                 }
 
                 return {
@@ -62,6 +60,7 @@ describe('funding source cases', () => {
             await clickButton(fundingSource);
         });
     });
+
 
     it('should render a button, click the button, and render checkout with ideal funding source', async () => {
         return await wrapPromise(async ({ expect }) => {
