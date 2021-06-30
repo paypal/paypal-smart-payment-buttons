@@ -162,6 +162,7 @@ describe('client config cases', () => {
 
             const fundingSource = FUNDING.VENMO;
             let clientConfigCalled = false;
+            window.navigator.mockUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A356 Safari/604.1';
 
             const gqlMock = getGraphQLApiMock({
                 extraHandler: expect('clientConfigCall', ({ data }) => {

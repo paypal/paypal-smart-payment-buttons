@@ -12,11 +12,14 @@ describe('Native fallback cases', () => {
         delete window.paypal;
         window.location.hash = '';
     });
+    
+    const parentDomain = 'foo.paypal.com';
+    const webCheckoutUrl = 'foo.paypal.com/checkoutnow?fundingSource=venmo&facilitatorAccessToken=ABCDEFGHIJKLMNIOPQRSTUVWXYZ_1234567890&token=1234ABCDE6789ZYXW&useraction=commit&native_xo=1';
 
     it('should open the native fallback and send a detect web switch message', () => {
         return wrapPromise(({ expect }) => {
             const opener = {};
-            const parentDomain = 'foo.paypal.com';
+            
             let detectedWebSwitch = false;
 
             window.opener = opener;
@@ -51,7 +54,7 @@ describe('Native fallback cases', () => {
                 }
             };
             
-            const nativeFallback = setupNativeFallback({ parentDomain });
+            const nativeFallback = setupNativeFallback({ parentDomain, webCheckoutUrl });
 
             return ZalgoPromise.delay(50).then(() => {
                 if (!detectedWebSwitch) {
