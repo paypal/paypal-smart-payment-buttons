@@ -229,12 +229,18 @@ const getMerchantID = () => {
 
 const getPersonalizationEnabled = () => true;
 const isFundingSourceBranded = () => Promise.resolve(true);
+
 const getInstanceLocationInformation = () => {
     return {
         cdnHostName:  'string',
         paypalDomain: 'string'
     };
 };
+
+const getSDKLocationInformation = () => Promise.resolve({
+    sdkCDNRegistry: 'string',
+    sdkActiveTag:   'string'
+});
 
 const content = {
     US: {
@@ -264,6 +270,7 @@ const defaultMiddleware = (req : ExpressRequest, res : ExpressResponse, next) =>
     next();
 };
 
+
 const buttonMiddleware = getButtonMiddleware({
     cache,
     logger,
@@ -274,7 +281,8 @@ const buttonMiddleware = getButtonMiddleware({
     tracking,
     getPersonalizationEnabled,
     isFundingSourceBranded,
-    getInstanceLocationInformation
+    getInstanceLocationInformation,
+    getSDKLocationInformation
 });
 
 const menuMiddleware = getMenuMiddleware({

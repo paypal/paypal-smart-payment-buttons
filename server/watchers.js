@@ -2,9 +2,9 @@
 
 import { poll } from 'grabthar';
 
-import type { CacheType, InstanceLocationInformation } from './types';
+import type { CacheType, InstanceLocationInformation, SDKLocationInformation } from './types';
 import type { LoggerBufferType } from './lib';
-import { SDK_RELEASE_MODULE, SMART_BUTTONS_MODULE, MODULE_POLL_INTERVAL, SDK_CDN_NAMESPACE, SMART_BUTTONS_CDN_NAMESPACE,
+import { SDK_RELEASE_MODULE, SMART_BUTTONS_MODULE, MODULE_POLL_INTERVAL, SMART_BUTTONS_CDN_NAMESPACE,
     CDN_NAMESPACE, CHECKOUT_COMPONENTS_MODULE, LATEST_TAG, ACTIVE_TAG } from './config';
 
 let paypalSDKWatcher;
@@ -46,15 +46,15 @@ function logInfo(logBuffer : LoggerBufferType, name : string, moduleDetails : Mo
     logBuffer.info(`${ name }_version_${ version.replace(/[^0-9]+/g, '_') }`, {});
 }
 
-export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, locationInformation : InstanceLocationInformation |}) : Watcher {
+export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation, sdkLocationInformation = {} } : {| logBuffer : ?LoggerBufferType, cache : ?CacheType, locationInformation : InstanceLocationInformation, sdkLocationInformation? : SDKLocationInformation |}) : Watcher {
     if (!cache || !logBuffer) {
         throw new Error(`Cache and logBuffer required`);
     }
 
     paypalSDKWatcher = paypalSDKWatcher || poll({
-        cdnRegistry:  `https://${ locationInformation.cdnHostName || CDN_NAMESPACE }/${ SDK_CDN_NAMESPACE }`,
+        cdnRegistry:  sdkLocationInformation?.sdkCDNRegistry || `https://${ locationInformation.cdnHostName || CDN_NAMESPACE }/${ SMART_BUTTONS_CDN_NAMESPACE }`,
         name:         SDK_RELEASE_MODULE,
-        tags:         [ LATEST_TAG, ACTIVE_TAG ],
+        tags:         [ LATEST_TAG, sdkLocationInformation?.sdkActiveTag || ACTIVE_TAG ],
         period:       MODULE_POLL_INTERVAL,
         childModules: [ CHECKOUT_COMPONENTS_MODULE ],
         flat:         true,
@@ -66,7 +66,7 @@ export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation } : 
     const { get } = paypalSDKWatcher;
 
     const getTag = () => {
-        return get(ACTIVE_TAG).then(tag => {
+        return get(sdkLocationInformation?.sdkActiveTag || ACTIVE_TAG).then(tag => {
             if (logBuffer) {
                 logInfo(logBuffer, 'render', tag);
             }
