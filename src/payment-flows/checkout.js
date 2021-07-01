@@ -199,10 +199,6 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
             createOrder: () => {
                 return createOrder().then(orderID => {
                     return ZalgoPromise.try(() => {
-                        // eslint-disable-next-line no-console
-                        console.log('vault call --->', clientID && buyerIntent === BUYER_INTENT.PAY, clientID, buyerIntent, BUYER_INTENT.PAY);
-                        // eslint-disable-next-line no-console
-                        console.log('vault prop --->', vault);
                         if (clientID && buyerIntent === BUYER_INTENT.PAY) {
                             return enableVaultSetup({ orderID, vault, clientAccessToken, fundingEligibility, fundingSource, createBillingAgreement, createSubscription,
                                 clientID, merchantID, buyerCountry, currency, commit, intent, disableFunding, disableCard, userIDToken });
