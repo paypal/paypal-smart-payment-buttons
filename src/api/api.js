@@ -38,12 +38,12 @@ export function callRestAPI<D, T>({ accessToken, method, url, data, headers } : 
             const hasDetails = body.details && body.details.length;
             const issue = (hasDetails && body.details[0].issue) ? body.details[0].issue : 'Generic Error';
             const description = (hasDetails && body.details[0].description) ? body.details[0].description : 'no description';
-            
+
             const error = new Error(`${ issue }: ${ description } (Corr ID: ${ responseHeaders[HEADERS.PAYPAL_DEBUG_ID] }`);
             // $FlowFixMe
             error.response = { status, headers: responseHeaders };
 
-            getLogger().warn(`rest_api${ url.replace(/\//g, '_') }_error`);
+            getLogger().warn(`rest_api${ url.replace(/\//g, '_') }_error`, { err: issue });
             throw error;
         }
 
@@ -115,7 +115,7 @@ export function callGraphQL<T>({ name, query, variables = {}, headers = {} } : {
         if (errors.length) {
             const message = errors[0].message || JSON.stringify(errors[0]);
 
-            getLogger().warn(`graphql_${ name }_error`);
+            getLogger().warn(`graphql_${ name }_error`, { err: message });
             throw new Error(message);
         }
 
