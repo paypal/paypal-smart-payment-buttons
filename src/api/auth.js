@@ -41,12 +41,10 @@ export function createAccessToken(clientID : ?string, { targetSubject } : Genera
         }).then(({ body }) => {
 
             if (body && body.error === 'invalid_client') {
-                getLogger().warn(`rest_api_create_access_token_error_invalid_client`, { clientID });
                 throw new Error(`Auth Api invalid client id: ${ clientID || '' }:\n\n${ JSON.stringify(body, null, 4) }`);
             }
 
             if (!body || !body.access_token) {
-                getLogger().warn(`rest_api_create_access_token_error`, { clientID });
                 throw new Error(`Auth Api response error:\n\n${ JSON.stringify(body, null, 4) }`);
             }
 

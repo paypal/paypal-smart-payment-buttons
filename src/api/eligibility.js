@@ -5,7 +5,6 @@ import { CURRENCY, COUNTRY, INTENT, FUNDING, CARD, PLATFORM, type FundingEligibi
 import { getUserAgent } from 'belter/src';
 
 import { HEADERS } from '../constants';
-import { getLogger } from '../lib';
 
 import { callGraphQL } from './api';
 
@@ -68,7 +67,6 @@ export function getFundingEligibility(query : string, { accessToken, clientID, m
         }
     }).then((gqlResult) => {
         if (!gqlResult || !gqlResult.fundingEligibility) {
-            getLogger().warn(`graphql_funding_eligibility_error_no_object`, { clientID });
             throw new Error(`GraphQL fundingEligibility returned no fundingEligibility object`);
         }
         return gqlResult && gqlResult.fundingEligibility;
@@ -155,7 +153,6 @@ export function getNativeEligibility({ vault, shippingCallbackEnabled, merchantI
         }
     }).then((gqlResult) => {
         if (!gqlResult || !gqlResult.mobileSDKEligibility) {
-            getLogger().warn(`graphql_funding_eligibility_error_no_mobile_sdk_eligibility_object`, { clientID, orderID });
             throw new Error(`GraphQL GetNativeEligibility returned no mobileSDKEligibility object`);
         }
 
@@ -201,7 +198,6 @@ export function getApplePayMerchantSession({ url, clientID, orderID, merchantDom
         }
     }).then((gqlResult) => {
         if (!gqlResult || !gqlResult.applePayMerchantSession) {
-            getLogger().warn(`graphql_funding_eligibility_error_no_applepay_merchant_session_object`, { clientID, orderID });
             throw new Error(`GraphQL GetApplePayMerchantSession returned no applePayMerchantSession object`);
         }
         return gqlResult.applePayMerchantSession;

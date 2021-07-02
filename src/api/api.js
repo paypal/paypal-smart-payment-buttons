@@ -43,7 +43,7 @@ export function callRestAPI<D, T>({ accessToken, method, url, data, headers } : 
             // $FlowFixMe
             error.response = { status, headers: responseHeaders };
 
-            getLogger().warn(`call_rest_api_error`, { accessToken, url });
+            getLogger().warn(`rest_api${ url.replace(/\//g, '_') }_error`);
             throw error;
         }
 
@@ -78,16 +78,18 @@ export function callSmartAPI({ accessToken, url, method = 'get', headers: reqHea
                 const err = new Error(body.contingency);
                 // $FlowFixMe
                 err.data = body.data;
+
+                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_contingency_error`);
                 throw err;
             }
 
             if (status > 400) {
-                getLogger().warn(`smart_api_${ status }_error`, { accessToken, method });
+                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_status_error`);
                 throw new Error(`Api: ${ url } returned status code: ${ status } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
             if (body.ack !== 'success') {
-                getLogger().warn(`smart_api_ack_error`, { accessToken, method });
+                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_ack_error`);
                 throw new Error(`Api: ${ url } returned ack: ${ body.ack } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
@@ -113,12 +115,12 @@ export function callGraphQL<T>({ name, query, variables = {}, headers = {} } : {
         if (errors.length) {
             const message = errors[0].message || JSON.stringify(errors[0]);
 
-            getLogger().warn(`call_graphql_error`, { query });
+            getLogger().warn(`graphql_${ name }_error`);
             throw new Error(message);
         }
 
         if (status !== 200) {
-            getLogger().warn(`call_graphql_${ status }_error`, { query });
+            getLogger().warn(`graphql_${ name }_status_${ status }_error`);
             throw new Error(`${ GRAPHQL_URI } returned status ${ status }`);
         }
 
