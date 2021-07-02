@@ -5,7 +5,7 @@ import { request } from 'belter/src';
 
 import { GRAPHQL_URI } from '../config';
 import { HEADERS, SMART_PAYMENT_BUTTONS } from '../constants';
-import { getLogger } from '../lib';
+import { getLogger, slashToUnderscore } from '../lib';
 
 type RESTAPIParams<D> = {|
     accessToken : string,
@@ -43,7 +43,7 @@ export function callRestAPI<D, T>({ accessToken, method, url, data, headers } : 
             // $FlowFixMe
             error.response = { status, headers: responseHeaders };
 
-            getLogger().warn(`rest_api${ url.replace(/\//g, '_') }_error`, { err: issue });
+            getLogger().warn(`rest_api${ slashToUnderscore(url) }_error`, { err: issue });
             throw error;
         }
 
@@ -79,17 +79,17 @@ export function callSmartAPI({ accessToken, url, method = 'get', headers: reqHea
                 // $FlowFixMe
                 err.data = body.data;
 
-                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_contingency_error`);
+                getLogger().warn(`smart_api${ slashToUnderscore(url) }_contingency_error`);
                 throw err;
             }
 
             if (status > 400) {
-                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_status_error`);
+                getLogger().warn(`smart_api${ slashToUnderscore(url) }_status_error`);
                 throw new Error(`Api: ${ url } returned status code: ${ status } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 
             if (body.ack !== 'success') {
-                getLogger().warn(`smart_api${ url.replace(/\//g, '_') }_ack_error`);
+                getLogger().warn(`smart_api${ slashToUnderscore(url) }_ack_error`);
                 throw new Error(`Api: ${ url } returned ack: ${ body.ack } (Corr ID: ${ headers[HEADERS.PAYPAL_DEBUG_ID] })`);
             }
 

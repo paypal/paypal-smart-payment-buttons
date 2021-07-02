@@ -93,3 +93,7 @@ export function setupLogger({ env, sessionID, clientID, sdkCorrelationID, buyerC
         logger.flush().catch(noop);
     });
 }
+
+export function slashToUnderscore(endpoint : string) : string {
+    return endpoint.replace(/\//g, '_');
+}
