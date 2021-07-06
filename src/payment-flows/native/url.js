@@ -6,7 +6,7 @@ import { COUNTRY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { getDomain } from 'cross-domain-utils/src';
 
 import { WEB_CHECKOUT_URI } from '../../config';
-import { isIOSSafari } from '../../lib';
+import { createExperiment, isIOSSafari } from '../../lib';
 import { USER_ACTION } from '../../constants';
 import { HASH } from '../../native/popup/constants';
 import type { FirebaseConfig } from '../../api';
@@ -14,7 +14,7 @@ import type { ButtonProps, ServiceData } from '../../button/props';
 import type { NativePopupInputParams } from '../../../server/components/native/params';
 
 import { isNativeOptedIn } from './eligibility';
-import { NATIVE_DOMAIN, NATIVE_POPUP_DOMAIN, NATIVE_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI, NATIVE_CHECKOUT_FALLBACK_URI } from './config';
+import { NATIVE_DOMAIN, HISTORY_NATIVE_POPUP_DOMAIN, MOBILE_NATIVE_POPUP_DOMAIN, NATIVE_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI, NATIVE_CHECKOUT_FALLBACK_URI } from './config';
 
 export function getNativeDomain({ props } : {| props : ButtonProps |}) : string {
     const { env } = props;
@@ -33,7 +33,18 @@ export function getNativePopupDomain({ props } : {| props : ButtonProps |}) : st
         return 'https://www.sandbox.paypal.com';
     }
 
-    return NATIVE_POPUP_DOMAIN[env];
+    const experimentOptions = {
+        sample: 1
+    };
+    const mobile_native_popup_domain_experiment = createExperiment('enable_mobile_native_popup_domain', experimentOptions);
+
+    const is_mobile_native_popup_domain_enabled = mobile_native_popup_domain_experiment.isEnabled();
+
+    const native_popup_domain = is_mobile_native_popup_domain_enabled ?
+        HISTORY_NATIVE_POPUP_DOMAIN :
+        MOBILE_NATIVE_POPUP_DOMAIN;
+
+    return native_popup_domain[env];
 }
 
 type GetWebCheckoutUrlOptions = {|
