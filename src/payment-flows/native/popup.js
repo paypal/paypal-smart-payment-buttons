@@ -11,7 +11,7 @@ import { FPTI_STATE, FPTI_TRANSITION, FPTI_CUSTOM_KEY } from '../../constants';
 import type { ButtonProps, ServiceData, Config } from '../../button/props';
 
 import { isNativeOptedIn } from './eligibility';
-import { getNativeUrl, getNativePopupUrl, getNativeDomain, getNativePopupDomain, getNativeFallbackUrl } from './url';
+import { getNativeUrl, getNativePopupUrl, getNativeDomain, getNativePopupDomain, getNativeFallbackUrl, getWebCheckoutUrl } from './url';
 import { onPostMessage } from './util';
 
 const POST_MESSAGE = {
@@ -246,6 +246,8 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
 
             return orderPromise.then(orderID => {
                 const nativeUrl = getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID });
+                const { facilitatorAccessToken } = serviceData;
+                const webCheckoutUrl = getWebCheckoutUrl({ orderID, props, fundingSource, facilitatorAccessToken });
 
                 getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                     .track({
@@ -262,7 +264,7 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
                 return {
                     redirect:    true,
                     appSwitch:   true,
-                    redirectUrl: nativeUrl
+                    redirectUrl: webCheckoutUrl
                 };
             });
 
