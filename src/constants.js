@@ -158,7 +158,10 @@ export const FPTI_TRANSITION = {
     NATIVE_POPUP_OPENER_DETECT_CLOSE:       ('native_popup_opener_detect_close', 'native_popup_opener_detect_close'),
     NATIVE_OPT_OUT:                         ('native_opt_out', 'native_opt_out'),
     NATIVE_FALLBACK:                        ('native_fallback', 'native_fallback'),
-
+  
+    QR_SHOWN:                               ('qr_shown' : 'qr_shown'),
+    QR_CLOSING:                             ('qr_closing' : 'qr_closing'),
+  
     HONEY_IDENTIFY:                         ('honey_identify')
 };
 
@@ -211,7 +214,11 @@ export const UPGRADE_LSAT_RAMP = {
 };
 
 export const FRAME_NAME = {
-    SMART_FIELDS: 'smart-fields'
+    SMART_FIELDS:      'smart-fields',
+    CARD_FIELD:        'card-field',
+    CARD_NUMBER_FIELD: 'card-number-field',
+    CARD_CVV_FIELD:    'card-cvv-field',
+    CARD_EXPIRY_FIELD: 'card-expiry-field'
 };
 
 export const AMPLITUDE_KEY = {
@@ -219,6 +226,13 @@ export const AMPLITUDE_KEY = {
 };
 
 export const VENMO_BLUE : string = '#3D93CE';
+
+export const QRCODE_STATE = {
+    ERROR:      'qr_error',
+    SCANNED:    'qr_scanned',
+    AUTHORIZED: 'qr_authorized',
+    DEFAULT:    'qr_default'
+};
 
 export const LSAT_UPGRADE_EXCLUDED_MERCHANTS = [
     'AQipcJ1uXz50maKgYx49lKUB8MlSOXP573M6cpsFpHqDZOqnopsJpfYY7bQC_9CtQJsEhGlk8HLs2oZz',
@@ -231,3 +245,13 @@ export const LSAT_UPGRADE_EXCLUDED_MERCHANTS = [
 ];
 
 export const LSAT_UPGRADE_FAILED = '__pp_lsat_upgrade_failure__';
+
+export const ITEM_CATEGORY = {
+    DIGITAL:  'DIGITAL',
+    DONATION: 'DONATION',
+    PHYSICAL: 'PHYSICAL'
+};
+
+export const BUTTON_LABEL = {
+    DONATE: 'donate'
+};

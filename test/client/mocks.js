@@ -249,6 +249,7 @@ export function mockMenu() : ZoidComponentInstance<MenuFlowProps> {
         renderTo:    () => ZalgoPromise.resolve(),
         render:      () => ZalgoPromise.resolve(),
         onError:     () => ZalgoPromise.resolve(),
+        onClose:       () => ZalgoPromise.resolve(),
         updateProps: () => ZalgoPromise.resolve(),
         close:       () => ZalgoPromise.resolve(),
         show:        () => ZalgoPromise.resolve(),
@@ -1432,7 +1433,8 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
             message_type:       'request',
             message_name:       'onFallback',
             message_data:       {
-                type: 'native_opt_out'
+                type:                 'native_opt_out',
+                skip_native_duration: 604800000
             }
         }));
 

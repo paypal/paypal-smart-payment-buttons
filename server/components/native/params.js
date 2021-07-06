@@ -1,11 +1,13 @@
 /* @flow */
 /* eslint max-depth: off */
 
-import { ENV, DEFAULT_COUNTRY, COUNTRY_LANGS, COUNTRY } from '@paypal/sdk-constants';
+import { ENV, DEFAULT_COUNTRY, COUNTRY_LANGS, COUNTRY, ERROR_CODE } from '@paypal/sdk-constants';
 
 import type { ExpressRequest, ExpressResponse, LocaleType } from '../../types';
 import { getCSPNonce, makeError } from '../../lib';
-import { ERROR_CODE, HTTP_HEADER } from '../../config';
+import { HTTP_HEADER } from '../../config';
+
+import { CHANNEL } from './constants';
 
 export type NativePopupInputParams = {|
     debug? : boolean,
@@ -15,7 +17,8 @@ export type NativePopupInputParams = {|
     buttonSessionID : string,
     sdkCorrelationID : string,
     env : $Values<typeof ENV>,
-    sdkMeta : string,
+    sdkMeta? : string,
+    channel : $Values<typeof CHANNEL>,
     buyerCountry : $Values<typeof COUNTRY>
 |};
 
