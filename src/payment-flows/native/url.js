@@ -124,7 +124,7 @@ function getNativeUrlQueryParams({ props, serviceData, config, fundingSource, se
         pageUrl,
         clientID,
         commit:         String(commit),
-        webCheckoutUrl: isIOSSafari() ? webCheckoutUrl : '',
+        webCheckoutUrl,
         stickinessID,
         userAgent,
         buttonSessionID,
