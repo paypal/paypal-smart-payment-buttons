@@ -8,16 +8,21 @@ import { getPostRobot } from '../lib';
 import { MESSAGE } from './constants';
 
 type NativeFallbackOptions = {|
-    parentDomain : string
+    parentDomain : string,
+    webCheckoutUrl : string
 |};
 
 type NativeFallback = {|
     destroy : () => ZalgoPromise<void>
 |};
 
-export function setupNativeFallback({ parentDomain = window.location.origin } : NativeFallbackOptions) : NativeFallback {
+export function setupNativeFallback({ parentDomain = window.location.origin, webCheckoutUrl } : NativeFallbackOptions) : NativeFallback {
     if (!window.opener) {
-        throw new Error(`Expected window to have opener`);
+        try {
+            window.location.href = webCheckoutUrl;
+        } catch {
+            throw new Error(`Expected window to have opener`);
+        }
     }
 
     const clean = cleanup();

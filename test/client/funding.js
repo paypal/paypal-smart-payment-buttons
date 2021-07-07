@@ -60,6 +60,7 @@ describe('funding source cases', () => {
         });
     });
 
+
     it('should render a button, click the button, and render checkout with ideal funding source', async () => {
         return await wrapPromise(async ({ expect }) => {
             const fundingSource = FUNDING.IDEAL;

@@ -114,22 +114,26 @@ export function getNativePopupParams(params : NativePopupInputParams, req : Expr
 }
 
 type NativeFallbackInputParams = {|
+    webCheckoutUrl : string,
     debug? : boolean
 |};
 
 type NativeFallbackParams = {|
+    webCheckoutUrl : string,
     cspNonce : string,
     debug : boolean
 |};
 
 export function getNativeFallbackParams(params : NativeFallbackInputParams, req : ExpressRequest, res : ExpressResponse) : NativeFallbackParams {
     const {
+        webCheckoutUrl,
         debug = false
     } = params;
 
     const cspNonce = getCSPNonce(res);
 
     return {
+        webCheckoutUrl,
         cspNonce,
         debug: Boolean(debug)
     };
