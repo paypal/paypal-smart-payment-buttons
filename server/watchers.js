@@ -51,7 +51,7 @@ export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation, sdk
         throw new Error(`Cache and logBuffer required`);
     }
 
-    const { sdkActiveTag = ACTIVE_TAG } = sdkLocationInformation
+    const { sdkActiveTag = ACTIVE_TAG } = sdkLocationInformation;
 
     paypalSDKWatcher = paypalSDKWatcher || poll({
         cdnRegistry:  sdkLocationInformation?.sdkCDNRegistry || `https://${ locationInformation.cdnHostName }/${ SDK_CDN_NAMESPACE }`,
