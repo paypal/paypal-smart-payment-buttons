@@ -2740,6 +2740,9 @@ window.spb = function(modules) {
         function isAndroidChrome() {
             return isAndroid() && isChrome();
         }
+        function slashToUnderscore(endpoint) {
+            return endpoint.replace(/\//g, "_");
+        }
         function getNonce() {
             var nonce = "";
             document.body && (nonce = document.body.getAttribute("data-nonce") || "");
@@ -2763,21 +2766,26 @@ window.spb = function(modules) {
             var _extends2;
             var accessToken = _ref.accessToken, method = _ref.method, url = _ref.url, data = _ref.data, headers = _ref.headers;
             if (!accessToken) throw new Error("No access token passed to " + url);
+            var requestHeaders = _extends(((_extends2 = {}).authorization = "Bearer " + accessToken, 
+            _extends2["content-type"] = "application/json", _extends2), headers);
             return request({
                 method: method,
                 url: url,
-                headers: _extends(((_extends2 = {}).authorization = "Bearer " + accessToken, _extends2["content-type"] = "application/json", 
-                _extends2), headers),
+                headers: requestHeaders,
                 json: data
             }).then((function(_ref2) {
                 var status = _ref2.status, body = _ref2.body, responseHeaders = _ref2.headers;
                 if (status >= 300) {
                     var hasDetails = body.details && body.details.length;
-                    var error = new Error((hasDetails && body.details[0].issue ? body.details[0].issue : "Generic Error") + ": " + (hasDetails && body.details[0].description ? body.details[0].description : "no description") + " (Corr ID: " + responseHeaders["paypal-debug-id"]);
+                    var issue = hasDetails && body.details[0].issue ? body.details[0].issue : "Generic Error";
+                    var error = new Error(issue + ": " + (hasDetails && body.details[0].description ? body.details[0].description : "no description") + " (Corr ID: " + responseHeaders["paypal-debug-id"]);
                     error.response = {
                         status: status,
                         headers: responseHeaders
                     };
+                    logger_getLogger().warn("rest_api" + slashToUnderscore(url) + "_error", {
+                        err: issue
+                    });
                     throw error;
                 }
                 return body;
@@ -2797,10 +2805,17 @@ window.spb = function(modules) {
                 if ("contingency" === body.ack) {
                     var err = new Error(body.contingency);
                     err.data = body.data;
+                    logger_getLogger().warn("smart_api" + slashToUnderscore(url) + "_contingency_error");
                     throw err;
                 }
-                if (status > 400) throw new Error("Api: " + url + " returned status code: " + status + " (Corr ID: " + headers["paypal-debug-id"] + ")");
-                if ("success" !== body.ack) throw new Error("Api: " + url + " returned ack: " + body.ack + " (Corr ID: " + headers["paypal-debug-id"] + ")");
+                if (status > 400) {
+                    logger_getLogger().warn("smart_api" + slashToUnderscore(url) + "_status_error");
+                    throw new Error("Api: " + url + " returned status code: " + status + " (Corr ID: " + headers["paypal-debug-id"] + ")");
+                }
+                if ("success" !== body.ack) {
+                    logger_getLogger().warn("smart_api" + slashToUnderscore(url) + "_ack_error");
+                    throw new Error("Api: " + url + " returned ack: " + body.ack + " (Corr ID: " + headers["paypal-debug-id"] + ")");
+                }
                 return {
                     data: body.data,
                     headers: headers
@@ -2808,9 +2823,9 @@ window.spb = function(modules) {
             }));
         }
         function callGraphQL(_ref5) {
-            var _ref5$variables = _ref5.variables, _ref5$headers = _ref5.headers;
+            var name = _ref5.name, _ref5$variables = _ref5.variables, _ref5$headers = _ref5.headers;
             return request({
-                url: "/graphql?" + _ref5.name,
+                url: "/graphql?" + name,
                 method: "POST",
                 json: {
                     query: _ref5.query,
@@ -2824,9 +2839,15 @@ window.spb = function(modules) {
                 var errors = body.errors || [];
                 if (errors.length) {
                     var message = errors[0].message || JSON.stringify(errors[0]);
+                    logger_getLogger().warn("graphql_" + name + "_error", {
+                        err: message
+                    });
                     throw new Error(message);
                 }
-                if (200 !== status) throw new Error("/graphql returned status " + status);
+                if (200 !== status) {
+                    logger_getLogger().warn("graphql_" + name + "_status_" + status + "_error");
+                    throw new Error("/graphql returned status " + status);
+                }
                 return body.data;
             }));
         }
@@ -2935,7 +2956,7 @@ window.spb = function(modules) {
             logger_getLogger().info("rest_api_create_order_token");
             var headers = ((_headers15 = {}).authorization = "Bearer " + accessToken, _headers15["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers15["paypal-client-metadata-id"] = clientMetadataID, _headers15["x-app-name"] = "smart-payment-buttons", 
-            _headers15["x-app-version"] = "5.0.42", _headers15);
+            _headers15["x-app-version"] = "5.0.44", _headers15);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -2998,7 +3019,7 @@ window.spb = function(modules) {
             var _headers21;
             return callGraphQL({
                 name: "GetCheckoutDetails",
-                query: "\n            query GetCheckoutDetails($orderID: String!) {\n                checkoutSession(token: $orderID) {\n                    cart {\n                        billingType\n                        intent\n                        paymentId\n                        billingToken\n                        amounts {\n                            total {\n                                currencyValue\n                                currencyCode\n                                currencyFormatSymbolISOCurrency\n                            }\n                        }\n                        supplementary {\n                            initiationIntent\n                        }\n                    }\n                    flags {\n                        isChangeShippingAddressAllowed\n                    }\n                    payees {\n                        merchantId\n                        email {\n                            stringValue\n                        }\n                    }\n                }\n            }\n        ",
+                query: "\n            query GetCheckoutDetails($orderID: String!) {\n                checkoutSession(token: $orderID) {\n                    cart {\n                        billingType\n                        intent\n                        paymentId\n                        billingToken\n                        amounts {\n                            total {\n                                currencyValue\n                                currencyCode\n                                currencyFormatSymbolISOCurrency\n                            }\n                        }\n                        supplementary {\n                            initiationIntent\n                        }\n                        category\n                    }\n                    flags {\n                        isChangeShippingAddressAllowed\n                    }\n                    payees {\n                        merchantId\n                        email {\n                            stringValue\n                        }\n                    }\n                }\n            }\n        ",
                 variables: {
                     orderID: orderID
                 },
@@ -6171,10 +6192,10 @@ window.spb = function(modules) {
             return "sandbox" !== env || !isNativeOptedIn({
                 props: props
             }) || window.xprops && window.xprops.useCorrectNativeSandboxDomain ? ((name = "enable_mobile_native_popup_domain", 
-            sample = (_ref = {
+            _ref = {
                 sample: 1
-            }).sample, sticky = void 0 === (_ref$sticky = _ref.sticky) || _ref$sticky, logger = logger_getLogger(), 
-            function(_ref) {
+            }, sample = _ref.sample, _ref$sticky = _ref.sticky, sticky = void 0 === _ref$sticky || _ref$sticky, 
+            logger = logger_getLogger(), function(_ref) {
                 var name = _ref.name, _ref$sample = _ref.sample, sample = void 0 === _ref$sample ? 50 : _ref$sample, _ref$logTreatment = _ref.logTreatment, logTreatment = void 0 === _ref$logTreatment ? src_util_noop : _ref$logTreatment, _ref$logCheckpoint = _ref.logCheckpoint, logCheckpoint = void 0 === _ref$logCheckpoint ? src_util_noop : _ref$logCheckpoint, _ref$sticky = _ref.sticky;
                 var throttle = void 0 === _ref$sticky || _ref$sticky ? function(name) {
                     return getBelterExperimentStorage().getState((function(state) {
@@ -6246,7 +6267,7 @@ window.spb = function(modules) {
                     logger.flush();
                 },
                 sticky: sticky
-            })).isEnabled() ? HISTORY_NATIVE_POPUP_DOMAIN : MOBILE_NATIVE_POPUP_DOMAIN)[env] : "https://www.sandbox.paypal.com";
+            })).isEnabled() ? MOBILE_NATIVE_POPUP_DOMAIN : HISTORY_NATIVE_POPUP_DOMAIN)[env] : "https://www.sandbox.paypal.com";
             var name, _ref, sample, _ref$sticky, sticky, logger;
         }
         function getWebCheckoutUrl(_ref3) {
@@ -7204,9 +7225,12 @@ window.spb = function(modules) {
                         var optOut = function(data) {
                             var optOut = !1;
                             if (data && "native_opt_out" === data.type) {
+                                var skip_native_duration = data.skip_native_duration;
+                                var OPT_OUT_TIME = 36288e5;
+                                skip_native_duration && "number" == typeof skip_native_duration && (OPT_OUT_TIME = skip_native_duration);
                                 var now = Date.now();
                                 getStorageState((function(state) {
-                                    state.nativeOptOutLifetime = now + 6048e5;
+                                    state.nativeOptOutLifetime = now + OPT_OUT_TIME;
                                 }));
                                 optOut = !0;
                             }
@@ -7546,7 +7570,8 @@ window.spb = function(modules) {
                                             onFallback({
                                                 data: {
                                                     win: nativePopupWin,
-                                                    type: data.type
+                                                    type: data.type,
+                                                    skip_native_duration: data.skip_native_duration
                                                 }
                                             });
                                         }));
@@ -7781,8 +7806,10 @@ window.spb = function(modules) {
                             if (isEnabled()) {
                                 paymentProcessing = !0;
                                 return function(_ref3) {
+                                    var _props$style;
                                     var payment = _ref3.payment, serviceData = _ref3.serviceData, config = _ref3.config, components = _ref3.components, props = _ref3.props;
                                     var button = payment.button, fundingSource = payment.fundingSource, instrumentType = payment.instrumentType;
+                                    var buttonLabel = null == (_props$style = props.style) ? void 0 : _props$style.label;
                                     return promise_ZalgoPromise.try((function() {
                                         var _getLogger$info$info$;
                                         var merchantID = serviceData.merchantID;
@@ -7846,7 +7873,7 @@ window.spb = function(modules) {
                                                 }));
                                                 var validateOrderPromise = createOrder().then((function(orderID) {
                                                     return function(orderID, _ref3) {
-                                                        var env = _ref3.env, clientID = _ref3.clientID, merchantID = _ref3.merchantID, currency = _ref3.currency, intent = _ref3.intent, vault = _ref3.vault;
+                                                        var env = _ref3.env, clientID = _ref3.clientID, merchantID = _ref3.merchantID, currency = _ref3.currency, intent = _ref3.intent, vault = _ref3.vault, buttonLabel = _ref3.buttonLabel;
                                                         var logger = logger_getLogger();
                                                         return getSupplementalOrderInfo(orderID).then((function(order) {
                                                             var cart = order.checkoutSession.cart;
@@ -7865,6 +7892,20 @@ window.spb = function(modules) {
                                                                 clientID: clientID,
                                                                 orderID: orderID
                                                             });
+                                                            if ("donate" === buttonLabel) {
+                                                                var itemCategory = cart.category || "";
+                                                                itemCategory && "DONATION" === itemCategory || triggerIntegrationError({
+                                                                    error: "smart_button_validation_error_incorrect_item_category",
+                                                                    message: "Expected item category from order api call to be DONATION, got " + itemCategory + ". Please ensure you are passing category=DONATION for all items in the order payload. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
+                                                                    loggerPayload: {
+                                                                        itemCategory: itemCategory,
+                                                                        category: "DONATION"
+                                                                    },
+                                                                    env: env,
+                                                                    clientID: clientID,
+                                                                    orderID: orderID
+                                                                });
+                                                            }
                                                             cartCurrency && cartCurrency !== currency && triggerIntegrationError({
                                                                 error: "smart_button_validation_error_incorrect_currency",
                                                                 message: "Expected currency from order api call to be " + currency + ", got " + cartCurrency + ". Please ensure you are passing currency=" + cartCurrency + " to the sdk url. https://developer.paypal.com/docs/checkout/reference/customize-sdk/",
@@ -8020,7 +8061,8 @@ window.spb = function(modules) {
                                                         merchantID: merchantID,
                                                         intent: intent,
                                                         currency: currency,
-                                                        vault: vault
+                                                        vault: vault,
+                                                        buttonLabel: buttonLabel
                                                     });
                                                 }));
                                                 var confirmOrderPromise = createOrder().then((function(orderID) {
@@ -8395,7 +8437,7 @@ window.spb = function(modules) {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
                     _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "5.0.42", _ref3.button_correlation_id = buttonCorrelationID, 
+                    _ref3.button_version = "5.0.44", _ref3.button_correlation_id = buttonCorrelationID, 
                     _ref3.stickiness_id = isAndroidChrome() ? stickinessID : null, _ref3.bn_code = partnerAttributionID, 
                     _ref3.user_action = commit ? "commit" : "continue", _ref3.seller_id = merchantID[0], 
                     _ref3.merchant_domain = merchantDomain, _ref3.t = Date.now().toString(), _ref3.user_id = buttonSessionID, 
