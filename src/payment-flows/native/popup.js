@@ -130,7 +130,11 @@ type NativePopupOptions = {|
             buttonSessionID : string
         |}>,
         onFallback : ({|
-            win : CrossDomainWindowType
+            data? : {|
+                type? : string,
+                skip_native_duration? : number,
+                win? : CrossDomainWindowType
+            |}
         |}) => ZalgoPromise<{|
             buttonSessionID : string
         |}>,
@@ -155,7 +159,7 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
     if (!firebaseConfig) {
         throw new Error(`Can not load popup without firebase config`);
     }
-    
+
     const nativePopupWin = window.open(getNativePopupUrl({ props, serviceData, fundingSource }));
     const nativePopupDomain = getNativePopupDomain({ props });
 
@@ -234,14 +238,14 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
                         redirect:    true,
                         appSwitch:   false,
                         redirectUrl: getNativeFallbackUrl({
-                            props, serviceData, fundingSource, firebaseConfig, sessionUID, pageUrl, orderID, stickinessID
+                            props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID
                         })
                     };
                 });
             }
 
             return orderPromise.then(orderID => {
-                const nativeUrl = getNativeUrl({ props, serviceData, fundingSource, firebaseConfig, sessionUID, pageUrl, orderID, stickinessID });
+                const nativeUrl = getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID });
 
                 getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                     .track({
@@ -275,7 +279,7 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
                     redirect:    true,
                     appSwitch:   false,
                     redirectUrl: getNativeFallbackUrl({
-                        props, serviceData, fundingSource, firebaseConfig, sessionUID, pageUrl, orderID, stickinessID
+                        props, serviceData, config, fundingSource, sessionUID, pageUrl, orderID, stickinessID
                     })
                 };
             });
@@ -308,12 +312,13 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
         closePopup('onCancel');
     });
 
-    const onFallbackListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_FALLBACK, () => {
+    const onFallbackListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_FALLBACK, (data) => {
         getLogger().info(`native_message_onfallback`)
             .track({
                 [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_FALLBACK
             }).flush();
-        onFallback({ win: nativePopupWin });
+        const { type, skip_native_duration } = data;
+        onFallback({ data: { win: nativePopupWin, type, skip_native_duration } });
     });
 
     const onCompleteListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.ON_COMPLETE, () => {

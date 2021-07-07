@@ -67,6 +67,7 @@ export function setupMocks() {
     };
 
     window.paypal = {
+        version: 'TEST',
         config:  {
             locale: {
                 country: 'US',
@@ -248,6 +249,7 @@ export function mockMenu() : ZoidComponentInstance<MenuFlowProps> {
         renderTo:    () => ZalgoPromise.resolve(),
         render:      () => ZalgoPromise.resolve(),
         onError:     () => ZalgoPromise.resolve(),
+        onClose:       () => ZalgoPromise.resolve(),
         updateProps: () => ZalgoPromise.resolve(),
         close:       () => ZalgoPromise.resolve(),
         show:        () => ZalgoPromise.resolve(),
@@ -687,7 +689,8 @@ type NativeMockWebSocket = {|
     onError : () => void,
     onShippingChange : () => void,
     onFallback : () => void,
-    fallback : ({| buyerAccessToken : string |}) => void
+    fallback : ({| buyerAccessToken : string |}) => void,
+    onFallbackOptOut : () => void
 |};
 
 export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : () => ?string |}) : NativeMockWebSocket {
@@ -883,7 +886,7 @@ export function getNativeWebSocketMock({ getSessionUID } : {| getSessionUID : ()
     };
 
     return {
-        expect, onInit, onApprove, onCancel, onError, onShippingChange, onFallback, fallback: noop
+        expect, onInit, onApprove, onCancel, onError, onShippingChange, onFallback, fallback: noop, onFallbackOptOut: noop
     };
 }
 
@@ -1410,6 +1413,27 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
         waitingForResponse.push(onApproveRequestID);
     };
 
+    const onFallbackOptOut = () => {
+        fallbackRequestID = `${ uniqueID()  }_fallback`;
+
+        send(`users/${ getSessionUID() }/messages/${ uniqueID() }`, JSON.stringify({
+            session_uid:        getSessionUID(),
+            source_app:         'paypal_native_checkout_sdk',
+            source_app_version: '1.2.3',
+            target_app:         'paypal_smart_payment_buttons',
+            request_uid:        fallbackRequestID,
+            message_uid:        uniqueID(),
+            message_type:       'request',
+            message_name:       'onFallback',
+            message_data:       {
+                type:                 'native_opt_out',
+                skip_native_duration: 604800000
+            }
+        }));
+
+        waitingForResponse.push(fallbackRequestID);
+    };
+
     const expect = () => {
         const { done: firebaseDone } = expectFirebase();
 
@@ -1429,7 +1453,7 @@ export function getNativeFirebaseMock({ getSessionUID, extraHandler } : {| getSe
     };
 
     return {
-        expect, onInit, onApprove, onCancel, onError, onShippingChange, fallback, onFallback
+        expect, onInit, onApprove, onCancel, onError, onShippingChange, fallback, onFallback, onFallbackOptOut
     };
 }
 
