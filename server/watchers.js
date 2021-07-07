@@ -5,7 +5,7 @@ import { poll } from 'grabthar';
 import type { CacheType, InstanceLocationInformation, SDKLocationInformation } from './types';
 import type { LoggerBufferType } from './lib';
 import { SDK_RELEASE_MODULE, SMART_BUTTONS_MODULE, MODULE_POLL_INTERVAL, SMART_BUTTONS_CDN_NAMESPACE,
-    CDN_NAMESPACE, CHECKOUT_COMPONENTS_MODULE, LATEST_TAG, ACTIVE_TAG } from './config';
+    SDK_CDN_NAMESPACE, CHECKOUT_COMPONENTS_MODULE, LATEST_TAG, ACTIVE_TAG } from './config';
 
 let paypalSDKWatcher;
 let paypalSmartButtonsWatcher;
@@ -51,10 +51,12 @@ export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation, sdk
         throw new Error(`Cache and logBuffer required`);
     }
 
+    const { sdkActiveTag = ACTIVE_TAG } = sdkLocationInformation
+
     paypalSDKWatcher = paypalSDKWatcher || poll({
-        cdnRegistry:  sdkLocationInformation?.sdkCDNRegistry || `https://${ locationInformation.cdnHostName || CDN_NAMESPACE }/${ SMART_BUTTONS_CDN_NAMESPACE }`,
+        cdnRegistry:  sdkLocationInformation?.sdkCDNRegistry || `https://${ locationInformation.cdnHostName }/${ SDK_CDN_NAMESPACE }`,
         name:         SDK_RELEASE_MODULE,
-        tags:         [ LATEST_TAG, sdkLocationInformation?.sdkActiveTag || ACTIVE_TAG ],
+        tags:         [ LATEST_TAG, sdkActiveTag ],
         period:       MODULE_POLL_INTERVAL,
         childModules: [ CHECKOUT_COMPONENTS_MODULE ],
         flat:         true,
@@ -66,7 +68,7 @@ export function getPayPalSDKWatcher({ logBuffer, cache, locationInformation, sdk
     const { get } = paypalSDKWatcher;
 
     const getTag = () => {
-        return get(sdkLocationInformation?.sdkActiveTag || ACTIVE_TAG).then(tag => {
+        return get(sdkActiveTag).then(tag => {
             if (logBuffer) {
                 logInfo(logBuffer, 'render', tag);
             }
@@ -96,7 +98,7 @@ export function getPayPalSmartPaymentButtonsWatcher({ logBuffer, cache, location
     }
 
     paypalSmartButtonsWatcher = paypalSmartButtonsWatcher || poll({
-        cdnRegistry:  `https://${ locationInformation.cdnHostName || CDN_NAMESPACE }/${ SMART_BUTTONS_CDN_NAMESPACE }`,
+        cdnRegistry:  `https://${ locationInformation.cdnHostName }/${ SMART_BUTTONS_CDN_NAMESPACE }`,
         name:         SMART_BUTTONS_MODULE,
         tags:         [ LATEST_TAG, ACTIVE_TAG ],
         period:       MODULE_POLL_INTERVAL,
