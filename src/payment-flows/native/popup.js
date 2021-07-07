@@ -264,7 +264,7 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
                 return {
                     redirect:    true,
                     appSwitch:   true,
-                    redirectUrl: webCheckoutUrl
+                    redirectUrl: fundingSource === FUNDING.VENMO ? webCheckoutUrl : nativeUrl
                 };
             });
 
