@@ -38,11 +38,11 @@ export function getNativePopupDomain({ props } : {| props : ButtonProps |}) : st
     };
     const isMobileNativePopupDomainEnabled = createExperiment('enable_mobile_native_popup_domain', experimentOptions).isEnabled();
 
-    const native_popup_domain = isMobileNativePopupDomainEnabled ?
+    const nativePopupDomain = isMobileNativePopupDomainEnabled ?
         MOBILE_NATIVE_POPUP_DOMAIN :
         HISTORY_NATIVE_POPUP_DOMAIN;
         
-    return native_popup_domain[env];
+    return nativePopupDomain[env];
 }
 
 type GetWebCheckoutUrlOptions = {|
