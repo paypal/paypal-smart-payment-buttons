@@ -294,6 +294,12 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
             }
 
             replaceHash(appSwitch ? HASH.APPSWITCH : HASH.WEBSWITCH);
+
+            if (fundingSource === FUNDING.VENMO && redirectUrl.includes('webCheckoutUrl')) {
+                const urlParams = new URLSearchParams(redirectUrl);
+                redirectUrl = urlParams.get('webCheckoutUrl');
+            }
+            
             window.location.replace(redirectUrl);
 
             let didRedirect = false;
