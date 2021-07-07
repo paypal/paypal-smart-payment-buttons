@@ -8,6 +8,7 @@ import { FPTI_STATE, FPTI_TRANSITION } from '../constants';
 
 import { getLogger } from './logger';
 
+
 export function unresolvedPromise<T>() : ZalgoPromise<T> {
     return new ZalgoPromise(noop);
 }
@@ -129,4 +130,8 @@ export function isIOSSafari() : boolean {
 
 export function isAndroidChrome() : boolean {
     return isAndroid() && isChrome();
+}
+
+export function slashToUnderscore(endpoint : string) : string {
+    return endpoint.replace(/\//g, '_');
 }

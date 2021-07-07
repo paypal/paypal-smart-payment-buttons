@@ -1112,10 +1112,6 @@
             } ]);
         }
         var http_headerBuilders = [];
-        function getPayPal() {
-            if (!window.paypal) throw new Error("paypal not found");
-            return window.paypal;
-        }
         var AUTO_FLUSH_LEVEL = [ "warn", "error" ];
         var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
         function httpTransport(_ref) {
@@ -1387,6 +1383,10 @@
                 return /Safari/.test(ua) && !isChrome(ua);
             }();
         }
+        function getPayPal() {
+            if (!window.paypal) throw new Error("paypal not found");
+            return window.paypal;
+        }
         function isAndroidAppInstalled(appId) {
             return window.navigator && window.navigator.getInstalledRelatedApps ? window.navigator.getInstalledRelatedApps().then((function(result) {
                 if (result && result.length) {
@@ -1435,7 +1435,7 @@
                         return (_ref3 = {}).feed_name = "payments_sdk", _ref3.serverside_data_source = "checkout", 
                         _ref3.client_id = clientID, _ref3.page_session_id = sessionID, _ref3.referer_url = window.location.host, 
                         _ref3.buyer_cntry = buyerCountry, _ref3.locale = lang + "_" + country, _ref3.integration_identifier = clientID, 
-                        _ref3.sdk_environment = isIos() ? "ios" : isAndroid() ? "android" : null, _ref3.sdk_name = "payments_sdk", 
+                        _ref3.sdk_environment = isIos() ? "iOS" : isAndroid() ? "android" : null, _ref3.sdk_name = "payments_sdk", 
                         _ref3.sdk_version = sdkVersion, _ref3.user_agent = window.navigator && window.navigator.userAgent, 
                         _ref3.context_correlation_id = sdkCorrelationID, _ref3.t = Date.now().toString(), 
                         _ref3;
@@ -1472,7 +1472,7 @@
                 logger.addTrackingBuilder((function() {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
-                    _ref3.context_id = buttonSessionID, _ref3.button_session_id = buttonSessionID, _ref3.button_version = "5.0.38", 
+                    _ref3.context_id = buttonSessionID, _ref3.button_session_id = buttonSessionID, _ref3.button_version = "5.0.42", 
                     _ref3.user_id = buttonSessionID, _ref3;
                 }));
                 (function() {
