@@ -1312,6 +1312,24 @@ window.spb = function(modules) {
                 lifetime: lifetime
             } ]);
         }
+        function getBelterExperimentStorage() {
+            return getStorage({
+                name: "belter_experiment"
+            });
+        }
+        function isEventUnique(name) {
+            return getBelterExperimentStorage().getSessionState((function(state) {
+                state.loggedBeacons = state.loggedBeacons || [];
+                if (-1 === state.loggedBeacons.indexOf(name)) {
+                    state.loggedBeacons.push(name);
+                    return !0;
+                }
+                return !1;
+            }));
+        }
+        function getRandomInteger(range) {
+            return Math.floor(Math.random() * range);
+        }
         var http_headerBuilders = [];
         function request(_ref) {
             var url = _ref.url, _ref$method = _ref.method, method = void 0 === _ref$method ? "get" : _ref$method, _ref$headers = _ref.headers, headers = void 0 === _ref$headers ? {} : _ref$headers, json = _ref.json, data = _ref.data, body = _ref.body, _ref$win = _ref.win, win = void 0 === _ref$win ? window : _ref$win, _ref$timeout = _ref.timeout, timeout = void 0 === _ref$timeout ? 0 : _ref$timeout;
@@ -2027,7 +2045,7 @@ window.spb = function(modules) {
             logger_getLogger().info("rest_api_create_order_token");
             var headers = ((_headers15 = {}).authorization = "Bearer " + accessToken, _headers15["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers15["paypal-client-metadata-id"] = clientMetadataID, _headers15["x-app-name"] = "smart-payment-buttons", 
-            _headers15["x-app-version"] = "5.0.37", _headers15);
+            _headers15["x-app-version"] = "5.0.38", _headers15);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -5083,15 +5101,19 @@ window.spb = function(modules) {
             spinner: !0,
             inline: !0
         };
-        var _NATIVE_DOMAIN, _NATIVE_POPUP_DOMAIN, _NATIVE_CHECKOUT_URI, _NATIVE_CHECKOUT_POPU, _NATIVE_CHECKOUT_FALL;
+        var _NATIVE_DOMAIN, _HISTORY_NATIVE_POPUP, _MOBILE_NATIVE_POPUP_, _NATIVE_CHECKOUT_URI, _NATIVE_CHECKOUT_POPU, _NATIVE_CHECKOUT_FALL;
         var SUPPORTED_FUNDING = [ "paypal", "venmo" ];
         var NATIVE_DOMAIN = ((_NATIVE_DOMAIN = {}).test = "https://www.paypal.com", _NATIVE_DOMAIN.local = "https://www.paypal.com", 
         _NATIVE_DOMAIN.stage = "https://www.paypal.com", _NATIVE_DOMAIN.sandbox = "https://www.sandbox.paypal.com", 
         _NATIVE_DOMAIN.production = "https://www.paypal.com", _NATIVE_DOMAIN);
-        var NATIVE_POPUP_DOMAIN = ((_NATIVE_POPUP_DOMAIN = {}).test = "https://history.paypal.com", 
-        _NATIVE_POPUP_DOMAIN.local = getDomain(), _NATIVE_POPUP_DOMAIN.stage = "https://history.paypal.com", 
-        _NATIVE_POPUP_DOMAIN.sandbox = "https://history.paypal.com", _NATIVE_POPUP_DOMAIN.production = "https://history.paypal.com", 
-        _NATIVE_POPUP_DOMAIN);
+        var HISTORY_NATIVE_POPUP_DOMAIN = ((_HISTORY_NATIVE_POPUP = {}).test = "https://history.paypal.com", 
+        _HISTORY_NATIVE_POPUP.local = getDomain(), _HISTORY_NATIVE_POPUP.stage = "https://history.paypal.com", 
+        _HISTORY_NATIVE_POPUP.sandbox = "https://history.paypal.com", _HISTORY_NATIVE_POPUP.production = "https://history.paypal.com", 
+        _HISTORY_NATIVE_POPUP);
+        var MOBILE_NATIVE_POPUP_DOMAIN = ((_MOBILE_NATIVE_POPUP_ = {}).test = "https://mobile.paypal.com", 
+        _MOBILE_NATIVE_POPUP_.local = getDomain(), _MOBILE_NATIVE_POPUP_.stage = "https://mobile.paypal.com", 
+        _MOBILE_NATIVE_POPUP_.sandbox = "https://mobile.paypal.com", _MOBILE_NATIVE_POPUP_.production = "https://mobile.paypal.com", 
+        _MOBILE_NATIVE_POPUP_);
         var NATIVE_CHECKOUT_URI = ((_NATIVE_CHECKOUT_URI = {}).paypal = "/smart/checkout/native", 
         _NATIVE_CHECKOUT_URI.venmo = "/smart/checkout/venmo", _NATIVE_CHECKOUT_URI);
         var NATIVE_CHECKOUT_POPUP_URI = ((_NATIVE_CHECKOUT_POPU = {}).paypal = "/smart/checkout/native/popup", 
@@ -5125,7 +5147,84 @@ window.spb = function(modules) {
             var env = props.env;
             return "sandbox" !== env || !isNativeOptedIn({
                 props: props
-            }) || window.xprops && window.xprops.useCorrectNativeSandboxDomain ? NATIVE_POPUP_DOMAIN[env] : "https://www.sandbox.paypal.com";
+            }) || window.xprops && window.xprops.useCorrectNativeSandboxDomain ? ((name = "enable_mobile_native_popup_domain", 
+            sample = (_ref = {
+                sample: 1
+            }).sample, sticky = void 0 === (_ref$sticky = _ref.sticky) || _ref$sticky, logger = logger_getLogger(), 
+            function(_ref) {
+                var name = _ref.name, _ref$sample = _ref.sample, sample = void 0 === _ref$sample ? 50 : _ref$sample, _ref$logTreatment = _ref.logTreatment, logTreatment = void 0 === _ref$logTreatment ? src_util_noop : _ref$logTreatment, _ref$logCheckpoint = _ref.logCheckpoint, logCheckpoint = void 0 === _ref$logCheckpoint ? src_util_noop : _ref$logCheckpoint, _ref$sticky = _ref.sticky;
+                var throttle = void 0 === _ref$sticky || _ref$sticky ? function(name) {
+                    return getBelterExperimentStorage().getState((function(state) {
+                        state.throttlePercentiles = state.throttlePercentiles || {};
+                        state.throttlePercentiles[name] = state.throttlePercentiles[name] || getRandomInteger(100);
+                        return state.throttlePercentiles[name];
+                    }));
+                }(name) : getRandomInteger(100);
+                var group;
+                var treatment = name + "_" + (group = throttle < sample ? "test" : sample >= 50 || sample <= throttle && throttle < 2 * sample ? "control" : "throttle");
+                var started = !1;
+                var forced = !1;
+                try {
+                    window.localStorage && window.localStorage.getItem(name) && (forced = !0);
+                } catch (err) {}
+                return {
+                    isEnabled: function() {
+                        return "test" === group || forced;
+                    },
+                    isDisabled: function() {
+                        return "test" !== group && !forced;
+                    },
+                    getTreatment: function() {
+                        return treatment;
+                    },
+                    log: function(checkpoint, payload) {
+                        void 0 === payload && (payload = {});
+                        if (!started) return this;
+                        isEventUnique(treatment + "_" + JSON.stringify(payload)) && logTreatment({
+                            name: name,
+                            treatment: treatment,
+                            payload: payload,
+                            throttle: throttle
+                        });
+                        isEventUnique(treatment + "_" + checkpoint + "_" + JSON.stringify(payload)) && logCheckpoint({
+                            name: name,
+                            treatment: treatment,
+                            checkpoint: checkpoint,
+                            payload: payload,
+                            throttle: throttle
+                        });
+                        return this;
+                    },
+                    logStart: function(payload) {
+                        void 0 === payload && (payload = {});
+                        started = !0;
+                        return this.log("start", payload);
+                    },
+                    logComplete: function(payload) {
+                        void 0 === payload && (payload = {});
+                        return this.log("complete", payload);
+                    }
+                };
+            }({
+                name: name,
+                sample: sample,
+                logTreatment: function(_ref2) {
+                    var _extends2;
+                    var treatment = _ref2.treatment, payload = _ref2.payload;
+                    var fullPayload = _extends(((_extends2 = {}).state_name = "PXP_CHECK", _extends2.transition_name = "process_pxp_check", 
+                    _extends2.pxp_exp_id = name, _extends2.pxp_trtmnt_id = treatment, _extends2), payload);
+                    logger.track(fullPayload);
+                    logger.flush();
+                },
+                logCheckpoint: function(_ref3) {
+                    logger.info(_ref3.treatment + "_" + _ref3.checkpoint, _extends({}, _ref3.payload, {
+                        throttle: _ref3.throttle.toString()
+                    }));
+                    logger.flush();
+                },
+                sticky: sticky
+            })).isEnabled() ? HISTORY_NATIVE_POPUP_DOMAIN : MOBILE_NATIVE_POPUP_DOMAIN)[env] : "https://www.sandbox.paypal.com";
+            var name, _ref, sample, _ref$sticky, sticky, logger;
         }
         function getWebCheckoutUrl(_ref3) {
             var orderID = _ref3.orderID, props = _ref3.props, fundingSource = _ref3.fundingSource, facilitatorAccessToken = _ref3.facilitatorAccessToken;
@@ -7109,7 +7208,7 @@ window.spb = function(modules) {
                         return (_ref3 = {}).feed_name = "payments_sdk", _ref3.serverside_data_source = "checkout", 
                         _ref3.client_id = clientID, _ref3.page_session_id = sessionID, _ref3.referer_url = window.location.host, 
                         _ref3.buyer_cntry = buyerCountry, _ref3.locale = lang + "_" + country, _ref3.integration_identifier = clientID, 
-                        _ref3.sdk_environment = isIos() ? "ios" : isAndroid() ? "android" : null, _ref3.sdk_name = "payments_sdk", 
+                        _ref3.sdk_environment = isIos() ? "iOS" : isAndroid() ? "android" : null, _ref3.sdk_name = "payments_sdk", 
                         _ref3.sdk_version = sdkVersion, _ref3.user_agent = window.navigator && window.navigator.userAgent, 
                         _ref3.context_correlation_id = sdkCorrelationID, _ref3.t = Date.now().toString(), 
                         _ref3;
@@ -7143,7 +7242,7 @@ window.spb = function(modules) {
                     var _ref3;
                     return (_ref3 = {}).state_name = "smart_button", _ref3.context_type = "button_session_id", 
                     _ref3.context_id = buttonSessionID, _ref3.state_name = "smart_button", _ref3.button_session_id = buttonSessionID, 
-                    _ref3.button_version = "5.0.37", _ref3.button_correlation_id = buttonCorrelationID, 
+                    _ref3.button_version = "5.0.38", _ref3.button_correlation_id = buttonCorrelationID, 
                     _ref3.stickiness_id = isAndroidChrome() ? stickinessID : null, _ref3.bn_code = partnerAttributionID, 
                     _ref3.user_action = commit ? "commit" : "continue", _ref3.seller_id = merchantID[0], 
                     _ref3.merchant_domain = merchantDomain, _ref3.t = Date.now().toString(), _ref3.user_id = buttonSessionID, 
