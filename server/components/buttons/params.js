@@ -44,7 +44,8 @@ type ButtonInputParams = {|
     platform : ?$Values<typeof PLATFORM>,
     paymentMethodNonce? : ?string,
     branded? : boolean,
-    fundingSource : $Values<typeof FUNDING>
+    fundingSource : $Values<typeof FUNDING>,
+    merchantAccessToken? : ?string
 |};
 
 type Style = {|
@@ -83,7 +84,8 @@ type ButtonParams = {|
     cookies : string,
     paymentMethodNonce : ?string,
     branded : ?boolean,
-    fundingSource : $Values<typeof FUNDING>
+    fundingSource : $Values<typeof FUNDING>,
+    merchantAccessToken? : ?string
 |};
 
 function getCookieString(req : ExpressRequest) : string {
@@ -218,6 +220,16 @@ function getBranded(params : ButtonInputParams) : ?boolean {
     return branded;
 }
 
+function getMerchantAccessToken(req : ExpressRequest) : ?string {
+    const merchantAccessToken = req.query && req.query.merchantAccessToken;
+
+    if (!merchantAccessToken || typeof merchantAccessToken !== 'string') {
+        return;
+    }
+
+    return merchantAccessToken;
+}
+
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
     const serializedRiskData = req.query.riskData;
 
@@ -313,6 +325,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
+    const merchantAccessToken = getMerchantAccessToken(req);
 
     const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
@@ -350,7 +363,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         platform,
         cookies,
         paymentMethodNonce,
-        branded
+        branded,
+        merchantAccessToken
     };
 }
 
