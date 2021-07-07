@@ -4,7 +4,6 @@ import { FUNDING } from '@paypal/sdk-constants';
 import { wrapPromise } from 'belter/src';
 
 import { promiseNoop } from '../../src/lib';
-import { NATIVE_CHECKOUT_URI } from '../../src/payment-flows/native/config';
 
 import { mockSetupButton, createButtonHTML, DEFAULT_FUNDING_ELIGIBILITY, mockFunction, clickButton } from './mocks';
 
