@@ -36,14 +36,12 @@ export function getNativePopupDomain({ props } : {| props : ButtonProps |}) : st
     const experimentOptions = {
         sample: 1
     };
-    const mobile_native_popup_domain_experiment = createExperiment('enable_mobile_native_popup_domain', experimentOptions);
+    const isMobileNativePopupDomainEnabled = createExperiment('enable_mobile_native_popup_domain', experimentOptions).isEnabled();
 
-    const is_mobile_native_popup_domain_enabled = mobile_native_popup_domain_experiment.isEnabled();
-
-    const native_popup_domain = is_mobile_native_popup_domain_enabled ?
-        HISTORY_NATIVE_POPUP_DOMAIN :
-        MOBILE_NATIVE_POPUP_DOMAIN;
-
+    const native_popup_domain = isMobileNativePopupDomainEnabled ?
+        MOBILE_NATIVE_POPUP_DOMAIN :
+        HISTORY_NATIVE_POPUP_DOMAIN;
+        
     return native_popup_domain[env];
 }
 

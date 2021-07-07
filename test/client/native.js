@@ -15,6 +15,10 @@ const ANDROID_CHROME_USER_AGENT = 'Mozilla/5.0 (Linux; Android 8.0.0; Nexus 5X B
 
 describe('native ios cases', () => {
 
+    beforeEach(() => {
+        window.localStorage.removeItem('enable_mobile_native_popup_domain');
+    });
+
     it('should render a button with createOrder, click the button, and render checkout via popup to native path in iOS', async () => {
         return await wrapPromise(async ({ expect, avoid }) => {
             window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
