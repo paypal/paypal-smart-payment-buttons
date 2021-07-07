@@ -77,7 +77,7 @@ export function setupExports({ props, isEnabled, facilitatorAccessToken } : Expo
                     }
 
                     // eslint-disable-next-line no-console
-                    return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(result => console.log('success!', result)).catch(error => console.error('fail...', error));
+                    return upgradeFacilitatorAccessToken(facilitatorAccessToken, { buyerAccessToken, orderID }).then(() => console.log('success!')).catch(error => console.error('fail...', error));
                 },
                 getFacilitatorAccessToken: () => {
                     return facilitatorAccessToken;
