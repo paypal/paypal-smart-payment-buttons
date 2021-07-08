@@ -34,7 +34,7 @@ export function getNativePopupDomain({ props } : {| props : ButtonProps |}) : st
     }
 
     const experimentOptions = {
-        sample: 1
+        sample: 0
     };
     const isMobileNativePopupDomainEnabled = createExperiment('enable_mobile_native_popup_domain', experimentOptions).isEnabled();
 
