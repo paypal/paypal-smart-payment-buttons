@@ -6,7 +6,7 @@ import { CURRENCY, FPTI_KEY, FUNDING, WALLET_INSTRUMENT, INTENT } from '@paypal/
 import { request, noop, memoize, uniqueID } from 'belter/src';
 
 import { SMART_API_URI, ORDERS_API_URL, VALIDATE_PAYMENT_METHOD_API } from '../config';
-import { getLogger } from '../lib';
+import { getLogger, setBuyerAccessToken } from '../lib';
 import { FPTI_TRANSITION, FPTI_CONTEXT_TYPE, HEADERS, SMART_PAYMENT_BUTTONS,
     INTEGRATION_ARTIFACT, ITEM_CATEGORY, USER_EXPERIENCE_FLOW, PRODUCT_FLOW, PREFER, LSAT_UPGRADE_FAILED } from '../constants';
 import type { ShippingMethod, ShippingAddress } from '../payment-flows/types';
@@ -477,6 +477,9 @@ export function approveOrder({ orderID, planID, buyerAccessToken } : ApproveOrde
                 ) {
                     buyer {
                         userId
+                        auth {
+                            accessToken
+                        }
                     }
                 }
             }
@@ -487,6 +490,7 @@ export function approveOrder({ orderID, planID, buyerAccessToken } : ApproveOrde
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(({ approvePayment }) => {
+        setBuyerAccessToken(approvePayment.buyer.auth.accessToken);
         return {
             payerID: approvePayment.buyer.userId
         };
@@ -756,6 +760,9 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 ) {
                     buyer {
                         userId
+                        auth {
+                            accessToken
+                        }
                     }
                 }
             }
@@ -771,7 +778,8 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(({ approvePaymentWithNonce }) => {
-        getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce));
+        getLogger().info('pay_with_paymentMethodNonce', JSON.stringify(approvePaymentWithNonce.buyer.userId));
+        setBuyerAccessToken(approvePaymentWithNonce.buyer.auth.accessToken);
         return {
             payerID: approvePaymentWithNonce.buyer.userId
         };
