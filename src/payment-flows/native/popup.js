@@ -160,7 +160,32 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
         throw new Error(`Can not load popup without firebase config`);
     }
 
-    const nativePopupWin = window.open(getNativePopupUrl({ props, serviceData, fundingSource }));
+    const validatePromise = ZalgoPromise.try(() => {
+        return onClick ? onClick({ fundingSource }) : true;
+    }).then(valid => {
+        if (!valid) {
+            getLogger().info(`native_onclick_invalid`).track({
+                [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+            }).flush();
+        }
+
+        return valid;
+    });
+
+    const orderPromise = validatePromise.then(valid => {
+        if (valid) {
+            return createOrder();
+        }
+
+        return unresolvedPromise();
+    });
+
+    //orderPromise.then((orderID)=>{
+        const nativePopupWin = window.open(getNativePopupUrl({ props, serviceData, fundingSource, orderPromise }));
+    // })
+
+    //const nativePopupWin = window.open(getNativePopupUrl({ props, serviceData, fundingSource }));
     const nativePopupDomain = getNativePopupDomain({ props });
 
     getLogger().info(`native_attempt_appswitch_popup_shown`)
@@ -190,26 +215,8 @@ export function openNativePopup({ props, serviceData, config, fundingSource, ses
         getLogger().info(`native_popup_load_timeout`).flush();
     }, 5 * 1000);
 
-    const validatePromise = ZalgoPromise.try(() => {
-        return onClick ? onClick({ fundingSource }) : true;
-    }).then(valid => {
-        if (!valid) {
-            getLogger().info(`native_onclick_invalid`).track({
-                [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
-            }).flush();
-        }
 
-        return valid;
-    });
 
-    const orderPromise = validatePromise.then(valid => {
-        if (valid) {
-            return createOrder();
-        }
-
-        return unresolvedPromise();
-    });
 
     const awaitRedirectListener = onPostMessage(nativePopupWin, nativePopupDomain, POST_MESSAGE.AWAIT_REDIRECT, ({ data: { app: appDetect, pageUrl, sfvc, stickinessID } }) => {
         clearTimeout(redirectListenerTimeout);

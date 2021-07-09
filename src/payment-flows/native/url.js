@@ -2,6 +2,7 @@
 
 
 import { extendUrl, getUserAgent, isDevice } from 'belter/src';
+import { ZalgoPromise } from 'zalgo-promise/src';
 import { COUNTRY, ENV, FUNDING } from '@paypal/sdk-constants/src';
 import { getDomain } from 'cross-domain-utils/src';
 
@@ -158,14 +159,21 @@ export function getNativeFallbackUrl({ props, serviceData, config, fundingSource
 type GetNativePopupUrlOptions = {|
     props : ButtonProps,
     serviceData : ServiceData,
-    fundingSource : $Values<typeof FUNDING>
+    fundingSource : $Values<typeof FUNDING>,
+    orderID: string
 |};
 
-const getNativePopupQueryParams = ({ props, serviceData } : GetNativePopupUrlOptions) : NativePopupInputParams => {
+type GetNativePopupQueryParamOptions = {|  
+    props : ButtonProps,      
+    serviceData : ServiceData,
+    orderID : string
+|};
+const getNativePopupQueryParams = ({ props, serviceData, fundingSource, orderID} : GetNativePopupUrlOptions) : {...NativePopupInputParams, webCheckoutUrl : string}=> {
     const { buttonSessionID, env, clientID, sessionID, sdkCorrelationID } = props;
-    const { sdkMeta, buyerCountry } = serviceData;
+    const { sdkMeta, buyerCountry,facilitatorAccessToken } = serviceData;
     const parentDomain = getDomain();
     const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
+    const webCheckoutUrl = getWebCheckoutUrl({ orderID,props, fundingSource, facilitatorAccessToken });
     const queryParams = {
         buttonSessionID,
         buyerCountry,
@@ -175,13 +183,15 @@ const getNativePopupQueryParams = ({ props, serviceData } : GetNativePopupUrlOpt
         parentDomain,
         sdkCorrelationID,
         sdkMeta,
-        sessionID
+        sessionID,
+        webCheckoutUrl
     };
     return queryParams;
 };
 
-export function getNativePopupUrl({ props, serviceData, fundingSource } : GetNativePopupUrlOptions) : string {
-    const queryParams = getNativePopupQueryParams({ props, serviceData, fundingSource });
+export function getNativePopupUrl({ props, serviceData, fundingSource, orderID } : GetNativePopupUrlOptions) : string {
+
+    const queryParams = getNativePopupQueryParams({ props, serviceData, fundingSource, orderID });
 
     const baseURL = extendUrl(`${ getNativePopupDomain({ props }) }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
         // $FlowFixMe
