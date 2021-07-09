@@ -1,6 +1,6 @@
 /* @flow */
 
-import { parseQuery, cleanup, stringifyErrorMessage, base64encode, isSFVC, isSFVCorSafari } from 'belter/src';
+import { parseQuery, cleanup, stringifyErrorMessage, base64encode, isSFVC, isSFVCorSafari, getQueryParam } from 'belter/src';
 import { onCloseWindow } from 'cross-domain-utils/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { ENV, FUNDING, FPTI_KEY, COUNTRY } from '@paypal/sdk-constants/src';
@@ -295,9 +295,11 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
 
             replaceHash(appSwitch ? HASH.APPSWITCH : HASH.WEBSWITCH);
 
-            if (fundingSource === FUNDING.VENMO && redirectUrl.includes('webCheckoutUrl')) {
-                const urlParams = new URLSearchParams(redirectUrl);
-                redirectUrl = urlParams.get('webCheckoutUrl');
+            if (fundingSource === FUNDING.VENMO) {
+                const webCheckoutUrl = getQueryParam('webCheckoutUrl');
+                if (webCheckoutUrl) {
+                    redirectUrl = webCheckoutUrl;
+                }
             }
             
             window.location.replace(redirectUrl);

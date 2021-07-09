@@ -171,11 +171,12 @@ type GetNativePopupUrlOptions = {|
     fundingSource : $Values<typeof FUNDING>
 |};
 
-const getNativePopupQueryParams = ({ props, serviceData } : GetNativePopupUrlOptions) : NativePopupInputParams => {
+const getNativePopupQueryParams = ({ props, serviceData, fundingSource } : GetNativePopupUrlOptions) : NativePopupInputParams => {
     const { buttonSessionID, env, clientID, sessionID, sdkCorrelationID } = props;
-    const { sdkMeta, buyerCountry } = serviceData;
+    const { sdkMeta, buyerCountry, facilitatorAccessToken } = serviceData;
     const parentDomain = getDomain();
     const channel = isDevice() ? CHANNEL.MOBILE : CHANNEL.DESKTOP;
+    const webCheckoutUrl = getWebCheckoutUrl({ props, fundingSource, facilitatorAccessToken });
     const queryParams = {
         buttonSessionID,
         buyerCountry,
@@ -185,7 +186,8 @@ const getNativePopupQueryParams = ({ props, serviceData } : GetNativePopupUrlOpt
         parentDomain,
         sdkCorrelationID,
         sdkMeta,
-        sessionID
+        sessionID,
+        webCheckoutUrl
     };
     return queryParams;
 };
