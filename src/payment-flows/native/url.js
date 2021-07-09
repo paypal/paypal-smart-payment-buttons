@@ -163,11 +163,6 @@ type GetNativePopupUrlOptions = {|
     orderID: string
 |};
 
-type GetNativePopupQueryParamOptions = {|  
-    props : ButtonProps,      
-    serviceData : ServiceData,
-    orderID : string
-|};
 const getNativePopupQueryParams = ({ props, serviceData, fundingSource, orderID} : GetNativePopupUrlOptions) : {...NativePopupInputParams, webCheckoutUrl : string}=> {
     const { buttonSessionID, env, clientID, sessionID, sdkCorrelationID } = props;
     const { sdkMeta, buyerCountry,facilitatorAccessToken } = serviceData;
