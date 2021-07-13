@@ -312,7 +312,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]:  event ? `${ FPTI_TRANSITION.QR_CLOSING }_${ event }` : FPTI_TRANSITION.QR_CLOSING
             }).flush();
-            return onCloseCallback();
+
+            return ZalgoPromise.delay(2000).then(() => {            
+                return ZalgoPromise.try(() => {
+                    return destroy();
+                });                
+            }).then(noop);
         };
         
         return orderIDPromise.then((orderID) => {
@@ -344,6 +349,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             const onApproveQR = (res) => {
                 return updateQRCodeComponentState({ state: QRCODE_STATE.AUTHORIZED }).then(() => {
                     return closeQRCode('onApprove').then(() => {
+
                         return onApproveCallback(res);
                     });
                 });
