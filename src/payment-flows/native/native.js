@@ -315,6 +315,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
             return ZalgoPromise.delay(2000).then(() => {
                 return ZalgoPromise.try(() => {
+                    qrCodeRenderTarget.close();
                     return destroy();
                 });
             }).then(noop);
