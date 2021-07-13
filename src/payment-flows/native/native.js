@@ -313,10 +313,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 [FPTI_KEY.TRANSITION]:  event ? `${ FPTI_TRANSITION.QR_CLOSING }_${ event }` : FPTI_TRANSITION.QR_CLOSING
             }).flush();
 
-            return ZalgoPromise.delay(2000).then(() => {            
+            return ZalgoPromise.delay(2000).then(() => {
                 return ZalgoPromise.try(() => {
                     return destroy();
-                });                
+                });
             }).then(noop);
         };
         
