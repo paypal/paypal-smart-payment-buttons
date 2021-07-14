@@ -122,7 +122,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     });
                 }).catch(noop);
 
-            const vaultingPromise = createOrder().then(orderID => {
+            const vaultPromise = createOrder().then(orderID => {
                 return ZalgoPromise.try(() => {
                     if (clientID && buyerIntent === BUYER_INTENT.PAY) {
                         return enableVaultSetup({ orderID, vault, clientAccessToken, fundingEligibility, fundingSource, createBillingAgreement, createSubscription,
@@ -162,7 +162,7 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
 
             return ZalgoPromise.all([
                 clickPromise,
-                vaultingPromise,
+                vaultPromise,
                 startPromise,
                 validateOrderPromise,
                 confirmOrderPromise
