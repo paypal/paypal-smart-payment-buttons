@@ -306,29 +306,21 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.QR_SHOWN
         }).flush();
 
-
-        const closeQRCode = (event? : string = 'closeQRCode') => {
+        const logQRClose = (event? : string = 'closeQRCode') => {
             getLogger().info(`VenmoDesktopPay_qrcode_closing_${ event }`).track({
                 [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
                 [FPTI_KEY.TRANSITION]:  event ? `${ FPTI_TRANSITION.QR_CLOSING }_${ event }` : FPTI_TRANSITION.QR_CLOSING
             }).flush();
-
-            return ZalgoPromise.delay(2000).then(() => {
-                return ZalgoPromise.try(() => {
-                    qrCodeRenderTarget.close();
-                    return destroy();
-                });
-            }).then(noop);
         };
         
-        return orderIDPromise.then((orderID) => {
+        orderIDPromise.then((orderID) => {
             const url = getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, orderID, stickinessID, pageUrl });
 
             const qrCodeComponentInstance = QRCode({
                 cspNonce:  config.cspNonce,
                 qrPath:    url,
                 state:     QRCODE_STATE.DEFAULT,
-                onClose:   closeQRCode
+                onClose:   logQRClose()
             });
 
             function updateQRCodeComponentState(newState : {|
@@ -338,10 +330,21 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 return qrCodeComponentInstance.updateProps({
                     cspNonce: config.cspNonce,
                     qrPath:   url,
-                    onClose:  closeQRCode,
+                    onClose:  logQRClose(),
                     ...newState
                 });
             }
+
+            const closeQRCode = (event? : string) => {
+                logQRClose(event);
+
+                return ZalgoPromise.delay(2000).then(() => {
+                    return ZalgoPromise.try(() => {
+                        qrCodeComponentInstance.close();
+                        return destroy();
+                    });
+                }).then(noop);
+            };
             const onInitializeQR  = () => {
                 return updateQRCodeComponentState({ state: QRCODE_STATE.SCANNED }).then(() => {
                     return onInitCallback();
@@ -385,12 +388,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 }
             });
             clean.register(connection.cancel);
-            connection.setProps();
 
             return qrCodeComponentInstance.renderTo(qrCodeRenderTarget, TARGET_ELEMENT.BODY);
-            
-            
+
         });
+
     };
 
 
