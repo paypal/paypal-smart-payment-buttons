@@ -14,7 +14,6 @@ import { openPopup } from '../ui';
 import { FUNDING_SKIP_LOGIN } from '../config';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, InitOptions } from './types';
-import { enableVaultSetup } from './vault-setup';
 
 export const CHECKOUT_POPUP_DIMENSIONS = {
     WIDTH:  500,
@@ -111,12 +110,12 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
     const { sessionID, buttonSessionID, createOrder, onApprove, onCancel,
         onShippingChange, locale, commit, onError, vault, clientAccessToken,
         createBillingAgreement, createSubscription, onClick, amount,
-        clientID, connect, clientMetadataID: cmid, onAuth, userIDToken,
-        currency, intent, disableFunding, disableCard, enableFunding,
-        standaloneFundingSource, branded, env } = props;
+        clientID, connect, clientMetadataID: cmid, onAuth, userIDToken, env,
+        currency, enableFunding,
+        standaloneFundingSource, branded } = props;
     let { button, win, fundingSource, card, isClick, buyerAccessToken = serviceData.buyerAccessToken,
         venmoPayloadID, buyerIntent } = payment;
-    const { fundingEligibility, buyerCountry, sdkMeta, merchantID } = serviceData;
+    const { buyerCountry, sdkMeta, merchantID } = serviceData;
     const { cspNonce } = config;
 
     let context = getContext({ win, isClick });
@@ -198,14 +197,7 @@ function initCheckout({ props, components, serviceData, payment, config } : Init
 
             createOrder: () => {
                 return createOrder().then(orderID => {
-                    return ZalgoPromise.try(() => {
-                        if (clientID && buyerIntent === BUYER_INTENT.PAY) {
-                            return enableVaultSetup({ orderID, vault, clientAccessToken, fundingEligibility, fundingSource, createBillingAgreement, createSubscription,
-                                clientID, merchantID, buyerCountry, currency, commit, intent, disableFunding, disableCard, userIDToken });
-                        }
-                    }).then(() => {
-                        return orderID;
-                    });
+                    return orderID;
                 });
             },
 
