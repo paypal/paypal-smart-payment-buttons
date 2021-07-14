@@ -9,7 +9,7 @@ import { getLogger, promiseNoop, sendBeacon } from '../lib';
 import { FPTI_TRANSITION, BUYER_INTENT } from '../constants';
 import { updateButtonClientConfig } from '../api';
 import { getConfirmOrder } from '../props/confirmOrder';
-import { enableVaultSetup } from '../middlewares';
+import { enableVaultSetup } from '../middleware';
 
 import { type ButtonProps, type Config, type ServiceData, type Components } from './props';
 import { enableLoadingSpinner, disableLoadingSpinner } from './dom';
