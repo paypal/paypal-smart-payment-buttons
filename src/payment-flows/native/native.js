@@ -356,7 +356,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 });
             };
             const onCancelQR = () => {
-                return closeQRCode('onCancel').then(() => {
+                return updateQRCodeComponentState({
+                    state:     QRCODE_STATE.ERROR,
+                    errorText: 'The authorization was canceled'
+                }).then(() => {
                     return onCancelCallback();
                 });
             };
