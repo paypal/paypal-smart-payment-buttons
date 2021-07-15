@@ -1,17 +1,15 @@
 /* @flow */
 
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { CURRENCY, ENV } from '@paypal/sdk-constants/src';
-import { memoize, noop } from 'belter/src';
+import { CURRENCY } from '@paypal/sdk-constants/src';
+import { memoize } from 'belter/src';
 
 import type { Wallet } from '../types';
 import { HEADERS } from '../constants';
 
 import { callGraphQL } from './api';
-import { loadFraudnet } from './fraudnet';
 
 type GetSmartWalletOptions = {|
-    env : $Values<typeof ENV>,
     clientID : string,
     merchantID : ?$ReadOnlyArray<string>,
     currency : $Values<typeof CURRENCY>,
@@ -19,8 +17,7 @@ type GetSmartWalletOptions = {|
     clientMetadataID : string,
     userIDToken : string,
     vetted? : boolean,
-    cspNonce : ?string,
-    paymentMethodNonce? : ?string,
+    paymentMethodToken? : ?string,
     branded? : ?boolean
 |};
 
@@ -28,11 +25,10 @@ const DEFAULT_AMOUNT = '0.00';
 
 type GetSmartWallet = (GetSmartWalletOptions) => ZalgoPromise<Wallet>;
 
-export const getSmartWallet : GetSmartWallet = memoize(({ env, clientID, merchantID, currency, amount = DEFAULT_AMOUNT, clientMetadataID, userIDToken, vetted = true, cspNonce, paymentMethodNonce, branded }) => {
-    return loadFraudnet({ env, clientMetadataID, cspNonce }).catch(noop).then(() => {
-        return callGraphQL({
-            name:  'GetSmartWallet',
-            query: `
+export const getSmartWallet : GetSmartWallet = memoize(({ clientID, merchantID, currency, amount = DEFAULT_AMOUNT, clientMetadataID, userIDToken, vetted = true, paymentMethodToken, branded }) => {
+    return callGraphQL({
+        name:  'GetSmartWallet',
+        query: `
             query GetSmartWallet(
                 $clientID: String!
                 $merchantID: [String!]
@@ -40,7 +36,7 @@ export const getSmartWallet : GetSmartWallet = memoize(({ env, clientID, merchan
                 $amount: String
                 $userIDToken: String
                 $vetted: Boolean
-                $paymentMethodNonce: String
+                $paymentMethodToken: String
                 $branded: Boolean
             ) {
                 smartWallet(
@@ -50,7 +46,7 @@ export const getSmartWallet : GetSmartWallet = memoize(({ env, clientID, merchan
                     amount: $amount
                     userIdToken: $userIDToken
                     vetted: $vetted
-                    paymentMethodNonce: $paymentMethodNonce
+                    paymentMethodNonce: $paymentMethodToken
                     branded: $branded
                 ) {
                     paypal {
@@ -91,12 +87,11 @@ export const getSmartWallet : GetSmartWallet = memoize(({ env, clientID, merchan
                 }
             }
         `,
-            variables: { clientID, merchantID, currency, amount, userIDToken, vetted, paymentMethodNonce, branded },
-            headers:   {
-                [HEADERS.CLIENT_METADATA_ID]: clientMetadataID
-            }
-        }).then(({ smartWallet }) => {
-            return smartWallet;
-        });
+        variables: { clientID, merchantID, currency, amount, userIDToken, vetted, paymentMethodToken, branded },
+        headers:   {
+            [HEADERS.CLIENT_METADATA_ID]: clientMetadataID
+        }
+    }).then(({ smartWallet }) => {
+        return smartWallet;
     });
 });
