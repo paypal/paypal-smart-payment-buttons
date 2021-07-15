@@ -4,8 +4,9 @@ import { ZalgoPromise } from 'zalgo-promise/src';
 import { request } from 'belter/src';
 
 import { GRAPHQL_URI } from '../config';
-import { HEADERS, SMART_PAYMENT_BUTTONS } from '../constants';
+import { FPTI_CUSTOM_KEY, FPTI_TRANSITION, HEADERS, SMART_PAYMENT_BUTTONS, STATUS_CODES } from '../constants';
 import { getLogger, slashToUnderscore } from '../lib';
+import { FPTI_KEY } from '@paypal/sdk-constants/src';
 
 type RESTAPIParams<D> = {|
     accessToken : string,
@@ -44,6 +45,14 @@ export function callRestAPI<D, T>({ accessToken, method, url, data, headers } : 
             error.response = { status, headers: responseHeaders };
 
             getLogger().warn(`rest_api${ slashToUnderscore(url) }_error`, { err: issue });
+
+            if(status = STATUS_CODES.TOO_MANY_REQUESTS){
+                getLogger().track({
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.CALL_REST_API,
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `Error: ${ status } - ${ body }`,
+                    [FPTI_CUSTOM_KEY.INFO_MSG]: `URL: ${ url }`
+                });
+            }
             throw error;
         }
 
@@ -86,6 +95,14 @@ export function callSmartAPI({ accessToken, url, method = 'get', headers: reqHea
 
                 getLogger().warn(`smart_api${ slashToUnderscore(url) }_contingency_error`);
                 throw err;
+            }
+
+            if(status = STATUS_CODES.TOO_MANY_REQUESTS){
+                getLogger().track({
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.CALL_REST_API,
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `Error: ${ status } - ${ body }`,
+                    [FPTI_CUSTOM_KEY.INFO_MSG]: `URL: ${ url }`
+                });
             }
 
             if (status > 400) {

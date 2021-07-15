@@ -162,7 +162,9 @@ export const FPTI_TRANSITION = {
     QR_SHOWN:                               ('qr_shown' : 'qr_shown'),
     QR_CLOSING:                             ('qr_closing' : 'qr_closing'),
     
-    HONEY_IDENTIFY:                         ('honey_identify')
+    HONEY_IDENTIFY:                         ('honey_identify'),
+
+    CALL_REST_API:                          ('call_rest_api' : 'call_rest_api')
 };
 
 export const FPTI_MENU_OPTION = {
@@ -255,3 +257,7 @@ export const ITEM_CATEGORY = {
 export const BUTTON_LABEL = {
     DONATE: 'donate'
 };
+
+export const STATUS_CODES = {
+    TOO_MANY_REQUESTS: 429
+}
