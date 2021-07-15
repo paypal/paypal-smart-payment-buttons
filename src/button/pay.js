@@ -159,12 +159,16 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                         });
                 });
 
+            const startSequencePromise = vaultPromise
+                .then(() => {
+                    return validateOrderPromise;
+                }).then(() => {
+                    return startPromise;
+                });
 
             return ZalgoPromise.all([
                 clickPromise,
-                vaultPromise,
-                startPromise,
-                validateOrderPromise,
+                startSequencePromise,
                 confirmOrderPromise
             ]).catch(err => {
                 return ZalgoPromise.try(close).then(() => {
