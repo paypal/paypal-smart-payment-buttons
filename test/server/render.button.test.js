@@ -167,7 +167,7 @@ test('should give a 400 error with no clientID passed', async () => {
 });
 
 test('should give a 400 error when an error occur while rendering button', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation });
 
     // These are considered valid (validateButtonProps pass)
     const req = mockReq({
