@@ -263,6 +263,7 @@ export const DEFAULT_FUNDING_ELIGIBILITY : FundingEligibilityType = {
     }
 };
 
+// eslint-disable-next-line complexity
 export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBILITY, wallet } : {| fundingEligibility? : Object, wallet? : Object |} = {}) {
     const buttons = [];
 
@@ -284,7 +285,13 @@ export function createButtonHTML({ fundingEligibility = DEFAULT_FUNDING_ELIGIBIL
                 if (cardConfig.vaultedInstruments && cardConfig.vaultedInstruments.length) {
                     const vaultedInstrument = cardConfig.vaultedInstruments[0];
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ vaultedInstrument.id }"></div><div data-menu></div></div>`);
-                } else {
+                } else if (wallet && wallet[fundingSource] && wallet[fundingSource].instruments.length) {
+                    const walletInstrument = wallet[fundingSource].instruments[0];
+                    if (walletInstrument.paymentMethodID) {
+                        buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }" data-payment-method-id="${ walletInstrument.paymentMethodID }"></div></div>`);
+                    }
+                }
+                else {
                     buttons.push(`<div><div role="button" data-funding-source="${ fundingSource }"></div></div>`);
                 }
             }

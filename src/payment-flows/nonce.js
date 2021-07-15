@@ -70,7 +70,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
     if (fundingSource !== FUNDING.CARD) {
         return false;
     }
-    
+
     if (!branded || !instrument.branded) {
         return false;
     }
