@@ -14,6 +14,7 @@ import { MESSAGE, HASH, EVENT } from './constants';
 
 const ANDROID_PAYPAL_APP_ID = 'com.paypal.android.p2pmobile';
 const ANDROID_VENMO_APP_ID  = 'com.venmo';
+const ANDROID_VENMO_DEBUG_APP_ID = 'com.venmo.fifa';
 
 export type NativePopupOptions = {|
     parentDomain : string,
@@ -37,6 +38,10 @@ type AndroidApp = {|
     version? : string
 |};
 
+type IOSApp = {|
+    installed : boolean
+|};
+
 function isAndroidAppInstalled(appId : string) : ZalgoPromise<AndroidApp> {
     // assume true unless we can prove false
     if (window.navigator && window.navigator.getInstalledRelatedApps) {
@@ -53,10 +58,14 @@ function isAndroidAppInstalled(appId : string) : ZalgoPromise<AndroidApp> {
                 }
             }
             
-            return ZalgoPromise.resolve({ installed: true });
+            return ZalgoPromise.resolve({ installed: false });
         });
     }
 
+    return ZalgoPromise.resolve({ installed: true });
+}
+
+function isIosAppInstalled() : ZalgoPromise<IOSApp> {
     return ZalgoPromise.resolve({ installed: true });
 }
 
@@ -68,6 +77,12 @@ function isAndroidPayPalAppInstalled() : ZalgoPromise<AndroidApp> {
 
 function isAndroidVenmoAppInstalled() : ZalgoPromise<AndroidApp> {
     return isAndroidAppInstalled(ANDROID_VENMO_APP_ID).then(app => {
+        return { ...app };
+    });
+}
+
+function isAndroidVenmoDebugAppInstalled() : ZalgoPromise<AndroidApp> {
+    return isAndroidAppInstalled(ANDROID_VENMO_DEBUG_APP_ID).then(app => {
         return { ...app };
     });
 }
@@ -138,9 +153,21 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
                         [FPTI_CUSTOM_KEY.ERR_DESC]: `Error: ${ stringifyErrorMessage(err) }`
                     }).flush();
 
-                return { installed: true };
+                return { installed: false };
             });
         } else if (fundingSource === FUNDING.VENMO) {
+            if (env !== ENV.PRODUCTION) {
+                appInstalledPromise = isAndroidVenmoDebugAppInstalled().catch(err => {
+                    logger.info('native_popup_android_venmo_debug_app_installed_error')
+                        .track({
+                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_POPUP_ANDROID_VENMO_APP_ERROR,
+                            [FPTI_CUSTOM_KEY.ERR_DESC]: `Error: ${ stringifyErrorMessage(err) }`
+                        }).flush();
+
+                    return { installed: false };
+                });
+            }
+            
             appInstalledPromise = isAndroidVenmoAppInstalled().catch(err => {
                 logger.info('native_popup_android_venmo_app_installed_error')
                     .track({
@@ -148,9 +175,11 @@ export function setupNativePopup({ parentDomain, env, sessionID, buttonSessionID
                         [FPTI_CUSTOM_KEY.ERR_DESC]: `Error: ${ stringifyErrorMessage(err) }`
                     }).flush();
 
-                return { installed: true };
+                return { installed: false };
             });
         }
+    } else if (isIOSSafari()) {
+        appInstalledPromise = isIosAppInstalled();
     }
 
     const replaceHash = (hash) => {

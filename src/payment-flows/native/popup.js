@@ -32,15 +32,18 @@ type AppDetect = {|
 
 function logDetectedApp(app : AppDetect) {
     if (app) {
+        let logMessage = 'native_app';
         Object.keys(app).forEach(key => {
-            getLogger().info(`native_app_${ app.installed ? 'installed' : 'not_installed' }_${ key }`, { [key]: app[key] })
-                .track({
-                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_INSTALLED,
-                    [FPTI_CUSTOM_KEY.INFO_MSG]: `native_app_${ app.installed ? 'installed' : 'not_installed' }_${ key }: ${ app[key].toString() }`
-                })
-                .flush();
+            logMessage += `_${ String(app[key]) }`;
         });
+
+        getLogger().info(logMessage)
+            .track({
+                [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_INSTALLED,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: logMessage
+            })
+            .flush();
     }
 }
 
