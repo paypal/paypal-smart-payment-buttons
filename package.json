@@ -70,7 +70,7 @@
     "preact": "^10",
     "preact-render-to-string": "^5.1.4",
     "strict-merge": "^1.0.1",
-    "typed-graphqlify": "^2.2.3",
+    "typed-graphqlify": "^3.0.0",
     "zalgo-promise": "^1.0.28"
   },
   "devDependencies": {
