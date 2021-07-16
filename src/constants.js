@@ -260,4 +260,4 @@ export const BUTTON_LABEL = {
 
 export const STATUS_CODES = {
     TOO_MANY_REQUESTS: 429
-}
+};
