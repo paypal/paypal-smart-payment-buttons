@@ -5,7 +5,7 @@ import { FUNDING } from '@paypal/sdk-constants';
 
 import { getButtonMiddleware, cancelWatchers } from '../../server';
 
-import { mockReq, mockRes, graphQL, getAccessToken, getMerchantID, mockContent, tracking, getPersonalizationEnabled, isFundingSourceBranded } from './mock';
+import { mockReq, mockRes, graphQL, getAccessToken, getMerchantID, mockContent, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation } from './mock';
 
 function getRenderedFundingSources(template) : $ReadOnlyArray<string> {
     return regexMap(template, / data-funding-source="([^"]+)"/g, (result, group1) => group1);
@@ -34,7 +34,7 @@ const logger = {
 };
 
 test('should do a basic button render and succeed', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation });
 
     const req = mockReq({
         query: {
@@ -113,7 +113,9 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
         logger,
         tracking,
         getPersonalizationEnabled,
-        isFundingSourceBranded
+        isFundingSourceBranded,
+        getInstanceLocationInformation,
+        getSDKLocationInformation
     });
     // $FlowFixMe
     await errButtonMiddleware(req, res);
@@ -149,7 +151,7 @@ test('should do a basic button render and succeed when graphql fundingEligibilit
 });
 
 test('should give a 400 error with no clientID passed', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation });
 
     const req = mockReq();
     const res = mockRes();
@@ -165,7 +167,7 @@ test('should give a 400 error with no clientID passed', async () => {
 });
 
 test('should give a 400 error when an error occur while rendering button', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation });
 
     // These are considered valid (validateButtonProps pass)
     const req = mockReq({
@@ -187,7 +189,7 @@ test('should give a 400 error when an error occur while rendering button', async
 });
 
 test('should render empty personalization when API errors', async () => {
-    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded });
+    const buttonMiddleware = getButtonMiddleware({ graphQL, getAccessToken, getMerchantID, content: mockContent, cache, logger, tracking, getPersonalizationEnabled, isFundingSourceBranded, getInstanceLocationInformation, getSDKLocationInformation });
 
     const req = mockReq({
         query: {
@@ -218,7 +220,9 @@ test('should render empty personalization when config is disabled', async () => 
         logger,
         tracking,
         getPersonalizationEnabled: () => false,
-        isFundingSourceBranded
+        isFundingSourceBranded,
+        getInstanceLocationInformation,
+        getSDKLocationInformation
     });
 
     const req = mockReq({
@@ -249,7 +253,9 @@ test('should render filled out tagline when config is enabled', async () => {
         logger,
         tracking,
         getPersonalizationEnabled: () => true,
-        isFundingSourceBranded
+        isFundingSourceBranded,
+        getInstanceLocationInformation,
+        getSDKLocationInformation
     });
 
     const req = mockReq({

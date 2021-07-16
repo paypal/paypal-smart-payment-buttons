@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint no-restricted-globals: off, promise/no-native: off, compat/compat: off */
 
-import type { ExpressRequest } from '../../server/types';
+import type { ExpressRequest, InstanceLocationInformation, SDKLocationInformation } from '../../server/types';
 
 type MockReq = {|
     query : { [string] : string }
@@ -238,6 +238,20 @@ export function getPersonalizationEnabled() : boolean {
 
 export function isFundingSourceBranded() : Promise<boolean> {
     return Promise.resolve(true);
+}
+
+export function getInstanceLocationInformation() : InstanceLocationInformation {
+    return {
+        cdnHostName:  '',
+        paypalDomain: ''
+    };
+}
+
+export function getSDKLocationInformation() : Promise<SDKLocationInformation> {
+    return Promise.resolve({
+        sdkActiveTag:   '',
+        sdkCDNRegistry: ''
+    });
 }
 
 export const mockContent = {
