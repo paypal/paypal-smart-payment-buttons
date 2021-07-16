@@ -313,7 +313,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).flush();
         };
         
-        orderIDPromise.then((orderID) => {
+        return orderIDPromise.then((orderID) => {
             const url = getNativeUrl({ props, serviceData, config, fundingSource, sessionUID, orderID, stickinessID, pageUrl });
 
             const qrCodeComponentInstance = QRCode({
